@@ -18,10 +18,26 @@
 # Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 # 
 
+usage()
+{
+    echo "$0 infile"
+
+    cat <<EOF
+This program is a simple utility to convert a KML file to a poly file, which
+can be used to constrain the data set.
+EOF
+    exit
+}
+
+if test $# -lt 1; then
+    usage
+fi
+
 infile="$1"
 name="${tmpdir}/`echo "${infile}" | sed -e 's:\-poly\.kml:.poly:'`"
 name="`basename "${name}" | sed -e 's:\.poly::' #> ${outfile}`"
-outfile="${name}.poly"
+tmpdir="/tmp"
+outfile="${tmpdir}/${name}.poly"
 
 declare -a ways=(`egrep -n "<coordinates|</coordinates>" "${infile}" | cut -d ':' -f 1`)
 top=${ways[$a]}
@@ -32,17 +48,20 @@ bot=${ways[$a]}
 
 padding="     "
 
-echo "${name}" | sed -e 's:\.poly::'
-echo "1"
+touch ${outfile}
+
+echo "${name}" | sed -e 's:\.poly::' >> ${outfile}
+echo "1" >> ${outfile}
+
 
 coords="`sed -n ${top},${bot}p "${infile}" | grep -v "coordinate"`"
 for i in ${coords}; do
     lat="`echo $i | cut -d ',' -f 1`"
     lon="`echo $i | cut -d ',' -f 2`"
-    echo "${padding}${lat}${padding}${lon}"
+    echo "${padding}${lat}${padding}${lon}" >> ${outfile}
 done
 
-echo "END"
-echo "END"
+echo "END" >> ${outfile}
+echo "END" >> ${outfile}
 
-
+echo "Polyfile is: ${outfile}"
