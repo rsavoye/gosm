@@ -29,7 +29,12 @@ usage()
 This program is a simple utility to setup a database properly for importing
 data from wither and OSM file or a Shapefile (ERSI).
 EOF
+    exit
 }
+
+if test $# -lt 1; then
+    usage
+fi
 
 dbname=$1
 infile=$2
@@ -49,9 +54,14 @@ fi
 filetype="`echo ${infile} | sed -e 's:^.*\.::'`"
 name="`echo ${infile} | sed -e 's:\..*::'`"
 
+box=
+if test x"${poly}" != x; then
+    box="--bounding-polygon file=${poly}"
+fi
+
 case ${filetype} in
     xml|pbf|osm)
-	osmosis --read-${filetype} file="${infile}" --bounding-polygon file="${poly}"  --write-xml file=${dbname}.osm
+	osmosis --read-${filetype} file="${infile}" ${box}  --write-xml file=${dbname}.osm
 	if test $? -gt 0; then
 	    exit
 	fi
