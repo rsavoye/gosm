@@ -52,6 +52,9 @@ if test "${exists}" -eq 0; then
 fi
 
 filetype="`echo ${infile} | sed -e 's:^.*\.::'`"
+if test x"${filetype}" = x"osm"; then
+    filetype="xml"
+fi
 name="`echo ${infile} | sed -e 's:\..*::'`"
 
 box=
