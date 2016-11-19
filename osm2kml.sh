@@ -66,7 +66,7 @@ done
 
 type="${ype:-trails}"
 format="${format:-kml}"
-title="${title:-${dbs}-${type}qq}"
+title="${title:-${dbs}-${type}}"
 
 debug=yes
 
@@ -79,8 +79,8 @@ done
 
 i=0
 declare -a names=()
-if test -n ${ns}; then
-    for item in `echo ${ns} | sed -e 's/,/ /'`; do
+if test -n "${ns}"; then
+    for item in `echo ${ns} | tr ' ' '_' | sed -e 's/,/ /'`; do
 	names[$i]="${item}"
 	i="`expr $i + 1`"
     done
@@ -505,9 +505,11 @@ EOF
 	esac
     fi
 
+    echo "FOO"
     declare -p names
+    name="`echo ${names[$i]} | tr '_' ' '`"
     echo "    <Folder>" >> ${outfile}
-    echo "        <name>${names[$i]}</name>" >> ${outfile}
+    echo "        <name>${name}</name>" >> ${outfile}
 
     data="${outdir}/data-${folder}-${type}.tmp"
     #if test ! -e "${data}"; then
