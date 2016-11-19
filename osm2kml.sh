@@ -72,7 +72,7 @@ debug=yes
 
 declare -a databases=()
 i=0
-for db in `echo ${dbs} | sed -e 's/,/ /'`; do
+for db in `echo ${dbs} | tr ',' ' '`; do
     databases[$i]="${db}"
     i="`expr $i + 1`"
 done
@@ -80,7 +80,7 @@ done
 i=0
 declare -a names=()
 if test -n "${ns}"; then
-    for item in `echo ${ns} | tr ' ' '_' | sed -e 's/,/ /'`; do
+    for item in `echo ${ns} | tr ' ' '_' | tr ',' ' '`; do
 	names[$i]="${item}"
 	i="`expr $i + 1`"
     done
@@ -468,7 +468,9 @@ EOF
 
 i=0
 # Execute the query
-for folder in ${databases[@]}; do
+while test $i -lt ${#databases[@]}; do
+    folder="${databases[$i]}"
+# for folder in ${databases[@]}; do
     # Create the KML header
 
     # Setup the query as a string to avoid werd shell escaping syntax ugliness
@@ -505,16 +507,13 @@ EOF
 	esac
     fi
 
-    echo "FOO"
-    declare -p names
     name="`echo ${names[$i]} | tr '_' ' '`"
     echo "    <Folder>" >> ${outfile}
     echo "        <name>${name}</name>" >> ${outfile}
 
     data="${outdir}/data-${folder}-${type}.tmp"
-    #if test ! -e "${data}"; then
-    time -p psql --dbname=${folder} --no-align --file=${sqlout} --output=${data}
-    #fi
+#    time -p psql --dbname=${folder} --no-align --file=${sqlout} --output=${data}
+    psql --dbname=${folder} --no-align --file=${sqlout} --output=${data}
     index=0
     while read line; do
 	if test x"${debug}" = x"yes"; then
