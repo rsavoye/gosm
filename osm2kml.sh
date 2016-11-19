@@ -318,9 +318,8 @@ trail_color()
     fi
 
     local sac_scale="$1"
-    local mtb_scale="$2"
-    local mtb_scale="$3"
-    local access="$4"
+    local mtb_scale_imba="$2"
+    local access="$3"
 
     local color="MAGENTA"
 
@@ -482,7 +481,7 @@ while test $i -lt ${#databases[@]}; do
 	    # exists.
 	    trails)
 		cat <<EOF >> ${sqlout}
-SELECT osm_id,name,tags->'sac_scale',tags->'bicycle',tags->'mtb:scale',access,ST_AsKML(way) from planet_osm_line WHERE (highway = 'footway' OR highway = 'path') AND tags?'piste:type' != 't';
+SELECT osm_id,name,tags->'sac_scale',tags->'bicycle',tags->'mtb:scale:imba',access,ST_AsKML(way) from planet_osm_line WHERE (highway = 'footway' OR highway = 'path') AND tags?'piste:type' != 't';
 EOF
 		;;
 	    piste)
@@ -581,7 +580,7 @@ EOF
             <name>${name:-"Unknown Trail ${index}"}</name>
             <Style>
                <LineStyle>
-                 <width>3</width>
+                 <width>2</width>
                  <color>${colors[${color}]}</color>
                 </LineStyle>
               </Style>
