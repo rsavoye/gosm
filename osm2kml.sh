@@ -565,7 +565,6 @@ EOF
 		if test x"${mtb_scale}" != x; then
 		    description=("MTB Scale: ${mtb_scale}" "${description[@]}")
 		fi
-		declare -p description
 #		if test x"${access}" != x; then
 #		    description="${description}Access: ${access}"
 #		fi
