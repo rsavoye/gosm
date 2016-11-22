@@ -30,8 +30,8 @@ usage()
     cat <<EOF
     $0 [options]
 	--database(-d) db1,db2,db3,...
-        --type trails|piste|waypoint
-        --format(-f) kml|kmz
+        --type(-t)     trails|piste|waypoint
+        --format(-f)   kml|kmz
         --name name1,name2,name3,...
 
     database can be multiple, seperated by a comma. Each gets it's own folder in
@@ -54,7 +54,7 @@ OPTS="`getopt -o d:h:t:f:i:n -l database:,type:,format:,name:title:,help`"
 while test $# -gt 0; do
     case $1 in
         -d|--database) dbs=$2 ;;
-        -t|--type) dbs=$2 ;;
+        -t|--type) type=$2 ;;
         -f|--format) format=$2 ;;
         -n|--name) ns=$2 ;;
         -i|--title) title=$2 ;;
@@ -110,18 +110,19 @@ fi
 
 # KML Color chart
 declare -A colors=()
-colors[RED]="ff0000ff"
-colors[BLACK]="ff000000"
-colors[BLUE]="ffff0000"
-colors[GREEN]="ff00ff00"
-colors[CYAN]="ffffff00"
-colors[MAGENTA]="ffff00ff"
-colors[YELLOW]="ff00ffff"
-colors[ORANGE]="ff00a5ff"
-colors[PURPLE]="ff800080"
-colors[LIGHTBLUE]="ffe6d8ad"
-colors[DARKGREEN]="ff008000"
-colors[GRAY]="ff888888"
+opacity="ff"
+colors[RED]="${opacity}0000ff"
+colors[BLACK]="${opacity}000000"
+colors[BLUE]="${opacity}ff0000"
+colors[GREEN]="${opacity}00ff00"
+colors[CYAN]="${opacity}ffff00"
+colors[MAGENTA]="${opacity}ff00ff"
+colors[YELLOW]="${opacity}00ffff"
+colors[ORANGE]="${opacity}00a5ff"
+colors[PURPLE]="${opacity}800080"
+colors[LIGHTBLUE]="${opacity}e6d8ad"
+colors[DARKGREEN]="${opacity}008000"
+colors[GRAY]="${opacity}888888"
 
 # Our custom Icons for waypoints
 icondir=icons
@@ -321,16 +322,22 @@ trail_color()
     local mtb_scale_imba="$2"
     local access="$3"
 
-    local color="MAGENTA"
+    local color="MAGENTA"	# default color
 
     # http://wiki.openstreetmap.org/wiki/Key:sac_scale
+    # hiking = Trail well cleared
+    # mountain_hiking - Trail with continuous line and balanced ascent
+    # demanding_mountain_hiking - exposed sites may be secured with ropes or chains,
+    #                             possible need to use hands for balance
     # Mountain hiking scale
-    case ${sac_scale} in
-	hiking) color="YELLOW" ;;
-	mountain_hiking|demanding_mountain_hiking) color="RED" ;;
-	alpine_hiking|difficult_alpine_hiking|demanding_alpine_hiking) color="BLUE" ;;
-	*) color="PURPLE" ;;
-    esac
+    if test x"${sac_scale}" != x; then
+	case ${sac_scale} in
+	    hiking) color="YELLOW" ;;
+	    mountain_hiking|demanding_mountain_hiking) color="RED" ;;
+	    alpine_hiking|difficult_alpine_hiking|demanding_alpine_hiking) color="BLUE" ;;
+	    *) color="PURPLE" ;;
+	esac
+    fi
 
     # GaiaGPS uses these colors:
     # green - Aspen Alley
@@ -354,29 +361,33 @@ trail_color()
     # difficult - black
     # expert - double black
 
-    # Mountain Biking scales
-    case ${mtb_scale_imba} in # 0-4
-	0*) color="YELLOW" ;; # easiest
-	1*) color="GREEN" ;;  # easy
-	2*) color="BLUE" ;;   # intermediate
-	3*) color="BLACK" ;;  # difficult
-	4*) color="PURPLE" ;; # double black
-	*)  ;;
-    esac
+    # Mountain Biking scales. Make the hiking rating more important
+    # since we hike into an emergency, we don't ride bikes.
+    if test x"${mtb_scale_imba}" != x -a x"${sac_scale}" = x; then
+	case ${mtb_scale_imba} in # 0-4
+	    0*) color="YELLOW" ;; # easiest
+	    1*) color="GREEN" ;;  # easy
+	    2*) color="BLUE" ;;   # intermediate
+	    3*) color="BLACK" ;;  # difficult
+	    4*) color="PURPLE" ;; # double black
+	    *)  ;;
+	esac
+    fi
     # http://wiki.openstreetmap.org/wiki/Key:mtb:scale
-    case ${mtb_scale} in # 0-6
-	0*) color="YELLOW" ;;
-	1*) color="GREEN" ;;
-	2*) color="LIGHTBLUE" ;;
-	3*) color="BLUE" ;;
-	4*) color="DARKGREEN" ;;
-	5*) color="PURPLE" ;;
-	6*) color="BLACK" ;;
-	*)  ;;
-    esac
-
+    if test x"${mtb_scale}" != x  -a x"${sac_scale}" = x; then
+	case ${mtb_scale} in # 0-6
+	    0*) color="YELLOW" ;;
+	    1*) color="GREEN" ;;
+	    2*) color="LIGHTBLUE" ;;
+	    3*) color="BLUE" ;;
+	    4*) color="DARKGREEN" ;;
+	    5*) color="PURPLE" ;;
+	    6*) color="BLACK" ;;
+	    *)  ;;
+	esac
+    fi
+    
     echo "${color}"
-
     return 0
 }
 
@@ -547,6 +558,17 @@ EOF
 		linestring="`echo ${line} | cut -d '|' -f 7`"
 		ways="`echo ${linestring:12} | cut -d '<' -f 1-3`"
 		color="`trail_color "${sac_scale}" "${mtb_scale}" "${access}"`"
+		declare -a description=()
+		if test x"${sac_scale}" != x; then
+		    description=("SAC Scale: ${sac_scale}" "${description[@]}")
+		fi
+		if test x"${mtb_scale}" != x; then
+		    description=("MTB Scale: ${mtb_scale}" "${description[@]}")
+		fi
+		declare -p description
+#		if test x"${access}" != x; then
+#		    description="${description}Access: ${access}"
+#		fi
 		;;
 	    piste)
 		piste_type="`echo ${line} | cut -d '|' -f 3`"
@@ -563,6 +585,10 @@ EOF
 		linestring="`echo ${line} | cut -d '|' -f 4`"
 		ways="`echo ${linestring:12} | cut -d '<' -f 1-3`"
 		color="`road_colors "${highway}"`"
+		description=
+		if test x"${highway}" != x; then
+		    description="${description}Type: ${highway}<br>"
+		fi
 		::
 	esac
 	newcolor="`echo ${color} | tr '[:upper:]' '[:lower:]'`"
@@ -578,6 +604,18 @@ EOF
 	    cat <<EOF >> ${outfile}
         <Placemark>
             <name>${name:-"Unknown Trail ${index}"}</name>
+EOF
+	    # THe description may have multipe lines.
+	    if test "${#description[@]}" -gt 0; then
+		echo "            <description>"  >> ${outfile}
+		j=0
+		while test $j -lt ${#description[@]}; do
+		    echo "${description[$j]}" >> ${outfile}
+		    j="`expr $j + 1`"
+		done
+		echo "            </description>"  >> ${outfile}
+	    fi
+	    cat <<EOF >> ${outfile}
             <Style>
                <LineStyle>
                  <width>2</width>
