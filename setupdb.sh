@@ -23,9 +23,13 @@
 #
 usage()
 {
-    echo "$0 name infile polyfile"
+    echo "$0 infile polyfile1,polyfile2,polyfile3,..."
 
     cat <<EOF
+--infile(-i) FILE      - Input file in osm, pbf, or zip (ERSI)
+--polyfile(-p) FILE(s) - Polyfile(s) to produce data subsets
+--help(-h)             - Display usage
+
 This program is a simple utility to setup a database properly for importing
 data from wither and OSM file or a Shapefile (ERSI).
 EOF
@@ -36,59 +40,88 @@ if test $# -lt 1; then
     usage
 fi
 
-dbname=$1
-infile=$2
-poly=$3
+infile="$1"
+polys="$2"
 
-exists="`psql -l | grep -c ${dbname}`"
-if test "${exists}" -eq 0; then
-    #sudo -u ${dbuser} psql template1 -c 'create extension hstore;'
-    createdb -EUTF8 ${dbname} -T template0
-    psql ${dbname} -c 'create extension hstore;'
-    psql ${dbname} -c 'create extension postgis;'
-#    sudo -u ${dbuser} createdb -EUTF8 ${name} -T template0
-#    sudo -u ${dbuser} psql ${dbname} -c 'create extension hstore;'
-#    sudo -u ${dbuser} psql ${dbname} -c 'create extension postgis;'
-fi
+OPTS="`getopt -o p:h -l polyfile:,help`"
+while test $# -gt 0; do
+    case $1 in
+        -i|--infile) infile=$2 ;;
+        -p|--polyfile) polys=$2 ;;
+        -h|--help) usage ;;
+        --) break ;;
+    esac
+    shift
+done
 
+declare -a polyfiles=()
+i=0
+for db in `echo ${polys} | tr ',' ' '`; do
+    polyfiles[$i]="${db}"
+    i="`expr $i + 1`"
+done
+
+# Look at the suffix to determine the input file type, as the 'file'
+# command just thinks it's an XML file. (which it is)
 filetype="`echo ${infile} | sed -e 's:^.*\.::'`"
 if test x"${filetype}" = x"osm"; then
     filetype="xml"
 fi
-name="`echo ${infile} | sed -e 's:\..*::'`"
 
-box=
-if test x"${poly}" != x; then
-    box="--bounding-polygon file=${poly}"
-fi
+i=0
+while test $i -lt ${#polyfiles[@]}; do
+    dbname="`basename ${polyfiles[$i]} | sed -e 's:\.poly::'`"
 
-case ${filetype} in
-    xml|pbf|osm)
-	osmosis --read-${filetype} file="${infile}" ${box}  --write-xml file=${dbname}.osm
+    exists="`psql -l | grep -c ${dbname}`"
+    # Note that the user running this script must have the right permissions.
+    if test "${exists}" -eq 0; then
+	createdb -EUTF8 ${dbname} -T template0
 	if test $? -gt 0; then
+	    echo "ERROR: createdb ${dbname} failed!"
 	    exit
 	fi
-	osm2pgsql -v --slim -C 1500 -d ${dbname} --number-processes 8 ${dbname}.osm --hstore
+	psql ${dbname} -c 'create extension hstore;'
 	if test $? -gt 0; then
+	    echo "ERROR: couldn't add hstore extension!"
 	    exit
 	fi
-	;;
-    zip)
-	unzip -o ${infile}
-	rm -f ${name}.sql
-	# Sometimes the filenames in the zip don't match the zip filename itsef,
-	# so we check for the actual name in the file.
-	newname="`unzip -l ${infile} | grep "\.shp$" | tr -s ' ' | cut -d ' ' -f 5 | sed -e 's/.shp//'`"
-	shp2pgsql -p ${newname} > ${name}.sql
-	if test -e ${name}.sql; then
-	    psql ${dbname} < ${name}.sql
-	else
-	    echo "ERROR: couldn't produce SQL file!"
+	psql ${dbname} -c 'create extension postgis;'
+	if test $? -gt 0; then	
+	    echo "ERROR: couldn't add postgis extension!"
+	    exit
 	fi
-	rm -f ${name}.{dbf,prj,shp,shx,sql}
-	;;
-    *)
-	echo "${filetype} not implemented!"
-	;;
-    #sudo -u ${dbuser} psql -c "GRANT CONNECT on DATABASE ${name} to rob"
-esac
+    fi
+    
+    case ${filetype} in
+	xml|pbf|osm)
+	    osmosis --read-${filetype} file="${infile}" --bounding-polygon file=${polyfiles[$i]} --write-xml file=${dbname}.osm
+	    if test $? -gt 0; then
+		exit
+	    fi
+	    osm2pgsql -v --slim -C 1500 -d ${dbname} --number-processes 8 ${dbname}.osm --hstore
+	    if test $? -gt 0; then
+		exit
+	    fi
+	    # rm -f ${dbname}.osm
+	    ;;
+	zip)
+	    unzip -o ${infile}
+	    rm -f ${name}.sql
+	    # Sometimes the filenames in the zip don't match the zip filename itsef,
+	    # so we check for the actual name in the file.
+	    newname="`unzip -l ${infile} | grep "\.shp$" | tr -s ' ' | cut -d ' ' -f 5 | sed -e 's/.shp//'`"
+	    shp2pgsql -p ${newname} > ${name}.sql
+	    if test -e ${name}.sql; then
+		psql ${dbname} < ${name}.sql
+	    else
+		echo "ERROR: couldn't produce SQL file!"
+	    fi
+	    rm -f ${name}.{dbf,prj,shp,shx,sql}
+	    ;;
+	*)
+	    echo "${filetype} not implemented!"
+	    ;;
+	#sudo -u ${dbuser} psql -c "GRANT CONNECT on DATABASE ${name} to rob"
+    esac
+    i="`expr $i + 1`"
+done
