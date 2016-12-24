@@ -90,6 +90,11 @@ while test $i -lt ${#polyfiles[@]}; do
 	    echo "ERROR: couldn't add postgis extension!"
 	    exit
 	fi
+	psql ${dbname} -c 'create extension dblink;'
+	if test $? -gt 0; then	
+	    echo "ERROR: couldn't add dblink extension!"
+	    exit
+	fi
     fi
     
     case ${filetype} in
