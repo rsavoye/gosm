@@ -1,8 +1,7 @@
 #!/bin/bash
 
 # 
-#   Copyright (C) 2016
-#   Free Software Foundation, Inc.
+#   Copyright (C) 2016, 2017   Free Software Foundation, Inc.
 # 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -29,16 +28,19 @@ usage()
 {
     cat <<EOF
     $0 [options]
-	--database(-d) db1,db2,db3,...
-        --type(-t)     trails|piste|waypoint
+	--database(-d) database
+        --subset(-s)   trails|piste|waypoint
+        --polygon(-p)  existing polygon1,poly2,poly3
         --format(-f)   kml|kmz
+        --title(-t)    title
+        --output(-0)   output file name
         --name name1,name2,name3,...
 
-    database can be multiple, seperated by a comma. Each gets it's own folder in
+    polygon can be multiple, seperated by a comma. Each gets it's own folder in
     the KML file.
 
     The optional name parameter is what the Folder gets called, and needs to be
-    in the same order as the databases.
+    in the same order as the polygons.
 EOF
     exit
 }
@@ -50,31 +52,43 @@ fi
 name=""
 dbs="$1"
 ns=""
-OPTS="`getopt -o d:h:t:f:i:n -l database:,type:,format:,name:title:,help`"
+outfile=""
+polygon=""
+
+OPTS="`getopt -o d:h:t:f:s:n:o:p: -l database:,polygon:,subset:,format:,name:title:,output:,help`"
 while test $# -gt 0; do
     case $1 in
-        -d|--database) dbs=$2 ;;
-        -t|--type) type=$2 ;;
+        -d|--database) database=$2 ;;
+        -s|--subset) type=$2 ;;
         -f|--format) format=$2 ;;
+        -p|--polygon) polys=$2, ;;
         -n|--name) ns=$2 ;;
-        -i|--title) title=$2 ;;
+        -t|--title) title=$2 ;;
+        -o|--output) outfile=$2 ;;
         -h|--help) usage ;;
         --) break ;;
     esac
     shift
 done
 
-type="${ype:-trails}"
+type="${type:-trails}"
 format="${format:-kml}"
 title="${title:-${dbs}-${type}}"
 
 debug=yes
 
-declare -a databases=()
-i=0
-for db in `echo ${dbs} | tr ',' ' '`; do
-    databases[$i]="${db}"
+declare -a polygons=()
+i=1
+k=0
+while test x"${polys}" != x; do
+    poly="`echo ${polys} | cut -d ',' -f $i`"
+    if test x"${poly}" = x; then
+	break
+    else
+	polygons[$k]="${poly}"
+    fi
     i="`expr $i + 1`"
+    k="`expr $k + 1`"
 done
 
 i=0
@@ -95,12 +109,13 @@ fi
 tmpdir="/tmp"
 outdir="${tmpdir}/tmp-$$"
 mkdir -p ${outdir}
-if test x"${format}" = x"kml"; then
-    outfile="${tmpdir}/${dbs}-${type}.kml"
-else
-    outfile="${outdir}/doc.kml"
+if test x"${outfile}" = x; then
+    if test x"${format}" = x"kml"; then
+	outfile="${tmpdir}/${dbs}-${type}.kml"
+    else
+	outfile="${outdir}/doc.kml"
+    fi
 fi
-
 
 rm -f /tmp/debug.log
 
@@ -127,19 +142,18 @@ colors[GRAY]="${opacity}888888"
 # Our custom Icons for waypoints
 icondir=icons
 declare -A icons=()
-icons[CAMPSITE]="${icondir}/campfire.png"
-icons[CAMPGROUND]="${icondir}/campground.png"
-icons[PICNIC]="${icondir}/picnic.png"
-icons[MOUNTAINS]="${icondir}/mountains.png"
-icons[HIKER]="${icondir}/hiker.png"
-icons[FIRESTATION]="${icondir}/firedept.png"
-icons[WATERTANK]="${icondir}/WaterTowerOutline.png"
-icons[UNDERGROUND]="${icondir}/cistern.png"
-icons[PILLAR]="${icondir}/FireHydrant.png"
-icons[LANDINGSITE]="${icondir}/Helicopter.png"
-icons[PARKING]="${icondir}/parking_lot.png"
-icons[TRAILHEAD]="${icondir}/Trailhead.png"
-icons[WAY]="${icondir}/"
+icons[CAMPSITE]="campfire"
+icons[CAMPGROUND]="campground"
+icons[PICNIC]="picnic"
+icons[MOUNTAINS]="mountains"
+icons[HIKER]="hiker"
+icons[FIRESTATION]="firedept"
+icons[WATERTANK]="WaterTowerOutline"
+icons[UNDERGROUND]="cistern"
+icons[PILLAR]="FireHydrant"
+icons[LANDINGSITE]="Helicopter"
+icons[PARKING]="parking_lot"
+icons[TRAILHEAD]="Trailhead"
 
 get_icon()
 {
@@ -179,12 +193,14 @@ get_icon()
     esac
 
     cat <<EOF >> ${outfile}
-	<IconStyle>
-	  <scale>1.0</scale>
-	  <Icon>
--	    <href>icons/${icon}</href>
-	  </Icon>
-	</IconStyle>
+        <Style>
+	  <IconStyle>
+	    <scale>1.0</scale>
+	    <Icon>
+-	      <href>${icon}</href>
+	    </Icon>
+	  </IconStyle>
+        </Style>
 EOF
 
     return 0
@@ -478,36 +494,54 @@ EOF
 
 i=0
 # Execute the query
-while test $i -lt ${#databases[@]}; do
-    folder="${databases[$i]}"
-# for folder in ${databases[@]}; do
-    # Create the KML header
+while test $i -lt ${#polygons[@]}; do
+    folder="${polygons[$i]}"
+    echo "Processing ${folder}..."
 
+    rows=`psql --dbname=${database} --command="SELECT name FROM planet_osm_polygon WHERE name='${folder}'" | grep " row" | grep -o "[0-9]"`
+
+    if test ${rows} -eq 0; then
+	echo "ERROR: ${folder} doesn't exist in planet_osm_polygon!"
+	i="`expr $i + 1`"
+	continue
+    fi
     # Setup the query as a string to avoid werd shell escaping syntax ugliness
-    sqlout="/tmp/query-${folder}-${type}.sql"
+    sqlout="`echo /tmp/query-${folder}-${type}.sql | tr ' ' '-'`"
+    
+#    rm -f ${sqlout}
     if test ! -e "${sqlout}"; then
 	case "${type}" in
 	    # We only want trails that aren't ski trails, as piste routes get different
 	    # colors. The only way we can tell the difference is if the piste:type tag
 	    # exists.
 	    trails)
+#		cat <<EOF >> ${sqlout}
+#SELECT line.osm_id,line.name,line.tags->'sac_scale',line.tags->'bicycle',line.tags->'mtb:scale:imba',line.access,ST_AsKML(line.way) FROM planet_osm_line AS line, dblink('dbname=polygons', 'select name,geom FROM boundary') AS poly(name name,geom geometry) WHERE poly.name='${polygon}' AND (ST_Crosses(line.way,poly.geom) OR ST_Contains(poly.geom,line.way)) AND (line.highway='footway' OR line.highway = 'path');
+#EOF
+		# Works!
 		cat <<EOF >> ${sqlout}
-SELECT osm_id,name,tags->'sac_scale',tags->'bicycle',tags->'mtb:scale:imba',access,ST_AsKML(way) from planet_osm_line WHERE (highway = 'footway' OR highway = 'path') AND tags?'piste:type' != 't';
+SELECT line.osm_id,line.name,line.tags->'sac_scale',line.tags->'bicycle',line.tags->'mtb:scale:imba',line.access,ST_AsKML(line.way) FROM planet_osm_line AS line, (SELECT name,way FROM planet_osm_polygon WHERE name='${folder}') AS poly WHERE (ST_Crosses(line.way,poly.way) OR ST_Contains(poly.way,line.way)) AND (line.highway='footway' OR line.highway = 'path');
 EOF
+#		cat <<EOF >> ${sqlout}
+#SELECT planet_osm_line.osm_id,planet_osm_line.name,planet_osm_line.tags->'sac_scale',planet_osm_line.tags->'bicycle',planet_osm_line.tags->'mtb:scale:imba',planet_osm_line.access,ST_AsKML(planet_osm_line.way) FROM planet_osm_line,planet_osm_polygon WHERE ((planet_osm_line.highway = 'footway' OR planet_osm_line.highway = 'path') AND planet_osm_line.tags?'piste:type' != 't') ${polysql};
+#EOF
 		;;
 	    piste)
 		cat <<EOF >> ${sqlout}
-SELECT osm_id,name,tags->'piste:type',tags->'piste:difficulty',tags->'piste:grooming',aerialway,access,ST_AsKML(way) from planet_osm_line WHERE tags?'piste:type' = 't' OR aerialway = 'chair_lift';
+SELECT line.osm_id,line.name,line.tags->'piste:type',line.tags->'piste:difficulty',line.tags->'piste:grooming',line.aerialway,line.access,ST_AsKML(line.way) FROM planet_osm_line AS line, (SELECT name,way FROM planet_osm_polygon WHERE name='${folder}') AS poly WHERE (ST_Crosses(line.way,poly.way) OR ST_Contains(poly.way,line.way)) AND (line.tags?'piste:type' = 't' OR line.aerialway = 'chair_lift');
 EOF
+#		cat <<EOF >> ${sqlout}
+#SELECT planet_osm_line.osm_id,planet_osm_line.name,planet_osm_line.tags->'piste:type',planet_osm_line.tags->'piste:difficulty',planet_osm_line.tags->'piste:grooming',planet_osm_line.aerialway,planet_osm_line.access,ST_AsKML(planet_osm_line.way) from planet_osm_line,planet_osm_polygon WHERE (planet_osm_line.tags?'piste:type' = 't' OR planet_osm_line.erialway = 'chair_lift') ${polysql};
+#EOF
 		;;
 	    waypoint)
 		cat <<EOF >> ${sqlout}
-SELECT osm_id,tags->'emergency',amenity,highway,tourism,tags->'fire_hydrant:type',ST_AsKML(way) from planet_osm_point';
+SELECT osm_id,tags->'emergency',amenity,highway,tourism,tags->'fire_hydrant:type',ST_AsKML(way) from planet_osm_point' ${polysql};
 EOF
 		;;
 	    roads)
 		cat <<EOF >> ${sqlout}
-SELECT osm_id,name,highway,ST_AsKML(way) from planet_osm_line WHERE highway='secondary' OR highway='tertiary' OR highway='unclassified' OR highway='residential' OR highway='service' OR highway='track';
+SELECT osm_id,name,highway,ST_AsKML(way) from planet_osm_line WHERE highway='secondary' OR highway='tertiary' OR highway='unclassified' OR highway='residential' OR highway='service' OR planet_osm_line.highway='track') ${polysql};
 EOF
 		;;
 	    firestations|hospital)
@@ -516,14 +550,18 @@ EOF
 		;;
 	esac
     fi
+# select planet_osm_line.name FROM dblink('dbname=polygons', 'select name,geom from boundary') AS t1(name name,geometry geometry),planet_osm_line WHERE t1.name='VAIL' OR (ST_Contains(t1.geometry,planet_osm_line.way) OR ST_Crosses(t1.geometry,planet_osm_line.way));
 
+    echo "FIXME: `cat ${sqlout}`"
+    
     name="`echo ${names[$i]} | tr '_' ' '`"
-    echo "    <Folder>" >> ${outfile}
-    echo "        <name>${name}</name>" >> ${outfile}
-
-    data="${outdir}/data-${folder}-${type}.tmp"
-#    time -p psql --dbname=${folder} --no-align --file=${sqlout} --output=${data}
-    psql --dbname=${folder} --no-align --file=${sqlout} --output=${data}
+    if test ${#polygons[@]} -gt 1; then
+	echo "    <Folder>" >> ${outfile}
+	echo "        <name>${name}</name>" >> ${outfile}
+    fi
+    
+    data="`echo ${outdir}/data-${folder}-${type}.tmp | tr ' ' '-'`"
+    psql --dbname=${database} --no-align --file=${sqlout} --output=${data}
     index=0
     while read line; do
 	if test x"${debug}" = x"yes"; then
@@ -540,6 +578,7 @@ EOF
 	    break
 	fi
 	name="`echo ${line} | cut -d '|' -f 2 | sed -e 's:&:and:'`"
+	declare -a description=()
 	case ${type} in
 	    waypoint)
 		#	    emergency="`echo ${line} | cut -d '|' -f 3`"
@@ -549,6 +588,10 @@ EOF
 		#	    hydrant="`echo ${line} | cut -d '|' -f 3`"
 		linestring="`echo ${line} | cut -d '|' -f 7`"
 		way="`echo ${linestring:12} | cut -d '<' -f 1-3`"
+		emergency=""
+		if test x"${emergency}" != x; then
+		    description=("Emergency: ${emergency}" "${description[@]}")
+		fi
 		;;
 	    trails)
 		sac_scale="`echo ${line} | cut -d '|' -f 3`"
@@ -558,7 +601,6 @@ EOF
 		linestring="`echo ${line} | cut -d '|' -f 7`"
 		ways="`echo ${linestring:12} | cut -d '<' -f 1-3`"
 		color="`trail_color "${sac_scale}" "${mtb_scale}" "${access}"`"
-		declare -a description=()
 		if test x"${sac_scale}" != x; then
 		    description=("SAC Scale: ${sac_scale}" "${description[@]}")
 		fi
@@ -648,7 +690,9 @@ EOF
 	#	break
 	#    fi
     done < ${data}
-    echo "    </Folder>" >> ${outfile}
+    if test ${#polygons[@]} -gt 1; then
+	echo "    </Folder>" >> ${outfile}
+    fi
     i="`expr $i + 1`"
 done
 
@@ -667,3 +711,4 @@ fi
 #rm -f ${sqlout}
 
 echo "KML file is ${outfile}"
+echo "SQL file is ${sqlout}"
