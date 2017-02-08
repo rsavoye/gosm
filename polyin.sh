@@ -41,7 +41,7 @@ done
 database="${database:-polygons}"
 op="${op:-none}"
 poly="${poly}"
-name="`echo ${poly} | sed -s 's:.poly::'`"
+name="`echo ${poly} | sed -e 's:\.poly::'`"
 name="`basename ${name}`"
 title="${title:-${name}}"
 name="${name:-${title}}"
@@ -65,13 +65,13 @@ create_sql()
     local sql=
     declare -A fields=()
     fields[name]="${1:-'unknown'}"
-    fields[geom]=$2
+    fields[geom]="$2"
 
     # landuse, leisure, sport=ski
     if test ${exists} -eq 0; then
 	if test x"${osm}" = x"yes"; then
 	    case ${op} in
-		ski|piste) sql="INSERT INTO ${table} (name,way,boundary,leisure,osm_id,landuse) VALUES ('${fields[name]}',ST_GeomFromText('LINESTRING(${fields[geom]})',900913), 'administrative', 'sports_centre', 0, 'winter_sports')"
+		ski|piste) sql="INSERT INTO ${table} (name,way,boundary,leisure,osm_id,landuse,tags) VALUES ('${fields[name]}',ST_GeomFromText('LINESTRING(${fields[geom]})',900913), 'administrative', 'sports_centre', 0, 'winter_sports', '"ski"=>"yes"')"
 		;;
 		*) sql="INSERT INTO ${table} (name,way,boundary,osm_id) VALUES ('${fields[name]}',ST_GeomFromText('LINESTRING(${fields[geom]})',900913), 'administrative', 0)"
 		   ;;
