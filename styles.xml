@@ -1,0 +1,151 @@
+<!--
+  styles.xml - This gets included in all KML files to present a
+  consistent UI.
+-->
+<Style id="Campsite">
+  <IconStyle>
+    <scale>1.3</scale>
+    <Icon>
+      <href>icons/campground.png</href>
+    </Icon>
+  </IconStyle>
+</Style>
+<Style id="Campfire">
+  <IconStyle>
+    <scale>1.3</scale>
+    <Icon>
+      <href>icons/campfire.png</href>
+    </Icon>
+  </IconStyle>
+</Style>
+<Style id="Hydrant">
+  <IconStyle>
+    <scale>1.3</scale>
+    <Icon>
+      <href>icons/FireHydrant.png</href>
+    </Icon>
+  </IconStyle>
+</Style>
+<Style id="Cistern">
+  <IconStyle>
+    <scale>1.3</scale>
+    <Icon>
+      <href>icons/cistern.png</href>
+    </Icon>
+  </IconStyle>
+</Style>
+<Style id="Heliport">
+  <IconStyle>
+    <scale>1.3</scale>
+    <Icon>
+      <href>icons/heliport.png</href>
+    </Icon>
+  </IconStyle>
+</Style>
+<Style id="Helicopter">
+  <IconStyle>
+    <scale>1.3</scale>
+    <Icon>
+      <href>icons/Helicopter.png</href>
+    </Icon>
+  </IconStyle>
+</Style>
+<Style id="FireStation">
+  <IconStyle>
+    <scale>1.3</scale>
+    <Icon>
+      <href>icons/firedept.png</href>
+    </Icon>
+  </IconStyle>
+</Style>
+<Style id="Town">
+  <IconStyle>
+    <scale>1.3</scale>
+    <Icon>
+      <href>icons/town.png</href>
+    </Icon>
+  </IconStyle>
+</Style>
+<Style id="Lodging">
+  <IconStyle>
+    <scale>1.3</scale>
+    <Icon>
+      <href>icons/lodging.png</href>
+    </Icon>
+  </IconStyle>
+</Style>
+<Style id="line_red">
+  <LineStyle>
+    <color>ff0000ff</color>
+    <width>5</width>
+  </LineStyle>
+  <LabelStyle>
+    <color>ff0000ff</color>
+  </LabelStyle>
+</Style>
+<Style id="line_green">
+  <LineStyle>
+    <color>ff00ff00</color>
+    <width>5</width>
+  </LineStyle>
+</Style>
+<Style id="line_black">
+  <LineStyle>
+    <color>ff000000</color>
+    <width>5</width>
+  </LineStyle>
+</Style>
+<Style id="line_blue">
+  <LineStyle>
+    <color>ffff0000</color>
+    <width>5</width>
+  </LineStyle>
+</Style>
+<Style id="line_orange">
+  <LineStyle>
+    <color>ff00a5ff</color>
+    <width>5</width>
+  </LineStyle>
+</Style>
+<Style id="line_yellow">
+  <LineStyle>
+    <color>ff00ffff</color>
+    <width>5</width>
+  </LineStyle>
+</Style>
+<Style id="line_cyan">
+  <LineStyle>
+    <color>ffffff00</color>
+    <width>5</width>
+  </LineStyle>
+</Style>
+<Style id="line_magenta">
+  <LineStyle>
+    <color>ffff00ff</color>
+    <width>5</width>
+  </LineStyle>
+</Style>
+<Style id="line_purple">
+  <LineStyle>
+    <color>ff800080</color>
+    <width>5</width>
+  </LineStyle>
+</Style>
+<Style id="line_gray">
+  <LineStyle>
+    <color>ff888888</color>
+    <width>5</width>
+  </LineStyle>
+</Style>
+<Style id="line_lightblue">
+  <LineStyle>
+    <color>ffe6d8ad</color>
+    <width>5</width>
+  </LineStyle>
+</Style>
+<Style id="line_darkgreen">
+  <LineStyle>
+    <color>ff008000</color>
+    <width>5</width>
+  </LineStyle>
+</Style>
