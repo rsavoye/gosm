@@ -29,7 +29,7 @@ usage()
 --infile(-i) FILE      - Input file in osm, pbf, or zip (ERSI)
 --polyfile(-p) FILE(s) - Polyfile(s) to produce data subsets
 --help(-h)             - Display usage
-
+--database(-d)         - Database to use
 This program is a simple utility to setup a database properly for importing
 data from wither and OSM file or a Shapefile (ERSI).
 EOF
@@ -41,18 +41,25 @@ if test $# -lt 1; then
 fi
 
 infile="$1"
-polys="$2"
+polys=""
+dbname=""
 
-OPTS="`getopt -o p:h -l polyfile:,help`"
+OPTS="`getopt -o p:d:h -l polyfile:database:,help`"
 while test $# -gt 0; do
     case $1 in
         -i|--infile) infile=$2 ;;
         -p|--polyfile) polys=$2 ;;
+        -d|--database) dbname=$2 ;;
         -h|--help) usage ;;
         --) break ;;
     esac
     shift
 done
+
+if test x"${polys}" = x -a x"${dbname}" = x; then
+    echo "ERROR: If no poly file, a database name must be specifed!"
+    exit
+fi
 
 declare -a polyfiles=()
 i=0
@@ -69,12 +76,14 @@ if test x"${filetype}" = x"osm"; then
 fi
 
 i=0
-while test $i -lt ${#polyfiles[@]}; do
-    dbname="`basename ${polyfiles[$i]} | sed -e 's:\.poly::'`"
+while test $i -lt ${#polyfiles[@]} -o x"${polys}" = x; do
+    dbname="${dbname:-`basename ${polyfiles[$i]} | sed -e 's:\.poly::'`}"
 
+    echo "Processing ${infile} into ${dbname}..."
     exists="`psql -l | grep -c ${dbname}`"
     # Note that the user running this script must have the right permissions.
     if test "${exists}" -eq 0; then
+	echo "Creating postgresql database ${dbname}"
 	createdb -EUTF8 ${dbname} -T template0
 	if test $? -gt 0; then
 	    echo "ERROR: createdb ${dbname} failed!"
@@ -95,15 +104,22 @@ while test $i -lt ${#polyfiles[@]}; do
 	    echo "ERROR: couldn't add dblink extension!"
 	    exit
 	fi
+    else
+	echo "Postgresql database ${dbname} already exists, not creating."
     fi
     
+    if test x"${polys}" = x; then
+	polys="done"
+    fi
     case ${filetype} in
 	xml|pbf|osm)
-	    osmosis --read-${filetype} file="${infile}" --bounding-polygon file=${polyfiles[$i]} --write-xml file=${dbname}.osm
-	    if test $? -gt 0; then
-		exit
+	    if test x"${polys}" != x"done"; then
+		osmosis --read-${filetype} file="${infile}" --bounding-polygon file=${polyfiles[$i]} --write-xml file=${dbname}.osm
+		if test $? -gt 0; then
+		    exit
+		fi
 	    fi
-	    osm2pgsql -v --slim -C 1500 -d ${dbname} --number-processes 8 ${dbname}.osm --hstore
+	    osm2pgsql -v --slim -C 1500 -d ${dbname} --number-processes 8 ${infile} --hstore
 	    if test $? -gt 0; then
 		exit
 	    fi
