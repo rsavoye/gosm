@@ -33,7 +33,7 @@ usage()
         --polygon(-p)  existing polygon1,poly2,poly3
         --format(-f)   kml|kmz
         --title(-t)    title
-        --output(-0)   output file name
+        --output(-o)   output file name
         --name name1,name2,name3,...
 
     polygon can be multiple, seperated by a comma. Each gets it's own folder in
@@ -110,11 +110,7 @@ tmpdir="/tmp"
 outdir="${tmpdir}/tmp-$$"
 mkdir -p ${outdir}
 if test x"${outfile}" = x; then
-    if test x"${format}" = x"kml"; then
-	outfile="${tmpdir}/${dbs}-${type}.kml"
-    else
-	outfile="${outdir}/doc.kml"
-    fi
+    outfile="${tmpdir}/${dbs}-${type}.kml"
 fi
 
 rm -f /tmp/debug.log
@@ -142,17 +138,17 @@ colors[GRAY]="${opacity}888888"
 # Our custom Icons for waypoints
 icondir=icons
 declare -A icons=()
-icons[CAMPSITE]="campfire"
-icons[CAMPGROUND]="campground"
-icons[PICNIC]="picnic"
-icons[MOUNTAINS]="mountains"
-icons[HIKER]="hiker"
-icons[FIRESTATION]="firedept"
-icons[WATERTANK]="WaterTowerOutline"
-icons[UNDERGROUND]="cistern"
-icons[PILLAR]="FireHydrant"
-icons[LANDINGSITE]="Helicopter"
-icons[PARKING]="parking_lot"
+icons[CAMPSITE]="#Campfire"
+icons[CAMPGROUND]="#Campground"
+icons[PICNIC]="#Picnic"
+icons[MOUNTAINS]="#Mountains"
+icons[HIKER]="#Hiker"
+icons[FIRESTATION]="#FireStation"
+icons[WATERTANK]="#WaterTowerOutline"
+icons[UNDERGROUND]="#Cistern"
+icons[PILLAR]="#Hydrant"
+icons[LANDINGSITE]="#Helicopter"
+icons[PARKING]="#ParkingLot"
 icons[TRAILHEAD]="Trailhead"
 
 get_icon()
@@ -415,96 +411,29 @@ cat <<EOF > ${outfile}
     <description></description>
     <visibility>1</visibility>
     <open>1</open>
-    <Style id="line_red">
-        <LineStyle>
-            <color>ff0000ff</color>
-            <width>5</width>
-        </LineStyle>
-        <LabelStyle>
-            <color>ff0000ff</color>
-        </LabelStyle>
-    </Style>
-    <Style id="line_green">
-        <LineStyle>
-            <color>ff00ff00</color>
-            <width>5</width>
-        </LineStyle>
-    </Style>
-    <Style id="line_black">
-        <LineStyle>
-            <color>ff000000</color>
-            <width>5</width>
-        </LineStyle>
-    </Style>
-    <Style id="line_blue">
-        <LineStyle>
-            <color>ffff0000</color>
-            <width>5</width>
-        </LineStyle>
-    </Style>
-    <Style id="line_orange">
-        <LineStyle>
-            <color>ff00a5ff</color>
-            <width>5</width>
-        </LineStyle>
-    </Style>
-    <Style id="line_yellow">
-        <LineStyle>
-            <color>ff00ffff</color>
-            <width>5</width>
-        </LineStyle>
-    </Style>
-    <Style id="line_cyan">
-        <LineStyle>
-            <color>ffffff00</color>
-            <width>5</width>
-        </LineStyle>
-    </Style>
-    <Style id="line_magenta">
-        <LineStyle>
-            <color>ffff00ff</color>
-            <width>5</width>
-        </LineStyle>
-    </Style>
-    <Style id="line_purple">
-        <LineStyle>
-            <color>ff800080</color>
-            <width>5</width>
-        </LineStyle>
-    </Style>
-    <Style id="line_gray">
-        <LineStyle>
-            <color>ff888888</color>
-            <width>5</width>
-        </LineStyle>
-    </Style>
-    <Style id="line_lightblue">
-        <LineStyle>
-            <color>ffe6d8ad</color>
-            <width>5</width>
-        </LineStyle>
-    </Style>
-    <Style id="line_darkgreen">
-        <LineStyle>
-            <color>ff008000</color>
-            <width>5</width>
-        </LineStyle>
-    </Style>
 EOF
+
+cat `dirname $0`/styles.xml >> ${outfile}
 
 i=0
 # Execute the query
 while test $i -lt ${#polygons[@]}; do
-    folder="${polygons[$i]}"
+    folder="`basename ${polygons[$i]} | sed -e 's:\.[a-z]*::'`"
     echo "Processing ${folder}..."
 
-    rows=`psql --dbname=${database} --command="SELECT name FROM planet_osm_polygon WHERE name='${folder}'" | grep " row" | grep -o "[0-9]"`
+    rows=
+    if test "`echo ${polygons[$i]} | grep -c poly`" -eq 0; then
+	rows=`psql --dbname=${database} --command="SELECT name FROM planet_osm_polygon WHERE name='${folder}'" | grep " row" | grep -o "[0-9]"`
 
-    if test ${rows} -eq 0; then
-	echo "ERROR: ${folder} doesn't exist in planet_osm_polygon!"
-	i="`expr $i + 1`"
-	continue
+	if test ${rows} -eq 0; then
+	    echo "ERROR: ${folder} doesn't exist in planet_osm_polygon!"
+	    i="`expr $i + 1`"
+	    continue
+	else
+	    echo "${folder} exists in planet_osm_polygon"
+	fi
     fi
+    
     # Setup the query as a string to avoid werd shell escaping syntax ugliness
     sqlout="`echo /tmp/query-${folder}-${type}.sql | tr ' ' '-'`"
     
@@ -519,16 +448,23 @@ while test $i -lt ${#polygons[@]}; do
 #SELECT line.osm_id,line.name,line.tags->'sac_scale',line.tags->'bicycle',line.tags->'mtb:scale:imba',line.access,ST_AsKML(line.way) FROM planet_osm_line AS line, dblink('dbname=polygons', 'select name,geom FROM boundary') AS poly(name name,geom geometry) WHERE poly.name='${polygon}' AND (ST_Crosses(line.way,poly.geom) OR ST_Contains(poly.geom,line.way)) AND (line.highway='footway' OR line.highway = 'path');
 #EOF
 		# Works!
-		cat <<EOF >> ${sqlout}
+		if test "`echo ${polygons[$i]} | grep -c poly`" -eq 0; then
+		    cat <<EOF >> ${sqlout}
 SELECT line.osm_id,line.name,line.tags->'sac_scale',line.tags->'bicycle',line.tags->'mtb:scale:imba',line.access,ST_AsKML(line.way) FROM planet_osm_line AS line, (SELECT name,way FROM planet_osm_polygon WHERE name='${folder}') AS poly WHERE (ST_Crosses(line.way,poly.way) OR ST_Contains(poly.way,line.way)) AND (line.highway='footway' OR line.highway = 'path');
 EOF
+		else
+		    cat <<EOF >> ${sqlout}
+SELECT line.osm_id,line.name,line.tags->'sac_scale',line.tags->'bicycle',line.tags->'mtb:scale:imba',line.access,ST_AsKML(line.way) FROM planet_osm_line AS line WHERE line.highway='footway' OR line.highway = 'path';
+EOF
+		fi
 #		cat <<EOF >> ${sqlout}
 #SELECT planet_osm_line.osm_id,planet_osm_line.name,planet_osm_line.tags->'sac_scale',planet_osm_line.tags->'bicycle',planet_osm_line.tags->'mtb:scale:imba',planet_osm_line.access,ST_AsKML(planet_osm_line.way) FROM planet_osm_line,planet_osm_polygon WHERE ((planet_osm_line.highway = 'footway' OR planet_osm_line.highway = 'path') AND planet_osm_line.tags?'piste:type' != 't') ${polysql};
 #EOF
 		;;
 	    piste)
 		cat <<EOF >> ${sqlout}
-SELECT line.osm_id,line.name,line.tags->'piste:type',line.tags->'piste:difficulty',line.tags->'piste:grooming',line.aerialway,line.access,ST_AsKML(line.way) FROM planet_osm_line AS line, (SELECT name,way FROM planet_osm_polygon WHERE name='${folder}') AS poly WHERE (ST_Crosses(line.way,poly.way) OR ST_Contains(poly.way,line.way)) AND (line.tags?'piste:type' = 't' OR line.aerialway = 'chair_lift');
+SELECT line.osm_id,line.name FROM planet_osm_line AS line, (SELECT name,way FROM planet_osm_polygon WHERE name='Parco Nazionale dello Stelvio') AS poly WHERE (ST_Crosses(line.way,poly.way) OR ST_Contains(poly.way,line.way));
+#SELECT line.osm_id,line.name,line.tags->'piste:type',line.tags->'piste:difficulty',line.tags->'piste:grooming',line.aerialway,line.access,ST_AsKML(line.way) FROM planet_osm_line AS line, (SELECT name,way FROM planet_osm_polygon WHERE name='${folder}') AS poly WHERE (ST_Crosses(line.way,poly.way) OR ST_Contains(poly.way,line.way)) AND (line.tags?'piste:type' = 't' OR line.aerialway = 'chair_lift');
 EOF
 #		cat <<EOF >> ${sqlout}
 #SELECT planet_osm_line.osm_id,planet_osm_line.name,planet_osm_line.tags->'piste:type',planet_osm_line.tags->'piste:difficulty',planet_osm_line.tags->'piste:grooming',planet_osm_line.aerialway,planet_osm_line.access,ST_AsKML(planet_osm_line.way) from planet_osm_line,planet_osm_polygon WHERE (planet_osm_line.tags?'piste:type' = 't' OR planet_osm_line.erialway = 'chair_lift') ${polysql};
@@ -552,8 +488,6 @@ EOF
     fi
 # select planet_osm_line.name FROM dblink('dbname=polygons', 'select name,geom from boundary') AS t1(name name,geometry geometry),planet_osm_line WHERE t1.name='VAIL' OR (ST_Contains(t1.geometry,planet_osm_line.way) OR ST_Crosses(t1.geometry,planet_osm_line.way));
 
-    echo "FIXME: `cat ${sqlout}`"
-    
     name="`echo ${names[$i]} | tr '_' ' '`"
     if test ${#polygons[@]} -gt 1; then
 	echo "    <Folder>" >> ${outfile}
@@ -572,7 +506,7 @@ EOF
 	if test x"${id}" = x"osm_id"; then
 	    continue
 	fi
-	# The last line of the file is a count of rows. which we don't  need
+	# The last line of the file is a count of rows. which we don't need
 	if test "`echo ${line} | grep -c "[0-9]* rows"`" -gt 0; then
 	    echo "Done processing file, processed ${index} nodes"
 	    break
@@ -646,7 +580,7 @@ EOF
         <Placemark>
             <name>${name:-"Unknown Trail ${index}"}</name>
 EOF
-	    # THe description may have multipe lines.
+	    # The description may have multipe lines.
 	    if test "${#description[@]}" -gt 0; then
 		echo "            <description>"  >> ${outfile}
 		j=0
@@ -656,13 +590,9 @@ EOF
 		done
 		echo "            </description>"  >> ${outfile}
 	    fi
+	    lowcolor="`echo ${color} | tr '[:upper:]' '[:lower:]'`"
 	    cat <<EOF >> ${outfile}
-            <Style>
-               <LineStyle>
-                 <width>2</width>
-                 <color>${colors[${color}]}</color>
-                </LineStyle>
-              </Style>
+	      <styleUrl>#line_${lowcolor}</styleUrl>
               <LineString>
                 <tessellate>1</tessellate>
                 <altitudeMode>clampToGround</altitudeMode>
