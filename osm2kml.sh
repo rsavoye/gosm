@@ -29,9 +29,9 @@ usage()
     cat <<EOF
     $0 [options]
 	--database(-d) database
-        --subset(-s)   trails|piste|waypoint
+        --subset(-s)   trails|piste|fire|lodging|wifi
         --polygon(-p)  existing polygon1,poly2,poly3
-        --format(-f)   kml|kmz
+        --format(-f)   kml|kmz|aqm
         --title(-t)    title
         --output(-o)   output file name
         --name name1,name2,name3,...
@@ -49,17 +49,20 @@ if test $# -lt 1; then
     usage
 fi
 
+tourism=""
 name=""
 dbs="$1"
 ns=""
 outfile=""
 polygon=""
-
+subset="trails"
+format="kml"
+title=""
 OPTS="`getopt -o d:h:t:f:s:n:o:p: -l database:,polygon:,subset:,format:,name:title:,output:,help`"
 while test $# -gt 0; do
     case $1 in
         -d|--database) database=$2 ;;
-        -s|--subset) type=$2 ;;
+        -s|--subset) subset=$2 ;;
         -f|--format) format=$2 ;;
         -p|--polygon) polys=$2, ;;
         -n|--name) ns=$2 ;;
@@ -71,9 +74,12 @@ while test $# -gt 0; do
     shift
 done
 
-type="${type:-trails}"
-format="${format:-kml}"
-title="${title:-${dbs}-${type}}"
+title="${title:-${database}-${subset}}"
+
+case ${subset} in
+    wifi|lodging|fire) type="waypoint" ;;
+    *) type="line" ;;
+esac
 
 debug=yes
 
@@ -99,7 +105,7 @@ if test -n "${ns}"; then
 	i="`expr $i + 1`"
     done
 else
-    for item in `echo ${dbs} | sed -e 's/,/ /'`; do
+    for item in `echo ${database} | sed -e 's/,/ /'`; do
 	names[$i]="${item}"
 	i="`expr $i + 1`"
     done
@@ -110,7 +116,7 @@ tmpdir="/tmp"
 outdir="${tmpdir}/tmp-$$"
 mkdir -p ${outdir}
 if test x"${outfile}" = x; then
-    outfile="${tmpdir}/${dbs}-${type}.kml"
+    outfile="${tmpdir}/${database}-${subset}.${format}"
 fi
 
 rm -f /tmp/debug.log
@@ -138,6 +144,12 @@ colors[GRAY]="${opacity}888888"
 # Our custom Icons for waypoints
 icondir=icons
 declare -A icons=()
+icons[HOSTEL]="#Hostel"
+icons[HOTEL]="#Hotel"
+icons[CASA]="#Casa"
+icons[UNKNOWN]="#town"
+icons[LODGING]="#Lodging"
+icons[WIFI]="#Wifi"
 icons[CAMPSITE]="#Campfire"
 icons[CAMPGROUND]="#Campground"
 icons[PICNIC]="#Picnic"
@@ -145,55 +157,26 @@ icons[MOUNTAINS]="#Mountains"
 icons[HIKER]="#Hiker"
 icons[FIRESTATION]="#FireStation"
 icons[WATERTANK]="#WaterTowerOutline"
-icons[UNDERGROUND]="#Cistern"
-icons[PILLAR]="#Hydrant"
+icons[CISTERN]="#Cistern"
+icons[HYDRANT]="#Hydrant"
+icons[WATER]="#Water"
 icons[LANDINGSITE]="#Helicopter"
 icons[PARKING]="#ParkingLot"
-icons[TRAILHEAD]="Trailhead"
+icons[TRAILHEAD]="#Trailhead"
 
 get_icon()
 {
-    local emergency="`echo ${line} | cut -d '|' -f 3`"
-    local amenity="`echo ${line} | cut -d '|' -f 4`"
-    local highway="`echo ${line} | cut -d '|' -f 5`"
-    local tourism="`echo ${line} | cut -d '|' -f 6`"
-    local hydrant="`echo ${line} | cut -d '|' -f 3`"
-    local linestring="`echo ${line} | cut -d '|' -f 7`"
-    local ways="`echo ${linestring:12} | cut -d '<' -f 1-3`"
-    local icon=
-
-    case ${highway} in
-	trailhead) icon="icons[TRAILHEAD]" ;;
-    esac
-
-    case ${amenity} in
-	parking) icon="icons[PARKONG]" ;;
-    esac
-
-    case ${emergency} in
-	fire_hydrant) icon="icons[FIREHYDRANT]" ;;
-	fire_station) icon="icons[FIRESTATION]" ;;
-	water_tank) icon="icons[WATERTANK]" ;;
-	landing_site) icon="icons[LANDINGSITE]" ;;
-    esac
-
-    case ${tourism} in
-	camp_site) icon="icons[CAMPSITE]" ;;
-	picnic_site) icon="icons[PICNIC]" ;;
-    esac
-
-    case ${hydrant} in
-	underground) icon="icons[UNDERGRUND]" ;;
-	pillar) icon="icons[PILLAR]" ;;
-	way) icon="icons[WAY]" ;;
-    esac
-
+    local tag="${1:-UNKNOWN}"
+    local scale="${2:-1.0}"
+    
+#    underground) icon="icons[UNDERGRUND]" ;;
+    
     cat <<EOF >> ${outfile}
         <Style>
 	  <IconStyle>
-	    <scale>1.0</scale>
+	    <scale>${scale}</scale>
 	    <Icon>
--	      <href>${icon}</href>
+-	      <href>${icon[${tag}]}</href>
 	    </Icon>
 	  </IconStyle>
         </Style>
@@ -408,7 +391,6 @@ cat <<EOF > ${outfile}
 <kml xmlns="http://www.opengis.net/kml/2.2" xmlns:gx="http://www.google.com/kml/ext/2.2" xmlns:kml="http://www.opengis.net/kml/2.2">
 <Document>
     <name>${title}</name>
-    <description></description>
     <visibility>1</visibility>
     <open>1</open>
 EOF
@@ -417,12 +399,14 @@ cat `dirname $0`/styles.xml >> ${outfile}
 
 i=0
 # Execute the query
-while test $i -lt ${#polygons[@]}; do
-    folder="`basename ${polygons[$i]} | sed -e 's:\.[a-z]*::'`"
+while test $i -lt ${#polygons[@]} -o x"${type}" = x"waypoint"; do
+    folder="`basename ${polygons[$i]:-${subset}} | sed -e 's:\.[a-z]*::'`"
     echo "Processing ${folder}..."
 
+    # See if the polygon exists in the database. If not we obviously can't
+    # use it.
     rows=
-    if test "`echo ${polygons[$i]} | grep -c poly`" -eq 0; then
+    if test "`echo ${polygons[$i]} | grep -c poly`" -eq 0 -a x"${type}" != x"waypoint"; then
 	rows=`psql --dbname=${database} --command="SELECT name FROM planet_osm_polygon WHERE name='${folder}'" | grep " row" | grep -o "[0-9]"`
 
 	if test ${rows} -eq 0; then
@@ -436,10 +420,12 @@ while test $i -lt ${#polygons[@]}; do
     
     # Setup the query as a string to avoid werd shell escaping syntax ugliness
     sqlout="`echo /tmp/query-${folder}-${type}.sql | tr ' ' '-'`"
-    
+    rm -f ${sqlout}
+    #    select osm_id INTO wifi FROM planet_osm_point WHERE tags->'internet_access'='wlan';
+    # select osm_id FROM planet_osm_point WHERE tourism='guest_house' OR tourism='hotel' OR tourism='hostel'
 #    rm -f ${sqlout}
     if test ! -e "${sqlout}"; then
-	case "${type}" in
+	case "${subset}" in
 	    # We only want trails that aren't ski trails, as piste routes get different
 	    # colors. The only way we can tell the difference is if the piste:type tag
 	    # exists.
@@ -464,7 +450,7 @@ EOF
 	    piste)
 		cat <<EOF >> ${sqlout}
 SELECT line.osm_id,line.name FROM planet_osm_line AS line, (SELECT name,way FROM planet_osm_polygon WHERE name='Parco Nazionale dello Stelvio') AS poly WHERE (ST_Crosses(line.way,poly.way) OR ST_Contains(poly.way,line.way));
-#SELECT line.osm_id,line.name,line.tags->'piste:type',line.tags->'piste:difficulty',line.tags->'piste:grooming',line.aerialway,line.access,ST_AsKML(line.way) FROM planet_osm_line AS line, (SELECT name,way FROM planet_osm_polygon WHERE name='${folder}') AS poly WHERE (ST_Crosses(line.way,poly.way) OR ST_Contains(poly.way,line.way)) AND (line.tags?'piste:type' = 't' OR line.aerialway = 'chair_lift');
+# SELECT line.osm_id,line.name,line.tags->'piste:type',line.tags->'piste:difficulty',line.tags->'piste:grooming',line.aerialway,line.access,ST_AsKML(line.way) FROM planet_osm_line AS line, (SELECT name,way FROM planet_osm_polygon WHERE name='${folder}') AS poly WHERE (ST_Crosses(line.way,poly.way) OR ST_Contains(poly.way,line.way)) AND (line.tags?'piste:type' = 't' OR line.aerialway = 'chair_lift');
 EOF
 #		cat <<EOF >> ${sqlout}
 #SELECT planet_osm_line.osm_id,planet_osm_line.name,planet_osm_line.tags->'piste:type',planet_osm_line.tags->'piste:difficulty',planet_osm_line.tags->'piste:grooming',planet_osm_line.aerialway,planet_osm_line.access,ST_AsKML(planet_osm_line.way) from planet_osm_line,planet_osm_polygon WHERE (planet_osm_line.tags?'piste:type' = 't' OR planet_osm_line.erialway = 'chair_lift') ${polysql};
@@ -472,12 +458,22 @@ EOF
 		;;
 	    waypoint)
 		cat <<EOF >> ${sqlout}
-SELECT osm_id,tags->'emergency',amenity,highway,tourism,tags->'fire_hydrant:type',ST_AsKML(way) from planet_osm_point' ${polysql};
+SELECT osm_id,name,tags->'emergency',amenity,highway,tourism,tags->'fire_hydrant:type',ST_AsKML(way) from planet_osm_point' ${polysql};
+EOF
+		;;
+	    wifi)
+		cat <<EOF >> ${sqlout}
+SELECT osm_id,name,ST_AsKML(way) from planet_osm_point WHERE tags->'internet_access'='wlan' ${polysql};
+EOF
+		;;
+	    lodging)
+		cat <<EOF >> ${sqlout}
+SELECT osm_id,name,tourism,tags->'phone',tags->'email',tags->'website',tags->'addr:street',tags->'addr:housenumber',ST_AsKML(way) from planet_osm_point WHERE tourism='guest_house' OR tourism='hotel' OR tourism='hostel' ${polysql};
 EOF
 		;;
 	    roads)
 		cat <<EOF >> ${sqlout}
-SELECT osm_id,name,highway,ST_AsKML(way) from planet_osm_line WHERE highway='secondary' OR highway='tertiary' OR highway='unclassified' OR highway='residential' OR highway='service' OR planet_osm_line.highway='track') ${polysql};
+SELECT osm_id,name,highway,ST_AsKML(way) from planet_osm_line WHERE highway='secondary' OR highway='tertiary' OR highway='unclassified' OR highway='residential' OR highway='service' OR planet_osm_line.highway='track';
 EOF
 		;;
 	    firestations|hospital)
@@ -489,10 +485,8 @@ EOF
 # select planet_osm_line.name FROM dblink('dbname=polygons', 'select name,geom from boundary') AS t1(name name,geometry geometry),planet_osm_line WHERE t1.name='VAIL' OR (ST_Contains(t1.geometry,planet_osm_line.way) OR ST_Crosses(t1.geometry,planet_osm_line.way));
 
     name="`echo ${names[$i]} | tr '_' ' '`"
-    if test ${#polygons[@]} -gt 1; then
-	echo "    <Folder>" >> ${outfile}
-	echo "        <name>${name}</name>" >> ${outfile}
-    fi
+    echo "    <Folder>" >> ${outfile}
+    echo "        <name>${name}</name>" >> ${outfile}
     
     data="`echo ${outdir}/data-${folder}-${type}.tmp | tr ' ' '-'`"
     psql --dbname=${database} --no-align --file=${sqlout} --output=${data}
@@ -511,9 +505,37 @@ EOF
 	    echo "Done processing file, processed ${index} nodes"
 	    break
 	fi
-	name="`echo ${line} | cut -d '|' -f 2 | sed -e 's:&:and:'`"
+	name="`echo ${line} | sed -e 's:Rent|::' | cut -d '|' -f 2 | sed -e 's:&:and:'`"
 	declare -a description=()
-	case ${type} in
+	case ${subset} in
+	    wifi)
+		way="`echo ${line} | cut -d '|' -f 3`"
+		;;
+	    lodging)
+		line="`echo ${line} | sed -e 's:Rent|::'`"
+		tourism="`echo ${line} | cut -d '|' -f 3`"
+		phone="`echo ${line} | cut -d '|' -f 4`"
+		email="`echo ${line} | cut -d '|' -f 5`"
+		website="`echo ${line} | cut -d '|' -f 6`"
+		street="`echo ${line} | cut -d '|' -f 7`"
+		housenumber="`echo ${line} | cut -d '|' -f 8`"
+		way="`echo ${line} | cut -d '|' -f 9`"
+		if test x"${phone}" != x; then
+		    description=("Phone: ${phone}" "${description[@]}")
+		fi
+		if test x"${street}" != x; then
+		    description=("Street: ${street}" "${description[@]}")
+		fi
+		if test x"${housenumber}" != x; then
+		    description=("Housenumber: ${housenumber}" "${description[@]}")
+		fi
+		if test x"${email}" != x; then
+		    description=("Email: ${email}" "${description[@]}")
+		fi
+		if test x"${website}" != x -a `echo ${website} | grep -c '?'` -eq 0; then
+		    description=("Website: ${website}" "${description[@]}")
+		fi
+		;;
 	    waypoint)
 		#	    emergency="`echo ${line} | cut -d '|' -f 3`"
 		#	    amenity="`echo ${line} | cut -d '|' -f 4`"
@@ -564,34 +586,28 @@ EOF
 		if test x"${highway}" != x; then
 		    description="${description}Type: ${highway}<br>"
 		fi
-		::
+		;;
 	esac
 	newcolor="`echo ${color} | tr '[:upper:]' '[:lower:]'`"
-	#             <color>${colors[${color}]}</color>
-	#           <styleUrl>#line_${newcolor}</styleUrl>
-	#            <styleUrl>#line_${color}</styleUrl>
-	#           <LineStyle>
-	#             <width>3</width>
-	#             <color>${colors[${color}]}</color>
-	#            </LineStyle>
 
-	if test x"${format}" = x"kml"; then
-	    cat <<EOF >> ${outfile}
+	case ${type} in
+	    line)
+		cat <<EOF >> ${outfile}
         <Placemark>
             <name>${name:-"Unknown Trail ${index}"}</name>
 EOF
-	    # The description may have multipe lines.
-	    if test "${#description[@]}" -gt 0; then
-		echo "            <description>"  >> ${outfile}
-		j=0
-		while test $j -lt ${#description[@]}; do
-		    echo "${description[$j]}" >> ${outfile}
-		    j="`expr $j + 1`"
-		done
-		echo "            </description>"  >> ${outfile}
-	    fi
-	    lowcolor="`echo ${color} | tr '[:upper:]' '[:lower:]'`"
-	    cat <<EOF >> ${outfile}
+		# The description may have multiple lines.
+		if test "${#description[@]}" -gt 0; then
+		    echo "            <description>"  >> ${outfile}
+		    j=0
+		    while test $j -lt ${#description[@]}; do
+			echo "${description[$j]}" >> ${outfile}
+			j="`expr $j + 1`"
+		    done
+		    echo "            </description>"  >> ${outfile}
+		fi
+		lowcolor="`echo ${color} | tr '[:upper:]' '[:lower:]'`"
+		cat <<EOF >> ${outfile}
 	      <styleUrl>#line_${lowcolor}</styleUrl>
               <LineString>
                 <tessellate>1</tessellate>
@@ -600,30 +616,48 @@ EOF
               </LineString>
         </Placemark>
 EOF
-	else
-	    cat <<EOF >> ${outfile}
+		;;
+	    waypoint)
+		case ${tourism} in
+		    guest_house) idx="CASA" ;;
+		    hotel) idx="HOTEL" ;;
+		    hostel) idx="HOSTEL" ;;
+		    *) idx="`echo ${subset} | tr '[:lower:]' '[:upper:]'`" ;;
+		esac
+		cat <<EOF >> ${outfile}
         <Placemark>
-            <name>${name:-"Unknown Location ${index}"}</name>
+            <name>${name:-"Unknown ${id}"}</name>
+            <styleUrl>${icons[${idx}]}</styleUrl>
 EOF
-            get_icon ${line}
-
-	    cat <<EOF >> ${outfile}
-            <Point>
-                ${way}
-            </Point>
+		echo "FOO ${#description[@]}"
+		# The description may have multiple lines.
+		if test "${#description[@]}" -gt 0; then
+		    echo "            <description>"  >> ${outfile}
+		    j=0
+		    while test $j -lt ${#description[@]}; do
+			echo "${description[$j]}" >> ${outfile}
+			j="`expr $j + 1`"
+		    done
+		    echo "            </description>"  >> ${outfile}
+		fi
+		cat <<EOF >> ${outfile}
+            ${way}
         </Placemark>
 EOF
-	fi
-	index="`expr ${index} + 1`"
-	# Google Maps has a limit of 5M or 2000 points
-	#    if test ${index} -gt 1999; then
-	#	break
-	#    fi
+		;;
+	    *)
+		echo "ERROR: ${type} unknown!"
+		exit
+		;;
+	esac
     done < ${data}
-    if test ${#polygons[@]} -gt 1; then
+    if test ${#polygons[@]} -gt 1 -o x"${type}" = x"waypoint"; then
 	echo "    </Folder>" >> ${outfile}
     fi
     i="`expr $i + 1`"
+    if test x"${type}" = x"waypoint"; then
+	break
+    fi
 done
 
 cat <<EOF >> ${outfile}
