@@ -28,10 +28,10 @@
 # load commonly used functions
 osmbin="`which $0`"
 topdir="`dirname ${osmbin}`"
+. "${topdir}/osmshlib/colors.sh" || exit 1
 . "${topdir}/osmshlib/parse.sh" || exit 1
 . "${topdir}/osmshlib/sql.sh" || exit 1
 . "${topdir}/osmshlib/kml.sh" || exit 1
-. "${topdir}/osmshlib/colors.sh" || exit 1
 
 # Include the darabase access user and password
 if test -e ~/.mariadbrc; then
@@ -234,18 +234,9 @@ for i in ${!subsets[@]}; do
 	way="`echo ${line} | cut -d '|' -f 3`"
 	out="`${func} "${line}"`"
 	eval $out
-	echo "BARFOO: `declare -p data`"
 	kml_placemark ${kmlout} "`declare -p data`"
-#	newcolor="`echo ${color} | tr '[:upper:]' '[:lower:]'`"
-# 		cat <<EOF >> ${sqlout}
-# 	      <styleUrl>#line_${lowcolor}</styleUrl>
-#               <LineString>
-#                 <tessellate>1</tessellate>
-#                 <altitudeMode>clampToGround</altitudeMode>
-#                 ${ways}
-#               </LineString>
-#         </Placemark>
-# EOF
+#        <tessellate>1</tessellate>
+#        <altitudeMode>clampToGround</altitudeMode>
     done < ${sqlout}
     kml_folder_end ${kmlout}
 done
@@ -254,6 +245,8 @@ cat ${outdir}/*.kml >> ${outfile}
 kml_file_footer ${outfile}
 
 echo "SQL file is ${sqlcmd}"
+
+# Make a KMZ file if specified
 if test x"${format}" = x"kmz"; then
     newout="`basename ${outfile} | sed -e 's:\.kml:.kmz:'`"
     (cd ${topdir} && zip -r ${outdir}/${newout} icons)
