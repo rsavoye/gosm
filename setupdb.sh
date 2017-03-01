@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # 
-#   Copyright (C) 2016
+#   Copyright (C) 2016, 2017
 #   Free Software Foundation, Inc.
 # 
 # This program is free software; you can redistribute it and/or modify
@@ -119,7 +119,7 @@ while test $i -lt ${#polyfiles[@]} -o x"${polys}" = x; do
 		    exit
 		fi
 	    fi
-	    osm2pgsql -v --slim -C 1500 -d ${dbname} --number-processes 8 ${infile} --hstore
+	    osm2pgsql -v --slim -C 1500 -d ${dbname} --number-processes 8 ${dbname}.osm --hstore
 	    if test $? -gt 0; then
 		exit
 	    fi
