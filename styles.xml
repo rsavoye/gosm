@@ -2,6 +2,46 @@
   styles.xml - This gets included in all KML files to present a
   consistent UI.
 -->
+<Style id="Hostel">
+  <IconStyle>
+    <scale>1.3</scale>
+    <Icon>
+      <href>icons/hostel.png</href>
+    </Icon>
+  </IconStyle>
+</Style>
+<Style id="Hotel">
+  <IconStyle>
+    <scale>1.3</scale>
+    <Icon>
+      <href>icons/Hotel.png</href>
+    </Icon>
+  </IconStyle>
+</Style>
+<Style id="Casa">
+  <IconStyle>
+    <scale>1.3</scale>
+    <Icon>
+      <href>icons/casa.png</href>
+    </Icon>
+  </IconStyle>
+</Style>
+<Style id="Lodging">
+  <IconStyle>
+    <scale>1.3</scale>
+    <Icon>
+      <href>icons/lodging.png</href>
+    </Icon>
+  </IconStyle>
+</Style>
+<Style id="Wifi">
+  <IconStyle>
+    <scale>1.3</scale>
+    <Icon>
+      <href>icons/WirelessConnection.png</href>
+    </Icon>
+  </IconStyle>
+</Style>
 <Style id="Campsite">
   <IconStyle>
     <scale>1.3</scale>
@@ -31,6 +71,30 @@
     <scale>1.3</scale>
     <Icon>
       <href>icons/cistern.png</href>
+    </Icon>
+  </IconStyle>
+</Style>
+<Style id="Water">
+  <IconStyle>
+    <scale>1.3</scale>
+    <Icon>
+      <href>icons/water.png</href>
+    </Icon>
+  </IconStyle>
+</Style>
+<Style id="Waterfall">
+  <IconStyle>
+    <scale>1.3</scale>
+    <Icon>
+      <href>icons/waterfall.png</href>
+    </Icon>
+  </IconStyle>
+</Style>
+<Style id="Swimming">
+  <IconStyle>
+    <scale>1.3</scale>
+    <Icon>
+      <href>icons/swimming.png</href>
     </Icon>
   </IconStyle>
 </Style>
