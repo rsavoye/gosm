@@ -93,6 +93,10 @@ while test $# -gt 0; do
 done
 
 title="${title:-${database} `echo ${subs} | sed -e 's/:[a-zA-Z0-9]*//'`}"
+# Always use a full path
+if test `dirname ${outfile}`; then
+    outfile="$PWD/${outfile}"
+fi
 
 # Process the list of data subsets
 declare -a subsets
@@ -249,14 +253,13 @@ done
 cat ${outdir}/*.kml >> ${outfile}
 kml_file_footer ${outfile}
 
+echo "SQL file is ${sqlcmd}"
 if test x"${format}" = x"kmz"; then
-    mkdir -p ${outdir}
-    cp -r icons ${outdir}/
-    newout="${tmpdir}/$1-${type}.kmz"
+    newout="`basename ${outfile} | sed -e 's:\.kml:.kmz:'`"
+    (cd ${topdir} && zip -r ${outdir}/${newout} icons)
+    zip -j ${outdir}/${newout} ${outfile}
+    echo "KMZ file is ${outdir}/${newout}"
 fi
 
-#rm -f ${data}
-#rm -f ${sqlout}
+rm -fr ${outdir}/*.tmp ${outdir}/*.sql
 
-echo "KML file is ${kmlout}"
-echo "SQL file is ${sqlcmd}"
