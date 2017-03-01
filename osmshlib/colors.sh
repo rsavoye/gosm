@@ -161,7 +161,10 @@ ski_color()
     return 0
 }
 
-trail_color()
+# $1 - The SAC scale
+# $2 - The MTB scale
+# $3 - The access. ie... don't go here if not allowed
+trails_color()
 {
     if test x"${debug}" = x"yes"; then
 	echo "trail_color ($*)" >> /tmp/debug.log

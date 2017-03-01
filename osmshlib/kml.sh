@@ -91,43 +91,52 @@ EOF
 # Create a Placemark entry inth KML file
 # $1 - name of the output file
 # $2 - coordinates
-# $2 - descriptioqn array
+# $2 - description array
 kml_placemark ()
 {
     echo "TRACE: $*"
     
     local outfile="$1"
     eval "$2"
+    local name="`echo ${data[NAME]} | sed -e 's:&: and :'`"
 
+    declare -p data
     cat <<EOF >> ${outfile}
         <Placemark>
-            <name>${data[NAME]:-"Unknown ${data[OSMID]}"}</name>
+            <name>${name:-"OSM-ID ${data[OSMID]}"}</name>
 EOF
     if test x"${data[ICON]}" != x; then
+	icon="${icons[${data[ICON]}]}"
+	echo "icon = ${data[ICON]} ${icons[${data[ICON]}]}"
 	cat <<EOF >> ${outfile}
-            <styleUrl>${icons[${data[ICON]}]}</styleUrl>
+            <styleUrl>${icon}</styleUrl>
+EOF
+    fi
+    if test x"${data[COLOR]}" != x; then
+	style="`echo ${data[COLOR]} | tr '[:upper:]' '[:lower:]'`"
+	echo "color = ${data[COLOR]} ${icons[${data[COLOR]}]}"
+	cat <<EOF >> ${outfile}
+            <styleUrl>#line_${style}</styleUrl>
 EOF
     fi
 
-    echo "BARBY: `declare -p data`"
-    
     # Create the description popup box
     if test ${#data[@]} -gt 3; then
  	echo "<description>"  >> ${outfile} 	
 	for i in ${!data[@]}; do
 	    case $i in
 		# ignore these, they're not part of the descriptiom
-		OSMID|WAY|ICON|TOURISM|AMENITY|WATERWAY|HIGHWAY|EMERGENCY) ;;
+		WAY|ICON|TOURISM|AMENITY|WATERWAY|HIGHWAY|EMERGENCY|COLOR) ;;
 		*)
 		    if test x"${data[$i]}" != x; then
 			local cap="${i:0:1}"
 			local rest="`echo ${i:1:${#i}} | tr '[:upper:]' '[:lower:]'`"
- 			echo "${cap}${rest}: ${data[$i]}"  >> ${outfile}
+ 			echo "${cap}${rest}: `echo ${data[$i]} | sed -e 's:&: and :'`"  >> ${outfile}
 		    fi
 		    ;;
 	    esac
 	done
- 	echo "</description>"  >> ${outfile} 	
+ 	echo "</description>"  >> ${outfile}
     fi
     
     cat <<EOF >> ${outfile}
