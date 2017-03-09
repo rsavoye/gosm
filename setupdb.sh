@@ -113,13 +113,15 @@ while test $i -lt ${#polyfiles[@]} -o x"${polys}" = x; do
     fi
     case ${filetype} in
 	xml|pbf|osm)
-	    if test x"${polys}" != x"done"; then
+#	    if test x"${polys}" != x"done" -a ${#polyfiles[@]} -gt 0; then
+	    # Only import a region from the input file
+	    if test ${#polyfiles[@]} -gt 0; then
 		osmosis --read-${filetype} file="${infile}" --bounding-polygon file=${polyfiles[$i]} --write-xml file=${dbname}.osm
 		if test $? -gt 0; then
 		    exit
 		fi
 	    fi
-	    osm2pgsql -v --slim -C 1500 -d ${dbname} --number-processes 8 ${dbname}.osm --hstore
+	    osm2pgsql -v --slim -C 1500 -d ${dbname} --number-processes 8 ${infile} --hstore
 	    if test $? -gt 0; then
 		exit
 	    fi
