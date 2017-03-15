@@ -40,7 +40,7 @@ kml_file_header ()
     <open>1</open>
 EOF
     
-    cat `dirname $0`/styles.xml >> ${outfile}
+    cat ${topdir}/styles.xml >> ${outfile}
 
     return 0
 }
@@ -66,6 +66,8 @@ kml_folder_start ()
 {
     local outfile="$1"
     local folder="$2"
+
+    echo -n -e "\rStarting folder: ${folder}"
     
     cat <<EOF >> ${outfile}
     <Folder>
@@ -80,7 +82,8 @@ EOF
 kml_folder_end ()
 {
     local outfile="$1"
-    
+
+    #    echo ""
     cat <<EOF >> ${outfile}
     </Folder>
 EOF
@@ -88,33 +91,32 @@ EOF
     return 0
 }
 
-# Create a Placemark entry inth KML file
+# Create a Placemark entry in the KML file
 # $1 - name of the output file
 # $2 - coordinates
 # $2 - description array
 kml_placemark ()
 {
-    echo "TRACE: $*"
+#    echo "TRACE: $*"
     
     local outfile="$1"
     eval "$2"
     local name="`echo ${data[NAME]} | sed -e 's:&: and :'`"
 
-    declare -p data
+#    declare -p data
     cat <<EOF >> ${outfile}
         <Placemark>
             <name>${name:-"OSM-ID ${data[OSMID]}"}</name>
 EOF
     if test x"${data[ICON]}" != x; then
 	icon="${icons[${data[ICON]}]}"
-	echo "icon = ${data[ICON]} ${icons[${data[ICON]}]}"
+#	echo "icon = ${data[ICON]} ${icons[${data[ICON]}]}"
 	cat <<EOF >> ${outfile}
             <styleUrl>${icon}</styleUrl>
 EOF
     fi
     if test x"${data[COLOR]}" != x; then
 	style="`echo ${data[COLOR]} | tr '[:upper:]' '[:lower:]'`"
-	echo "color = ${data[COLOR]} ${icons[${data[COLOR]}]}"
 	cat <<EOF >> ${outfile}
             <styleUrl>#line_${style}</styleUrl>
 EOF
@@ -126,7 +128,7 @@ EOF
 	for i in ${!data[@]}; do
 	    case $i in
 		# ignore these, they're not part of the descriptiom
-		WAY|ICON|TOURISM|AMENITY|WATERWAY|HIGHWAY|EMERGENCY|COLOR) ;;
+		NAME|WAY|ICON|TOURISM|AMENITY|WATERWAY|HIGHWAY|EMERGENCY|COLOR) ;;
 		*)
 		    if test x"${data[$i]}" != x; then
 			local cap="${i:0:1}"
@@ -138,11 +140,22 @@ EOF
 	done
  	echo "</description>"  >> ${outfile}
     fi
-    
-    cat <<EOF >> ${outfile}
+
+    if test x"${data[ICON]}" = x; then
+	cat <<EOF >> ${outfile}
+        <LineString>
+            <tessellate>1</tessellate>
+            <altitudeMode>clampToGround</altitudeMode>
+           ${data[WAY]}
+        </LineString>
+        </Placemark>
+EOF
+    fi
+    if test x"${data[ICON]}" != x; then
+	cat <<EOF >> ${outfile}
            ${data[WAY]}
         </Placemark>
 EOF
-
+    fi
     return 0
 }
