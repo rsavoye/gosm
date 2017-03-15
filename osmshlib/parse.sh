@@ -25,6 +25,54 @@
 
 # Parse a line that is the output of the SQL query
 # $1 - A line of text from the SQL query output
+parse_camp()
+{
+#    echo "TRACE: $*"
+
+    local line="$1"
+    declare -A data=()
+
+    data[OSMID]="`echo ${line} | cut -d '|' -f 1`"
+    data[NAME]="`echo ${line} | cut -d '|' -f 2`"
+    data[WAY]="`echo ${line} | cut -d '|' -f 3`" 
+    data[FEE]="`echo ${line} | cut -d '|' -f 4`"
+    data[TOILETS]="`echo ${line} | cut -d '|' -f 5`"
+    data[WEBSITE]="`echo ${line} | cut -d '|' -f 6`"
+    data[OPERATOR]="`echo ${line} | cut -d '|' -f 7`"
+    data[SITES]="`echo ${line} | cut -d '|' -f 8`"
+    data[AMENITY]="`echo ${line} | cut -d '|' -f 9`"
+    data[ICON]='CAMPSITE'
+
+    echo `declare -p data`
+    return 0
+}
+
+# Parse a line that is the output of the SQL query
+# $1 - A line of text from the SQL query output
+parse_historic()
+{
+#    echo "TRACE: $*"
+
+    local line="$1"
+    declare -A data=()
+
+    data[OSMID]="`echo ${line} | cut -d '|' -f 1`"
+    data[NAME]="`echo ${line} | cut -d '|' -f 2`"
+    data[WAY]="`echo ${line} | cut -d '|' -f 3`"
+    data[HISTORIC]="`echo ${line} | cut -d '|' -f 4`"
+    case ${data[HISTORIC]} in
+	archaeological_site) data[ICON]="ARCHAE";;
+	building) data[ICON]="BUILDING";;
+	ruins) data[ICON]="RUINS" ;;
+	*) data[ICON]='HISTYES' ;;
+    esac
+
+    echo `declare -p data`
+    return 0
+}
+
+# Parse a line that is the output of the SQL query
+# $1 - A line of text from the SQL query output
 parse_lodging()
 {
 #    echo "TRACE: $*"
@@ -58,9 +106,11 @@ parse_lodging()
 	data[HOUSENUMBER]="`echo ${line} | cut -d '|' -f 9`"
     fi
     case ${data[TOURISM]} in
-	guest_house) data[ICON]="CASA" ;;
-	hotel)       data[ICON]="HOTEL" ;;
-	hostel)      data[ICON]="HOSTEL" ;;
+	chalet)         data[ICON]="CHALET" ;;
+	wilderness_hut) data[ICON]="WHUT" ;;
+	alpine_hut)     data[ICON]="AHUT" ;;
+	hotel)          data[ICON]="HOTEL" ;;
+	hostel)         data[ICON]="HOSTEL" ;;
 	*) idx="`echo ${subset} | tr '[:lower:]' '[:upper:]'`" ;;
     esac
 
@@ -117,7 +167,7 @@ parse_trails()
 
     data[OSMID]="`echo ${line} | cut -d '|' -f 1`"
     data[NAME]="`echo ${line} | cut -d '|' -f 2`"
-    data[WAY]="`echo ${line} | grep -o "<LineString>.*</LineString>"`"
+    data[WAY]="`echo ${line} | grep -o "<LineString>.*</LineString>" | sed -e 's:<LineString>::' -e 's:</LineString>::'`"
     data[SAC_SCALE]="`echo ${line} | cut -d '|' -f 4`"
     data[BICYCLE]="`echo ${line} | cut -d '|' -f 5`"
     data[MTB_SCALE]="`echo ${line} | cut -d '|' -f 6`"
@@ -139,15 +189,15 @@ parse_piste()
 
     data[OSMID]="`echo ${line} | cut -d '|' -f 1`"
     data[NAME]="`echo ${line} | cut -d '|' -f 2`"
-    data[WAY]="`echo ${linestring:12} | cut -d '<' -f 1-3`"
-    data[PISTE_TYPE]="`echo ${line} | cut -d '|' -f 3`"
-    data[PISTE_DIFFICULTY]="`echo ${line} | cut -d '|' -f 4`"
-    data[PISTE_GROOMING]="`echo ${line} | cut -d '|' -f 5`"
-    data[AERIALWAY]="`echo ${line} | cut -d '|' -f 6`"
-    data[ACCESS]="`echo ${line} | cut -d '|' -f 7`"
-    data[LINESTRING]="`echo ${line} | cut -d '|' -f 8`"
-    data[WAYS]="`echo ${linestring:12} | cut -d '<' -f 1-3`"
-    data[COLOR]="`ski_color "${piste_type}" "${piste_difficulty}" "${piste_grooming}" "${aerialway}" "${access}"`"
+    # Remove the LineString, which gets put back later when generating the KML.
+    # That is because extra elemetns are added.
+    data[WAY]="`echo ${line} | grep -o "<LineString>.*</LineString>" | sed -e 's:<LineString>::' -e 's:</LineString>::'`"
+    data[PISTE_TYPE]="`echo ${line} | cut -d '|' -f 4`"
+    data[PISTE_DIFFICULTY]="`echo ${line} | cut -d '|' -f 5`"
+    data[PISTE_GROOMING]="`echo ${line} | cut -d '|' -f 6`"
+    data[AERIALWAY]="`echo ${line} | cut -d '|' -f 7`"
+    data[ACCESS]="`echo ${line} | cut -d '|' -f 8`"
+    data[COLOR]="`ski_color "${data[PISTE_TYPE]}" "${data[PISTE_DIFFICULTY]}" "${data[PISTE_GROOMING]}" "${data[AERIALWAY]}" "${data[ACCESS]}"`"
 
     echo `declare -p data`
     return 0
@@ -170,3 +220,40 @@ parse_roads()
     echo `declare -p data`
     return 0
 }
+
+# Parse a line that is the output of the SQL query
+# $1 - A line of text from the SQL query output
+parse_emergency()
+{
+#    echo "TRACE: $*"
+
+    local line="$1"
+    declare -A data=()
+
+    data[OSMID]="`echo ${line} | cut -d '|' -f 1`"
+    data[NAME]="`echo ${line} | cut -d '|' -f 2`"
+    data[WAY]="`echo ${line} | cut -d '|' -f 3`"
+    local amenity="`echo ${line} | cut -d '|' -f 4`"
+    local emergency="`echo ${line} | cut -d '|' -f 5`"
+    local type"`echo ${line} | cut -d '|' -f 6`"
+    local diameter="`echo ${line} | cut -d '|' -f 7`"
+
+    case "${amenity}" in
+	fire_station) data[ICON]="FIRESTATION" ;;
+	fire_hydrant)
+	    case "${type}" in
+		underground) data[ICON]="CISTERN" ;;
+		pond) data[ICON]="WATER" ;;
+#	        pillar) data[ICON]="PILLAR" ;;
+#	        wall) data[ICON]="WALL" ;;
+		*) data[ICON]="HYDRANT" ;;
+	    esac
+	    ;;
+	water_tank) data[ICON]="CISTERN" ;;
+	*) ;;
+    esac
+
+    echo `declare -p data`
+    return 0
+}
+
