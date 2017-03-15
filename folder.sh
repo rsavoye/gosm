@@ -35,8 +35,6 @@ topdir="`dirname ${osmbin}`"
 
 usage()
 {
-    local sup="`echo ${supported} | sed -e 's/ /[:name],/g'`"
-    
     cat <<EOF
     $0 [options]
 	--infile(-i)  input file
@@ -49,31 +47,61 @@ if test $# -lt 1; then
 fi
 
 infile=""
+op="split"
+files=""
 
-OPTS="`getopt -o h:i: -l infile:,help`"
+OPTS="`getopt -o o:h:i: -l op:,infile:,help`"
 while test $# -gt 0; do
     case $1 in
         -i|--infile) infile=$2 ;;
-        -h|--help) usage ;;
+	-o|--op)     op=$2 ;;
+        -h|--help)   usage ;;
+        *)  files="${files} $2" ;;
         --) break ;;
     esac
     shift
 done
 
-declare -a fs=(`grep -n '<Folder>' ${infile} | cut -d ':' -f 1`)
-declare -a fe=(`grep -n '</Folder>' ${infile} | cut -d ':' -f 1`)
+case ${op} in
+    split|join) ;;
+    *) usage ;;
+esac
 
-for i in ${!fs[@]}; do
-    j=`expr ${fs[$i]} + 1`
-    name=`sed -e "$j,$j!d" ${infile} -e 's:.*<name>::'  -e 's:</name>::'`
-done
+# Split a KML file, separating each Folder into it's own KML file.
+# This is primarily pf interest for apps that ignore the Folder tag.
+if test x"${op}" = x"split"; then
+    declare -a fs=(`grep -n '<Folder>' ${infile} | cut -d ':' -f 1`)
+    declare -a fe=(`grep -n '</Folder>' ${infile} | cut -d ':' -f 1`)
 
-for i in ${!fs[@]}; do
-    j=`expr ${fs[$i]} + 1`
-    name=`sed -e "$j,$j!d" ${infile} -e 's:.*<name>::'  -e 's:</name>::'`
-    outfile="`echo ${name}.kml | tr -d ' '`"
+    for i in ${!fs[@]}; do
+	j=`expr ${fs[$i]} + 1`
+	name=`sed -e "$j,$j!d" ${infile} -e 's:.*<name>::'  -e 's:</name>::'`
+	outfile="`echo ${name}.kml | tr ' ' '_'`"
+	kml_file_header "${outfile}" "${name}"
+	sed -e "${fs[$i]},${fe[$i]}!d" ${infile} >> "${outfile}"
+	kml_file_footer ${outfile}
+    done
+fi
+
+# Join a list of KML files into one big file with Folders.
+if test x"${op}" = x"join"; then
+    outfile="Joined.kml"
+    rm -f ${outfile}
     kml_file_header "${outfile}" "${name}"
-    sed -e "${fs[$i]},${fe[$i]}!d" ${infile} >> "${outfile}"
+    for i in ${files}; do
+	# Don't process the output file.
+	if test x"${outfile}" = x"$i"; then
+	    continue
+	fi
+	echo "Adding $i to ${outfile}..."
+	topline=`grep -n "</Style>" $i | tail -1 | cut -d ':' -f 1`
+	topline=`expr ${topline} + 1`
+	endline=`grep -n "</Document>" $i | cut -d ':' -f 1`
+	endline=`expr ${endline} - 1`
+	sed -e "${topline},${endline}!d" $i >> "${outfile}"
+    done
     kml_file_footer ${outfile}
-done
+fi
+
+
 
