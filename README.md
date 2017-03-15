@@ -1,4 +1,5 @@
 # osmtools
+
 A handful of bourne shell scripts to produce KML maps from an OSM
 database. I was tasked with producing some offline digital mapping
 solutions for my local rural volunteer fire department. Originally I
@@ -41,9 +42,18 @@ Example:
 * read binary OSM data file and load the county data into a new database.
 ./setupdb.sh --infile mariposa /tmp/california-latest.osm.pbf --polyfile CA-polyfiles/Mariposa.poly 
 
-* Query the database we've just created for trails or ski runs.
-./osm2kml.sh --database Mariposa trails (or piste)
+* Query the database we've just created for trails and ski runs.
+./osm2kml.sh --database Mariposa --subset trails,piste --output Mariposa.kml
 
 * View the file.
-google-earth /tmp/Mariposa-trails.kml
+google-earth /tmp/Mariposa.kml
 
+* Manipulate KML files as some programs handle <Folder>, and some don't...
+./folder.sh -o split infile.kml
+./folder.sh -o kml *.kml > bigfile.kml
+
+* Convert a KML file containing a polygon to an OSM .poly file.
+./kml2poly.sh infile.kml
+
+* Read a .polyfile into an postgresql database
+./polyin,sh --database Utah --operation trail
