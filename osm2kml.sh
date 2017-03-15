@@ -42,7 +42,7 @@ fi
 
 # This is a list of supported subsets of data to extract.
 supportedlines="trails piste roads"
-supportedpoints="firewater emergency lodging wifi waterfall swimming"
+supportedpoints="firewater helicopter emergency lodging huts wifi waterfall swimming historic camp"
 supported="${supportedlines} ${supportedpoints}"
 
 usage()
@@ -103,19 +103,33 @@ declare -a subsets
 declare -a subnames
 declare -a subtypes
 i=1				# array indexes can't start with 0
-subs="`echo ${subs} | tr ',' ' '`"
+subs="`echo ${subs} | tr ' ' '_' | tr ',' ' '`"
 for sub in ${subs}; do
     subsets[$i]="`echo ${sub} | cut -d ':' -f 1`"
     if test "`echo ${supported} | grep -c ${subsets[$i]}`" -eq 0; then
 	echo "ERROR: ${sub} not supported!"
 	continue
     fi
-    subnames[$i]="`echo ${sub} | cut -d ':' -f 2`"
+    subnames[$i]="`echo ${sub} | cut -d ':' -f 2-10 | tr '_' ' '`"
     if test x"${subnames[$i]}" = x; then
-	subnames[$i]="${sub}"
+	# Set some default folder names for less typing of the same stuff
+	# all the time.
+	case ${sub} in
+	    helicopter) subnames[$i]="Landing Zone" ;;
+	    trails)     subnames[$i]="Hike/Bike Trails" ;;
+	    firewater)  subnames[$i]="Water Sources" ;;
+	    wifi)       subnames[$i]="Wifi Access" ;;
+	    emergency)  subnames[$i]="Emergency Buildings" ;;
+	    Lodging)    subnames[$i]="Lodging" ;;
+	    Huts)       subnames[$i]="Alpine Huts" ;;
+	    *)          subnames[$i]="${sub}" ;;
+	esac
     fi
+    # There are two classes of data, waypoints and lines, which are
+    # rendered differently.
     case ${subsets[$i]} in
-	wifi|lodging|fire|waterfall|swimming) subtypes[$i]="waypoint" ;;
+	wifi|lodging|huts|waterfall|swimming) subtypes[$i]="waypoint" ;;
+	firewater|helicopter|emergency) subtypes[$i]="waypoint" ;;
 	*) subtypes[$i]="line" ;;
     esac
     i="`expr $i + 1`"
@@ -145,11 +159,16 @@ if test x"${outfile}" = x; then
     outfile="${outdir}/${database}-${subs}.kml"
 fi
 
-rm -f /tmp/debug.log
+rm -f ${outdir}/debug.log
 
 # Our custom Icons for waypoints
 icondir=icons
 declare -A icons=()
+icons[HISTYES]="#Histyes"
+icons[ARCHAE]="#Archae"
+icons[RUINS]="#Ruins"
+icons[BUILDING]="#Building"
+icons[AHUT]="#AHut"
 icons[HOSTEL]="#Hostel"
 icons[HOTEL]="#Hotel"
 icons[CASA]="#Casa"
@@ -223,11 +242,15 @@ for i in ${!subsets[@]}; do
     psql --tuples-only --dbname=${database} --no-align --file=${sqlcmd} --output=${sqlout}
     index=0
     func="parse_${subsets[$i]}"
-	
+
+    # print a rotating character, so we know it's working
+    rot[0]="|"
+    rot[1]="/"
+    rot[2]="-"
+    rot[3]="\\"
+    j=0
+    echo ""
     while read line; do
-	if test x"${debug}" = x"yes"; then
-	    echo "line: ${line}" | sed -e 's:LineString..*::' >> /tmp/debug.log
-	fi
 	id="`echo ${line} | cut -d '|' -f 1`"
 	# Bleech, ugly hack to fix errors in strings that screw up parsing.
 	name="`echo ${line} | sed -e 's:Rent|::' | cut -d '|' -f 2 | sed -e 's:\&:and:'`"
@@ -235,8 +258,12 @@ for i in ${!subsets[@]}; do
 	out="`${func} "${line}"`"
 	eval $out
 	kml_placemark ${kmlout} "`declare -p data`"
-#        <tessellate>1</tessellate>
-#        <altitudeMode>clampToGround</altitudeMode>
+	echo -n -e "\r\t${rot[$j]}"
+	if test $j -eq 3; then
+	    j=0
+	else
+	    j=`expr $j + 1`
+	fi
     done < ${sqlout}
     kml_folder_end ${kmlout}
 done
@@ -249,10 +276,12 @@ echo "SQL file is ${sqlcmd}"
 # Make a KMZ file if specified
 if test x"${format}" = x"kmz"; then
     newout="`basename ${outfile} | sed -e 's:\.kml:.kmz:'`"
-    (cd ${topdir} && zip -r ${outdir}/${newout} icons)
-    zip -j ${outdir}/${newout} ${outfile}
-    echo "KMZ file is ${outdir}/${newout}"
+    (cd ${topdir} && zip -rj ${newout} icons)
+    zip -j ${newout} ${outfile}
+    echo "KMZ file is ${newout}"
+else
+    echo "KML file is ${outfile}"
 fi
 
-rm -fr ${outdir}/*.tmp ${outdir}/*.sql
-
+# cat ${outdir}/*.sql
+# rm -fr ${outdir}/*.tmp ${outdir}/*.sql
