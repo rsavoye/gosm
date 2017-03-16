@@ -79,6 +79,12 @@ EOF
 #SELECT planet_osm_line.osm_id,planet_osm_line.name,planet_osm_line.tags->'piste:type',planet_osm_line.tags->'piste:difficulty',planet_osm_line.tags->'piste:grooming',planet_osm_line.aerialway,planet_osm_line.access,ST_AsKML(planet_osm_line.way) from planet_osm_line,planet_osm_polygon WHERE (planet_osm_line.tags?'piste:type' = 't' OR planet_osm_line.erialway = 'chair_lift');
 #EOF
 	    ;;
+	trailhead)
+	    cat <<EOF >> ${sqlout}
+SELECT osm_id,name,ST_AsKML(way) from planet_osm_point WHERE amenity='parking' AND name LIKE '%Trailhead';
+SELECT osm_id,name,ST_AsKML(way) from planet_osm_polygon WHERE amenity='parking' AND name LIKE '%Trailhead';
+EOF
+	    ;;
 	camp)
 	    cat <<EOF >> ${sqlout}
 SELECT osm_id,name,ST_AsKML(way),tags->'fee',tags->'toilets',tags->'website',tags->'operator',tags->'sites',amenity from planet_osm_point WHERE tourism='camp_site' OR amenity='campground';

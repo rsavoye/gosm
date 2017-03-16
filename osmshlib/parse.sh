@@ -25,6 +25,29 @@
 
 # Parse a line that is the output of the SQL query
 # $1 - A line of text from the SQL query output
+parse_trailhead()
+{
+#    echo "TRACE: $*"
+
+    local line="$1"
+    declare -A data=()
+
+    data[OSMID]="`echo ${line} | cut -d '|' -f 1`"
+    data[NAME]="`echo ${line} | cut -d '|' -f 2`"
+    data[WAY]="`echo ${line} | cut -d '|' -f 3`" 
+    if test `echo ${data[WAY]} | grep -c Polygon` -eq 0; then
+	data[ICON]='TRAILHEAD'
+    else
+	data[WAY]="`echo ${data[WAY]} | sed -e 's:<Polygon>::' -e 's:</Polygon>::'`" 
+	data[FILL]='PURPLE'
+    fi
+
+    echo `declare -p data`
+    return 0
+}
+
+# Parse a line that is the output of the SQL query
+# $1 - A line of text from the SQL query output
 parse_camp()
 {
 #    echo "TRACE: $*"

@@ -42,7 +42,7 @@ fi
 
 # This is a list of supported subsets of data to extract.
 supportedlines="trails piste roads"
-supportedpoints="firewater helicopter emergency lodging huts wifi waterfall swimming historic camp"
+supportedpoints="firewater helicopter emergency lodging huts wifi waterfall swimming historic camp trailhead"
 supported="${supportedlines} ${supportedpoints}"
 
 usage()
