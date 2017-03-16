@@ -38,6 +38,8 @@ usage()
     cat <<EOF
     $0 [options]
 	--infile(-i)  input file
+	--op(-o)      operation (jpin|split)
+	--file(-f)    output file
 EOF
     exit
 }
@@ -49,12 +51,14 @@ fi
 infile=""
 op="split"
 files=""
+outfile=""
 
-OPTS="`getopt -o o:h:i: -l op:,infile:,help`"
+OPTS="`getopt -o o:h:i:f: -l op:,infile:,file:,help`"
 while test $# -gt 0; do
     case $1 in
         -i|--infile) infile=$2 ;;
 	-o|--op)     op=$2 ;;
+	-f|--file)   outfile=$2 ;;
         -h|--help)   usage ;;
         *)  files="${files} $2" ;;
         --) break ;;
@@ -85,7 +89,7 @@ fi
 
 # Join a list of KML files into one big file with Folders.
 if test x"${op}" = x"join"; then
-    outfile="Joined.kml"
+    outfile="${outfile:-Joined.kml}"
     rm -f ${outfile}
     kml_file_header "${outfile}" "${name}"
     for i in ${files}; do
