@@ -121,6 +121,11 @@ EOF
             <styleUrl>#line_${style}</styleUrl>
 EOF
     fi
+    if test x"${data[FILL]}" != x; then
+	cat <<EOF >> ${outfile}
+            <styleUrl>#Polygon</styleUrl>
+EOF
+    fi
 
     # Create the description popup box
     if test ${#data[@]} -gt 3; then
@@ -128,7 +133,7 @@ EOF
 	for i in ${!data[@]}; do
 	    case $i in
 		# ignore these, they're not part of the descriptiom
-		NAME|WAY|ICON|TOURISM|AMENITY|WATERWAY|HIGHWAY|EMERGENCY|COLOR) ;;
+		FILL|NAME|WAY|ICON|TOURISM|AMENITY|WATERWAY|HIGHWAY|EMERGENCY|COLOR) ;;
 		*)
 		    if test x"${data[$i]}" != x; then
 			local cap="${i:0:1}"
@@ -141,7 +146,7 @@ EOF
  	echo "</description>"  >> ${outfile}
     fi
 
-    if test x"${data[ICON]}" = x; then
+    if test x"${data[COLOR]}" != x; then
 	cat <<EOF >> ${outfile}
         <LineString>
             <tessellate>1</tessellate>
@@ -151,11 +156,26 @@ EOF
         </Placemark>
 EOF
     fi
+
+    # Only waypoints have ICON set
     if test x"${data[ICON]}" != x; then
 	cat <<EOF >> ${outfile}
            ${data[WAY]}
         </Placemark>
 EOF
     fi
+
+    # Only Polygons have FILL set
+    if test x"${data[FILL]}" != x; then
+	cat <<EOF >> ${outfile}
+        <Polygon>
+            <extrude>1</extrude>
+            <altitudeMode>relativeToGround</altitudeMode>
+             ${data[WAY]}
+        </Polygon>
+        </Placemark>
+EOF
+    fi
+
     return 0
 }
