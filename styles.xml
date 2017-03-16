@@ -2,33 +2,97 @@
   styles.xml - This gets included in all KML files to present a
   consistent UI.
 -->
+<Style id="Trailhead">
+  <IconStyle>
+    <scale>1.0</scale>
+    <Icon>
+      <href>icons/mx_amenity_parking.png</href>
+    </Icon>
+  </IconStyle>
+</Style>
+<Style id="Histyes">
+  <IconStyle>
+    <scale>1.0</scale>
+    <Icon>
+      <href>icons/mx_historic_yes.png</href>
+    </Icon>
+  </IconStyle>
+</Style>
+<Style id="Archae">
+  <IconStyle>
+    <scale>1.0</scale>
+    <Icon>
+      <href>icons/mx_historic_archaeological_site.png</href>
+    </Icon>
+  </IconStyle>
+</Style>
+<Style id="Ruins">
+  <IconStyle>
+    <scale>1.0</scale>
+    <Icon>
+      <href>icons/mx_historic_ruins.png</href>
+    </Icon>
+  </IconStyle>
+</Style>
+<Style id="Building">
+  <IconStyle>
+    <scale>1.0</scale>
+    <Icon>
+      <href>icons/mx_historic.png</href>
+    </Icon>
+  </IconStyle>
+</Style>
+<Style id="Chalet">
+  <IconStyle>
+    <scale>1.0</scale>
+    <Icon>
+      <href>icons/mx_tourism_chalet.png</href>
+    </Icon>
+  </IconStyle>
+</Style>
+<Style id="WHut">
+  <IconStyle>
+    <scale>1.0</scale>
+    <Icon>
+      <href>icons/mx_wilderness_hut.png</href>
+    </Icon>
+  </IconStyle>
+</Style>
+<Style id="AHut">
+  <IconStyle>
+    <scale>1.0</scale>
+    <Icon>
+      <href>icons/mx_tourism_alpine_hut.png</href>
+    </Icon>
+  </IconStyle>
+</Style>
 <Style id="Hostel">
   <IconStyle>
-    <scale>1.3</scale>
+    <scale>1.0</scale>
     <Icon>
-      <href>icons/hostel.png</href>
+      <href>icons/mx_tourism_hostel.png</href>
     </Icon>
   </IconStyle>
 </Style>
 <Style id="Hotel">
   <IconStyle>
-    <scale>1.3</scale>
+    <scale>1.0</scale>
     <Icon>
-      <href>icons/Hotel.png</href>
+      <href>icons/mx_tourism_hotel.png</href>
     </Icon>
   </IconStyle>
 </Style>
 <Style id="Casa">
   <IconStyle>
-    <scale>1.3</scale>
+    <scale>1.0</scale>
     <Icon>
-      <href>icons/casa.png</href>
+      <href>icons/mx_tourism_guest_house.png</href>
     </Icon>
   </IconStyle>
 </Style>
 <Style id="Lodging">
   <IconStyle>
-    <scale>1.3</scale>
+    <scale>1.0</scale>
     <Icon>
       <href>icons/lodging.png</href>
     </Icon>
@@ -36,7 +100,7 @@
 </Style>
 <Style id="Wifi">
   <IconStyle>
-    <scale>1.3</scale>
+    <scale>1.0</scale>
     <Icon>
       <href>icons/WirelessConnection.png</href>
     </Icon>
@@ -44,31 +108,31 @@
 </Style>
 <Style id="Campsite">
   <IconStyle>
-    <scale>1.3</scale>
+    <scale>1.0</scale>
     <Icon>
-      <href>icons/campground.png</href>
+      <href>icons/mx_tourism_camp_site.png</href>
     </Icon>
   </IconStyle>
 </Style>
 <Style id="Campfire">
   <IconStyle>
-    <scale>1.3</scale>
+    <scale>1.0</scale>
     <Icon>
-      <href>icons/campfire.png</href>
+      <href>icons/mx_firepit.png</href>
     </Icon>
   </IconStyle>
 </Style>
 <Style id="Hydrant">
   <IconStyle>
-    <scale>1.3</scale>
+    <scale>1.0</scale>
     <Icon>
-      <href>icons/FireHydrant.png</href>
+      <href>icons/mx_emergency_fire_hydrant.png</href>
     </Icon>
   </IconStyle>
 </Style>
 <Style id="Cistern">
   <IconStyle>
-    <scale>1.3</scale>
+    <scale>1.0</scale>
     <Icon>
       <href>icons/cistern.png</href>
     </Icon>
@@ -76,39 +140,39 @@
 </Style>
 <Style id="Water">
   <IconStyle>
-    <scale>1.3</scale>
+    <scale>1.0</scale>
     <Icon>
-      <href>icons/water.png</href>
+      <href>icons/mx_water.png</href>
     </Icon>
   </IconStyle>
 </Style>
 <Style id="Waterfall">
   <IconStyle>
-    <scale>1.3</scale>
+    <scale>1.0</scale>
     <Icon>
-      <href>icons/waterfall.png</href>
+      <href>icons/mx_waterfall.png</href>
     </Icon>
   </IconStyle>
 </Style>
 <Style id="Swimming">
   <IconStyle>
-    <scale>1.3</scale>
+    <scale>1.0</scale>
     <Icon>
-      <href>icons/swimming.png</href>
+      <href>icons/mx_sport_swimming.png</href>
     </Icon>
   </IconStyle>
 </Style>
 <Style id="Heliport">
   <IconStyle>
-    <scale>1.3</scale>
+    <scale>1.0</scale>
     <Icon>
-      <href>icons/heliport.png</href>
+      <href>icons/mx_aeroway_helipad.png</href>
     </Icon>
   </IconStyle>
 </Style>
 <Style id="Helicopter">
   <IconStyle>
-    <scale>1.3</scale>
+    <scale>1.0</scale>
     <Icon>
       <href>icons/Helicopter.png</href>
     </Icon>
@@ -116,32 +180,48 @@
 </Style>
 <Style id="FireStation">
   <IconStyle>
-    <scale>1.3</scale>
+    <scale>1.0</scale>
     <Icon>
-      <href>icons/firedept.png</href>
+      <href>icons/mx_amenity_fire_station.png</href>
     </Icon>
   </IconStyle>
 </Style>
 <Style id="Town">
   <IconStyle>
-    <scale>1.3</scale>
+    <scale>1.0</scale>
     <Icon>
-      <href>icons/town.png</href>
+      <href>icons/mx_place_town.png</href>
     </Icon>
   </IconStyle>
 </Style>
 <Style id="Lodging">
   <IconStyle>
-    <scale>1.3</scale>
+    <scale>1.0</scale>
     <Icon>
       <href>icons/lodging.png</href>
+    </Icon>
+  </IconStyle>
+</Style>
+<Style id="CigarBox">
+  <IconStyle>
+    <scale>1.0</scale>
+    <Icon>
+      <href>icons/cigarbox.png</href>
+    </Icon>
+  </IconStyle>
+</Style>
+<Style id="Cigar">
+  <IconStyle>
+    <scale>1.0</scale>
+    <Icon>
+      <href>icons/cigar.png</href>
     </Icon>
   </IconStyle>
 </Style>
 <Style id="line_red">
   <LineStyle>
     <color>ff0000ff</color>
-    <width>5</width>
+    <width>3</width>
   </LineStyle>
   <LabelStyle>
     <color>ff0000ff</color>
@@ -150,66 +230,78 @@
 <Style id="line_green">
   <LineStyle>
     <color>ff00ff00</color>
-    <width>5</width>
+    <width>3</width>
   </LineStyle>
 </Style>
 <Style id="line_black">
   <LineStyle>
     <color>ff000000</color>
-    <width>5</width>
+    <width>3</width>
   </LineStyle>
 </Style>
 <Style id="line_blue">
   <LineStyle>
     <color>ffff0000</color>
-    <width>5</width>
+    <width>3</width>
   </LineStyle>
 </Style>
 <Style id="line_orange">
   <LineStyle>
     <color>ff00a5ff</color>
-    <width>5</width>
+    <width>3</width>
   </LineStyle>
 </Style>
 <Style id="line_yellow">
   <LineStyle>
     <color>ff00ffff</color>
-    <width>5</width>
+    <width>3</width>
   </LineStyle>
 </Style>
 <Style id="line_cyan">
   <LineStyle>
     <color>ffffff00</color>
-    <width>5</width>
+    <width>3</width>
   </LineStyle>
 </Style>
 <Style id="line_magenta">
   <LineStyle>
     <color>ffff00ff</color>
-    <width>5</width>
+    <width>3</width>
   </LineStyle>
 </Style>
 <Style id="line_purple">
   <LineStyle>
     <color>ff800080</color>
-    <width>5</width>
+    <width>3</width>
   </LineStyle>
 </Style>
 <Style id="line_gray">
   <LineStyle>
     <color>ff888888</color>
-    <width>5</width>
+    <width>3</width>
   </LineStyle>
 </Style>
 <Style id="line_lightblue">
   <LineStyle>
     <color>ffe6d8ad</color>
-    <width>5</width>
+    <width>3</width>
   </LineStyle>
 </Style>
 <Style id="line_darkgreen">
   <LineStyle>
     <color>ff008000</color>
-    <width>5</width>
+    <width>3</width>
   </LineStyle>
+</Style>
+<Style id="Polygon">
+  <LineStyle>
+    <color>7f0000ff</color>
+    <width>4</width>
+  </LineStyle>
+  <PolyStyle>
+    <color>7f0000ff</color>
+    <colorMode>normal</colorMode>
+    <fill>1</fill>
+    <outline>1</outline>
+  </PolyStyle>
 </Style>
