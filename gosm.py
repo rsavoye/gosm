@@ -55,7 +55,6 @@ class shpfile(object):
         print (self.sf.fields)
 
         self.shapes = self.sf.shapes
-#        print ("Fields: %d" % len(self.fields))
         silly = sys.stdout
         print("Fields in: %r" % self.shp.name)
         for field in self.fields:
@@ -70,7 +69,6 @@ class shpfile(object):
                         silly.write(" 'ignore' ")
                     else:
                         silly.write(" %r " % record)
-#                        continue
                 except:
                     print (" '%r' " % record)
                     continue
@@ -113,8 +111,8 @@ class shpfile(object):
             refs = []
             for point in entry.shape.points:
 #                print ("%r: %r" % (entry.record[1:2], point))
-                lat = point[0]
-                lon = point[1]
+                lon = point[0]
+                lat = point[1]
                 node = osm.node(lat, lon, tags)
                 refs.append(node)
                 silly.write ("   Processing OSM file: %s\r" % rot[k])
