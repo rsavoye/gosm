@@ -61,7 +61,9 @@ ctable.read()
 # Read Shape (ERSI) file
 shp = gosm.shpfile(dd)
 shp.open("/work/Mapping/Utah/Trails/Trails-new.shp")
-#shp.dump()
+if dd.get('dump') == True:
+    shp.dump()
+    quit()
 
 # Write KML file
 if dd.get('format') == 'kml':
