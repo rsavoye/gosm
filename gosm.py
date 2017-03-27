@@ -52,10 +52,30 @@ class shpfile(object):
         self.shapeRecs = self.sf.shapeRecords()
         
     def dump(self):
+        print (self.sf.fields)
+
         self.shapes = self.sf.shapes
 #        print ("Fields: %d" % len(self.fields))
+        silly = sys.stdout
+        print("Fields in: %r" % self.shp.name)
         for field in self.fields:
-            print (field[0])
+            silly.write(" '%s' " % field[0])
+        silly.write("\n")
+        shapeRecs = self.sf.iterShapeRecords()
+        for entry in shapeRecs:
+            end = (len(entry.record))
+            for record in entry.record[:end]:
+                try:
+                    if record.isspace() == True:
+                        silly.write(" 'ignore' ")
+                    else:
+                        silly.write(" %r " % record)
+#                        continue
+                except:
+                    print (" '%r' " % record)
+                    continue
+                silly.write("\n")
+            return
 
     def makeOSM(self, osm):
         silly = sys.stdout
@@ -63,59 +83,45 @@ class shpfile(object):
         shapeRecs = self.sf.iterShapeRecords()
         silly.write ("   Processing OSM file: \r")
         for entry in shapeRecs:
-#            print (len(entry.shape.parts))
-#            print ("BARBY: %r" % len(entry.shape.points))
             end = (len(entry.record))
             tags = dict()
-            i = 0
+
+            # Process the tags for this record
+            i = 1
             for record in entry.record[:end]:
-#                print ("HEX: %r %r" % (type(record), record.hex()))
                 try:
                     if record.isspace() == True:
+#                        print ("SPACE: %r" % record)
+                        i = i + 1
                         continue
-                except:
-                    #print ("AARRGG %r" % type(record))
-                    continue
-                    
-#                print ("BAR: %s " % record)
-                try:
-                    field = self.fields[i][0]
-                except:
-                    field = "OOPS!"
-#                tags = self.createFields(record[:end])
-#                for i,j in tags.items():
-#                   print ("FIXMER: %s"  % i, j)
-                i = i + 1
-
-                # print a rotating character, so we know it's working
-            rot = ("|", "/", "-", "\\", "*")
-
-            i = 0
-            j = 0
-            refs = []
-            tags = dict()
-            for point in entry.shape.points:
-#                print ("%r: %r" % (entry.record[1:2], point))
-                lat = point[0]
-                lon = point[1]
-                for record in entry.record[:end]:
-#                    print("%d: %r %r" % (i, self.fields[i][0], record))
-                    if i >= len(self.fields):
-                        tags['unknown'] = record
                     else:
                         # FIXME: remove embedded ', and &
                         bbb = str(record)
                         s = bbb.replace("&", "&amp;")
                         s = s.replace("'", "")
                         tags[self.fields[i][0]] = cgi.escape(s)
+#                        print ("TEXT: %s %s" % (self.fields[i][0], record))
+                except:
+#                    print ("FLOAT %r" % (record))
                     i = i + 1
+                    continue  
+                i = i + 1
+                # print a rotating character, so we know it's working
+            rot = ("|", "/", "-", "\\", "*")
+
+            k = 0
+            refs = []
+            for point in entry.shape.points:
+#                print ("%r: %r" % (entry.record[1:2], point))
+                lat = point[0]
+                lon = point[1]
                 node = osm.node(lat, lon, tags)
                 refs.append(node)
-                silly.write ("   Processing OSM file: %s\r" % rot[j])
-                if j <= 3:
-                    j = j + 1
+                silly.write ("   Processing OSM file: %s\r" % rot[k])
+                if k <= 3:
+                    k = k + 1
                 else:
-                    j = 0
+                    k = 0
 #                print("OSM ID: %r %r %r" % (tags, lat, lon))
 
             osm.way(refs, tags)
@@ -182,6 +188,7 @@ class config(object):
         self.options = dict()
         self.options['user'] = ""
         self.options['uid'] = 0
+        self.options['dump'] = False
         try:
             lines = gosmfile.readlines()
         except:
@@ -206,7 +213,7 @@ class config(object):
         # default values
         self.options['format'] = "osm"
         try:
-            (opts,val) = getopt.getopt(argv[1:], "h,f:", ["help","format=","user=","uid="])
+            (opts,val) = getopt.getopt(argv[1:], "h,f:d", ["help","format=","user=","uid=","dump"])
         except getopt.GetoptError:    
             print('Invalid arguments.')
             
@@ -220,6 +227,8 @@ class config(object):
                 self.options['user'] = val
             elif opt == "--uid":
                 self.options['uid'] = val
+            elif opt == "--dump" or opt == '-d':
+                self.options['dump'] = True
                             
     def get(self, opt):
         return self.options[opt]
