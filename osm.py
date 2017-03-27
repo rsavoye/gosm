@@ -86,9 +86,6 @@ class osmfile(object):
     def footer(self):
         self.file.write("</osm>\n")
         
-# Ref points to a node
-#        <node id="2746583940" lat="37.4460348" lon="-110.0405962" version="1" timestamp="2014-03-26T23:36:51Z" changeset="21335652" uid="104962" user="techlady"/>
-
     def node(self, lat="", lon="", tags=dict()):
         #        timestamp = ""  # LastUpdate
         timestamp = time.strftime("%Y-%m-%dT%TZ")
@@ -111,28 +108,23 @@ class osmfile(object):
     def process(self):
         self.shp.readShapes()
 
-#    <nd ref='83142602' />
-#    <tag k='highway' v='track' />
-#    <tag k='surface' v='dirt' />
-#    <tag k='tracktype' v='grade2' />
-
     def way(self, refs, tags):
-#        print ("BBBBB: %r" % refs)
-        
         self.file.write("    <way id='" +  str(self.osmid) + "\' visible='true'")
         timestamp = time.strftime("%Y-%m-%dT%TZ")
         self.file.write(" timestamp='" + timestamp + "\'")
         self.file.write(" user='" + self.options.get('user') + "' uid='" + str(self.options.get('uid')) + "'>'\n")
 
-        # Each ref ID points to a node id. Th coordinates is im the node.
+        # Each ref ID points to a node id. The coordinates is im the node.
         for ref in refs:
+            # FIXME: Ignore any refs that point to ourself. There shouldn't be
+            # any, so this is likely a bug elsewhere when parsing the geom.
+            if ref == self.osmid:
+                break
             self.file.write("        <nd ref='" + str(ref) + "' />\n")
 
         value = ""
-#        print(tags)
         
         for name, value in tags.items():
-#            print (name)
             if str(value)[0] != 'b':
                 self.file.write("        <tag k='" + name + "' v='" + str(value) + "' />\n")
             
