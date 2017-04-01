@@ -69,7 +69,7 @@ kml_folder_start ()
 
     echo -n -e "\rStarting folder: ${folder}"
     
-    cat <<EOF >> ${outfile}
+    cat <<EOF > ${outfile}
     <Folder>
         <name>${folder}</name>
 EOF
@@ -102,6 +102,11 @@ kml_placemark ()
     local outfile="$1"
     eval "$2"
     local name="`echo ${data[NAME]} | sed -e 's:&: and :'`"
+
+    if test x"${data[WAY]}" = x; then
+	echo "WARNING: Way has no coordinates!"
+	return 1
+    fi
 
 #    declare -p data
     cat <<EOF >> ${outfile}
@@ -146,6 +151,7 @@ EOF
  	echo "</description>"  >> ${outfile}
     fi
 
+    # Only lines have COLOR set
     if test x"${data[COLOR]}" != x; then
 	cat <<EOF >> ${outfile}
         <LineString>
@@ -153,7 +159,6 @@ EOF
             <altitudeMode>clampToGround</altitudeMode>
            ${data[WAY]}
         </LineString>
-        </Placemark>
 EOF
     fi
 
@@ -161,7 +166,6 @@ EOF
     if test x"${data[ICON]}" != x; then
 	cat <<EOF >> ${outfile}
            ${data[WAY]}
-        </Placemark>
 EOF
     fi
 
@@ -173,9 +177,11 @@ EOF
             <altitudeMode>relativeToGround</altitudeMode>
              ${data[WAY]}
         </Polygon>
-        </Placemark>
 EOF
     fi
+    cat <<EOF >> ${outfile}
+        </Placemark>
+EOF
 
     return 0
 }
