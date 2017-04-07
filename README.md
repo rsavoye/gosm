@@ -57,3 +57,10 @@ google-earth /tmp/Mariposa.kml
 
 * Read a .polyfile into an postgresql database
 ./polyin,sh --database Utah --operation trail
+
+* Convert a Shapefile into an OSM file.
+./shp2map.py --infile foo.shp --convfile utahgis.conv --outfile utah.osm
+
+*  Often a shapefile is in a different coordinate system, so it it
+   looks weird, convert it to 4326, which is standard.
+ogr2ogr -t_srs EPSG:4326 fixed.shp orig.shp
