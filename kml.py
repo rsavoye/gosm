@@ -23,8 +23,9 @@
 # for highways. Different types and surfaces have tags signifying what type
 # it is.
 
-import ogr
-import gosm
+# import ogr
+# import gosm
+
 
 class kmlfile(object):
     """Output file in KML format."""
@@ -66,18 +67,18 @@ class kmlfile(object):
             self.file.write('            <extrude>1</extrude>\n')
             self.file.write('            <altitudeMode>relativeToGround</altitudeMode>\n')
             self.file.write(way + '\n')
-            self.file.write(     '   </Polygon>\n')
+            self.file.write('        </Polygon>\n')
             self.file.write('        <styleUrl>' + style + '</styleUrl>\n')
             self.file.write('      </Placemark>\n')
 
     def wayStyle(self):
-        print ("Unimplemented")
+        print("Unimplemented")
 
     def lineColor(self):
-        print ("Unimplemented")
+        print("Unimplemented")
 
     def description(self):
-        print ("Unimplemented")
+        print("Unimplemented")
     
     def folderStart(self, folder):
         self.folder = folder
