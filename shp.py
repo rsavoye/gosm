@@ -23,11 +23,12 @@
 # for highways. Different types and surfaces have tags signifying what type
 # it is.
 
-import shapefile
-import ogr
+# import ogr
 import gosm
-import osm
+# import osm
+import shapefile
 import sys
+
 
 # This class holds a field from the Shapefile. It has 4 fields.
 # Name - name of the field
@@ -45,25 +46,25 @@ class shpField(object):
         return self.field[1]
 
     def isanum(self):
-        if  self.field[1] == 'N':
+        if self.field[1] == 'N':
             return True
         else:
             return False
 
     def isalpha(self):
-        if  self.field[1] == 'C':
+        if self.field[1] == 'C':
             return True
         else:
             return False
 
     def islong(self):
-        if  self.field[1] == 'L':
+        if self.field[1] == 'L':
             return True
         else:
             return False
 
     def isdate(self):
-        if  self.field[1] == 'D':
+        if self.field[1] == 'D':
             return True
         else:
             return False
@@ -75,29 +76,33 @@ class shpField(object):
         return self.field[3]
 
         
-class shpfile(object):
+class shpfile(gosm.verbose):
     """Hold data for an ERSI Shapefile shape."""
     def __init__(self, options):
         self.options = options
+        gosm.verbose.__init__(self, options)
         
     def open(self, file):
         # self.shp="/work/Mapping/Utah/ArchaeologySites/ArchaeologySites.shp"
         # sf = shapefile.Reader("/work/Mapping/Utah/Trailheads/Trailheads.shp")
         self.shp = open(file, "rb")
-        index = file.find('.')
-        base = file[:index]
-        shp = open(base + ".shp", "r")
-        dbf = open(base + ".dbf", "r")
+        self.debug("Opened inut file: %s" % file)
+        # index = file.find('.')
+        # base = file[:index]
+        # shp = open(base + ".shp", "r")
+        # dbf = open(base + ".dbf", "r")
 #        print (shp)
 #        print (dbf)
         self.sf = shapefile.Reader(file)
 #        self.sf = shapefile.Reader(shp=shp, dbf=dbf)
         self.fields = self.sf.fields
         self.shapeRecs = self.sf.shapeRecords()
-        
-    def dump(self):
-        print (self.sf.fields)
 
+    # Dump the contents of the Shapefile.
+    def dump(self):
+        print(self.sf.fields)
+
+        self.debug("Dumping file: " + self.options.get('infile'))
         self.shapes = self.sf.shapes
         silly = sys.stdout
         print("Fields in: %r" % self.shp.name)
@@ -105,25 +110,53 @@ class shpfile(object):
             silly.write(" '%s' " % field[0])
         silly.write("\n")
         shapeRecs = self.sf.iterShapeRecords()
+        k = 0
         for entry in shapeRecs:
             end = (len(entry.record))
             for record in entry.record[:end]:
                 try:
-                    if record.isspace() == True:
-                        silly.write(" 'ignore' ")
+                    if record.isspace() is True:
+                        silly.write(" 'blank' ")
                     else:
-                        silly.write(" %r " % record)
+                        silly.write(" %r " % str(record))
                 except:
-                    print (" '%r' " % record)
+                    print(" '%r' " % str(record))
                     continue
-                silly.write("\n")
-            return
+            silly.write("\n")
+#            print("FOOBY: %r %r" % (k, self.options['limit']))
+#            if k >= self.options['limit'] and self.options['limit'] != 0:
+#                break
+#            k = k + 1
+
+        return
+
+    def makeCSV(self, csv):
+        self.shapes = self.sf.shapes
+        silly = sys.stdout
+        print("%r," % self.shp.name)
+        for field in self.fields:
+            silly.write(" '%s,' " % field[0])
+        silly.write("\n")
+        shapeRecs = self.sf.iterShapeRecords()
+        for entry in shapeRecs:
+            end = (len(entry.record))
+            for record in entry.record[:end]:
+                try:
+                    if record.isspace() is True:
+                        silly.write(",' ")
+                    else:
+                        silly.write(", %r " % record)
+                except:
+                    print(" '%r' " % record)
+                    continue
+            silly.write("\n")
+        return
 
     def makeOSM(self, osm):
         silly = sys.stdout
         osm.header()
         shapeRecs = self.sf.iterShapeRecords()
-        silly.write ("   Processing OSM file: \r")
+        silly.write("   Processing OSM file: \r")
         for entry in shapeRecs:
             end = (len(entry.record))
             tags = dict()
@@ -132,30 +165,31 @@ class shpfile(object):
             i = 1
             for record in entry.record[:end]:
                 try:
-                    if record.isspace() == True:
-#                        print ("SPACE: %r" % record)
+                    if record.isspace() is True:
+                        # print ("SPACE: %r" % record)
                         i = i + 1
                         continue
                     else:
-                        # FIXME: remove embedded ', and &
-                        bbb = str(record)
-                        s = bbb.replace("&", "&amp;")
+                        # FIXME: remove embedded characters that
+                        # cause trouble with XML parsers
+                        s = str(record)
+                        s = s.replace("&", "&amp;")
                         s = s.replace("'", "")
-#                        tags[self.fields[i][0]] = cgi.escape(s)
+                        s = s.replace("<", "lt")
+                        s = s.replace(">", "gt")
+                        # tags[self.fields[i][0]] = cgi.escape(s)
 
-                        tagger = osm.maketag(self.fields[i][0], record)
-#                        import code
-#                        code.interact(local=locals())
-#                        import pdb; pdb.set_trace()
+                        tagger = osm.makeTag(self.fields[i][0], s)
+#                        tagger = osm.makeTag(self.fields[i][0], record)
                         if len(tagger) > 0:
-#                            print("TAGS: %r" % tagger)
+                        # print("TAGS: %r" % tagger)
                             tags[tagger[0][0]] = tagger[0][1]
-                            for tag in tagger:
-                                print("TAG1: %r %r" % (tag[0], tag[1]))
+                            # for tag in tagger:
+                                # print("TAG1: %r %r" % (tag[0], tag[1]))
                                 
-#                        print ("TEXT1 : %r %r" % (tagger[0][0], tagger[0][1]))
+                            self.debug("shpfile:makeOSM(tag=%r, value=%r" % (tagger[0][0], tagger[0][1]))
                 except:
-#                    print ("FLOAT %r" % (record))
+                    # print("FLOAT %r" % (record))
                     i = i + 1
                     continue  
                 i = i + 1
@@ -166,19 +200,19 @@ class shpfile(object):
             k = 0
             refs = []
             for point in entry.shape.points:
-#                print ("%r: %r" % (entry.record[1:2], point))
+                # print("%r: %r" % (entry.record[1:2], point))
                 lon = point[0]
                 lat = point[1]
                 node = osm.node(lat, lon, tags)
                 refs.append(node)
-                silly.write ("   Processing OSM file: %s\r" % rot[k])
+                silly.write("   Processing OSM file: %s\r" % rot[k])
                 if k <= 3:
                     k = k + 1
                 else:
                     k = 0
-#                print("OSM ID: %r %r %r" % (tags, lat, lon))
+                    # self.debug("OSM ID: %r %r %r" % (tags, lat, lon))
 
-            osm.way(refs, tags)
+            osm.makeWay(refs, tags)
         osm.footer()
 
     def makeKML(self, kml):
@@ -188,25 +222,25 @@ class shpfile(object):
         print("Unimplemented")
         
     def readShapes(self):
-         shapeRecs = self.sf.iterShapeRecords()
-         for entry in shapeRecs:
-             print (len(entry.shape.parts))
-             print (len(entry.shape.points))
-             for point in entry.shape.points:
-                 print ("%r: %r" % (entry.record[1:2], point))
-                             
+        shapeRecs = self.sf.iterShapeRecords()
+        for entry in shapeRecs:
+            print(len(entry.shape.parts))
+            print(len(entry.shape.points))
+            for point in entry.shape.points:
+                print("%r: %r" % (entry.record[1:2], point))
+
     def readRecords(self):
-        print ("Records: %d" % len(self.sf.records()))
+        print("Records: %d" % len(self.sf.records()))
         for record in (self.sf.iterRecords()):
             foo = self.createFields(record)
-            print ("------------------------- ")
-            for i,j in foo.items():
-                print ("FIXME: %s"  % i, j)
+            print("------------------------- ")
+            for i, j in foo.items():
+                print("FIXME: %s"  % i, j)
 
-            print ("=====================")
+            print("=====================")
         
     # Create a dictionary to hold the record data
-    def createFields(self, record):    
+    def createFields(self, record):
         columns = dict()
         # print (record)
         # print (self.fields)
