@@ -23,174 +23,69 @@
 # for highways. Different types and surfaces have tags signifying what type
 # it is.
 
-import shapefile
-import ogr
-import gosm
-import osm
-import sys
+# import shapefile
+# import ogr
+# import gosm
+# import osm
+# import sys
+# import cgi
 import getopt
-import cgi
 
-class shpfile(object):
-    """Hold data for an ERSI Shapefile shape."""
-    def __init__(self, options):
-        self.options = options
+
+class verbose(object):
+    """Debugging support for this program."""
+    def __init__(self, config):
+        self.verbosity = config.get('debug')
+
+    def toggle(self):
+        if self.verbosity is False:
+            self.verbosity = True
+        else:
+            self.verbosity = False
+
+    def debug(self, msg):
+        if self.verbosity is True:
+            print(msg)
+
+    def pdb(self):
+        # import code
+        # code.interact(local=locals())
+        import pdb; pdb.set_trace()
+
         
-    def open(self, file):
-        # self.shp="/work/Mapping/Utah/ArchaeologySites/ArchaeologySites.shp"
-        # sf = shapefile.Reader("/work/Mapping/Utah/Trailheads/Trailheads.shp")
-        self.shp = open(file, "rb")
-        index = file.find('.')
-        base = file[:index]
-        shp = open(base + ".shp", "r")
-        dbf = open(base + ".dbf", "r")
-#        print (shp)
-#        print (dbf)
-        self.sf = shapefile.Reader(file)
-#        self.sf = shapefile.Reader(shp=shp, dbf=dbf)
-        self.fields = self.sf.fields
-        self.shapeRecs = self.sf.shapeRecords()
-        
-    def dump(self):
-        print (self.sf.fields)
+    def value(self):
+        return self.verbosity
 
-        self.shapes = self.sf.shapes
-        silly = sys.stdout
-        print("Fields in: %r" % self.shp.name)
-        for field in self.fields:
-            silly.write(" '%s' " % field[0])
-        silly.write("\n")
-        shapeRecs = self.sf.iterShapeRecords()
-        for entry in shapeRecs:
-            end = (len(entry.record))
-            for record in entry.record[:end]:
-                try:
-                    if record.isspace() == True:
-                        silly.write(" 'ignore' ")
-                    else:
-                        silly.write(" %r " % record)
-                except:
-                    print (" '%r' " % record)
-                    continue
-                silly.write("\n")
-            return
-
-    def makeOSM(self, osm):
-        silly = sys.stdout
-        osm.header()
-        shapeRecs = self.sf.iterShapeRecords()
-        silly.write ("   Processing OSM file: \r")
-        for entry in shapeRecs:
-            end = (len(entry.record))
-            tags = dict()
-
-            # Process the tags for this record
-            i = 1
-            for record in entry.record[:end]:
-                try:
-                    if record.isspace() == True:
-#                        print ("SPACE: %r" % record)
-                        i = i + 1
-                        continue
-                    else:
-                        # FIXME: remove embedded ', and &
-                        bbb = str(record)
-                        s = bbb.replace("&", "&amp;")
-                        s = s.replace("'", "")
-                        tags[self.fields[i][0]] = cgi.escape(s)
-#                        print ("TEXT: %s %s" % (self.fields[i][0], record))
-                except:
-#                    print ("FLOAT %r" % (record))
-                    i = i + 1
-                    continue  
-                i = i + 1
-                # print a rotating character, so we know it's working
-            rot = ("|", "/", "-", "\\", "*")
-
-            k = 0
-            refs = []
-            for point in entry.shape.points:
-#                print ("%r: %r" % (entry.record[1:2], point))
-                lon = point[0]
-                lat = point[1]
-                node = osm.node(lat, lon, tags)
-                refs.append(node)
-                silly.write ("   Processing OSM file: %s\r" % rot[k])
-                if k <= 3:
-                    k = k + 1
-                else:
-                    k = 0
-#                print("OSM ID: %r %r %r" % (tags, lat, lon))
-
-            osm.way(refs, tags)
-        osm.footer()
-
-    def makeKML(self, kml):
-        kml.header('FOObar')
-        # FIXME:
-        kml.footer()
-        print("Unimplemented")
-        
-    def readShapes(self):
-         shapeRecs = self.sf.iterShapeRecords()
-         for entry in shapeRecs:
-#             print ("BAR: %s, %s, %s" % (entry.record[1:3], entry.record[4:6], entry.record[7:9]))
-             print (len(entry.shape.parts))
-             print (len(entry.shape.points))
-             for point in entry.shape.points:
-                 print ("%r: %r" % (entry.record[1:2], point))
-                
-#             print ("BAR: %r " % entry.record[1:2])
-             
-    def readRecords(self):
-        print ("Records: %d" % len(self.sf.records()))
-        for record in (self.sf.iterRecords()):
-            foo = self.createFields(record)
-            print ("------------------------- ")
-            for i,j in foo.items():
-                print ("FIXME: %s"  % i, j)
-
-            print ("=====================")
-        
-    # Create a dictionary to hold the record data
-    def createFields(self, record):    
-        columns = dict()
-        # print (record)
-        # print (self.fields)
-        i = 1
-        for entry in record:
-            try:
-                field = self.fields[i][0]
-            except:
-                print("OOPS!")
-#            print ("FOOOOO %s %s %d" % (entry, field, i))
-            columns[field] = entry
-            i = i + 1
-
-#        print (columns)
-        return columns
-        
 class config(object):
     """Config data for this program."""
     def __init__(self, argv):
+        if len(argv) <= 2:
+            self.usage(argv)
+            
         # Read the config file to get our OSM credentials, if we have any
         file = "/home/rob/.gosmrc"
         try:
             gosmfile = open(file, 'r')
         except:
-            print ("""WARNING: Couldn't open %s for writing! not using OSM credentials
+            print("""WARNING: Couldn't open %s for writing! not using OSM credentials
             """ % file)
             return
 
-        # Default to no credentials
+        # Default values for user options
         self.options = dict()
+        self.options['format'] = "osm"
         self.options['user'] = ""
+        self.options['infile'] = ""
+        self.options['outfile'] = "tmp.osm"
         self.options['uid'] = 0
         self.options['dump'] = False
+        self.options['limit'] = 0
+        self.options['debug'] = False
+        self.options['convfile'] = "default.conv"
         try:
             lines = gosmfile.readlines()
         except:
-            print("ERROR: Couldm't read lines from %s" % gosmfile.name)
+            print("ERROR: Couldn't read lines from %s" % gosmfile.name)
             
         for line in lines:
             if line[1] == '#':
@@ -206,14 +101,24 @@ class config(object):
                 self.options['uid'] = value[:index - 1]
             if name == "user":
                 self.options['user'] = value[:index - 1]
+            if name == "infile":
+                self.options['infile'] = value[:index - 1]
+            if name == "outfile":
+                self.options['outfile'] = value[:index - 1]
+            if name == "convfile":
+                self.options['convfile'] = value[:index - 1]
 
         # Process the command line arguments
         # default values
-        self.options['format'] = "osm"
         try:
-            (opts,val) = getopt.getopt(argv[1:], "h,f:d", ["help","format=","user=","uid=","dump"])
-        except getopt.GetoptError:    
+            print(argv)
+            (opts, val) = getopt.getopt(argv[1:], "h,f:,d,o:,i:,l:,v,c:",
+                ["help", "format=", "user=", "uid=", "dump", "outfile", "infile", "limit", "verbose", "config"])
+        except getopt.GetoptError:
             print('Invalid arguments.')
+            return
+
+            # import pdb; pdb.set_trace()
             
         for (opt, val) in opts:
             if opt == '--help' or opt == '-h':
@@ -227,92 +132,106 @@ class config(object):
                 self.options['uid'] = val
             elif opt == "--dump" or opt == '-d':
                 self.options['dump'] = True
+            elif opt == "--outfile" or opt == '-o':
+                self.options['outfile'] = val
+            elif opt == "--infile" or opt == '-i':
+                self.options['infile'] = val
+            elif opt == "--convfile" or opt == '-c':
+                self.options['convfile'] = val
+            elif opt == "--limit" or opt == '-l':
+                self.options['limit'] = int(val)
+            elif opt == "--verbose" or opt == '-v':
+                self.options['debug'] = True
                             
     def get(self, opt):
-        return self.options[opt]
+        try:
+            return self.options[opt]
+        except:
+            return False
     
     # Basic help message
     def usage(self, argv):
         print(argv[0] + ": options: ")
         print("""\t--help(-h)   Help
-\t--format[-f] output format (default=osm)
-\t--user       OSM User name (optional)
-\t--uid        OSM User ID (optional)
+\t--format[-f]  output format [osm, kml, cvs] (default=osm)
+\t--user          OSM User name (optional)
+\t--uid           OSM User ID (optional)
+\t--dump{-d)      Dump the Shape fields
+\t--outfile(-o)   Output file name
+\t--infile(-i)    Input file name
+\t--convfile(-c)  Conversion data file name
+\t--limit(-l)     Limit the output records
+\t--verbose(-v)   Enable verbosity
         """)
         quit()
 
     def dump(self):
-        print ("Dumping config")
-        for i,j in self.options.items():
+        print("Dumping config")
+        for i, j in self.options.items():
             print("\t%s: %s" % (i, j))
 
 class datafile(object):
     """Data file for the conversion"""
-    def __init__(self):
+    def __init__(self, file=""):
         self.table = dict()
-#        self.file = open(file, "r")
+        self.attrtable = dict()
+        if file != "":
+            self.open(file)
 
     def open(self, file):
         self.file = open(file, "r")
-#        print ("FILE: %r" % self.file)
 
     def read(self):
         lines = self.file.readlines()
+        curname = ""
         for line in lines:
-            if line[1] == '#':
+            if line[0] == '#':
                 continue
             # First field of the CSV file is the name
-            index = line.find(',')
-            name = line[:index]
-            # Second field of the CSV file is the value
-            value = line[index + 1:]
-            self.table[name] = value
+            tmp = line.split(',')
+            type = tmp[0]
+            try:
+                name = tmp[1]
+            except:
+                name = 'unknown'
+            # store so we know when a set of attributes changes
+            tmptab = dict()
+            if curname == name:
+                self.attrtable[curname] = tmptab
+            else:
+                items = dict()
+                curname = name
+            try:
+                value = tmp[2]
+            except:
+                value = ""
 
-#            print (self.table)
+            if type == 'attribute':
+                try:
+                    attr = tmp[3].replace("\n", "")
+                except:
+                    attr = ""
+
+                    # print("datafile:read(name=%r, value=%r, attr=%r) is attribute" % (name, value, attr))
+                items[value] = attr
+                self.attrtable[name] = items
+            elif type == 'tag':
+                # print("datafile:read(name=%r, value=%r) is tag" % (name, value.replace("\n", "")))
+                self.table[name] = value.replace("\n", "")
+            elif type == 'column':
+                # print("datafile:read(name=%r, value=%r) i column" % (name, value.replace("\n", "")))
+                self.table[name] = value.replace("\n", "")
+
+    def attribute(self, name, attr):
+        # print("datafile:attribute(%r) %r" % (name, attr))
+        try:
+            value = self.attrtable[name][attr]
+            # print("VAL: %r" % value)
+            return value
+        except KeyError:
+            # print("No VAL for: %r" % name)
+            return attr
+
     def match(self, instr):
         return self.table[instr]
-            
-# Create an OSM tag
-def createOSMTags( tag ):
-    print("Unimplemented")
-    tags = dict()
-    # bicycle
-    # mtn:scale:imba
-    # access
-    # sac_scale
-    tags['TrailID'] = 'trailid'
-    tags['SystemName'] = 'systemname'
-    tags['Status'] = 'status'
-    tags['Designated'] = 'designated'
-    tags['MotorizedP'] = 'motorizedp'
-    tags['PrimaryMai'] = 'primarymail'
-    tags['TrailClass'] = 'trailclass'
-    tags['TransNetwo'] = 'transnetwork'
-    tags['ADAAccessi'] = 'adaaccess'
-    tags['BikeDiffic'] = 'mtb:scale:imba'
-    tags['HikeDiffic'] = 'sac_scale'
-    tags['RoadConcur'] = 'roadconcur'
-    tags['InfoURL'] = 'infourl'
-    tags['Comments'] = 'comments'
-    tags['TagsSource'] = 'tagssource'
-    tags['LastUpdate'] = 'lastupdate'
-    tags['CartoCode'] = 'cartocode'
-    tags['SHAPE_Leng'] = 'leng'
-
-    return tags
     
-def createOSMColumn( field ):
-    data = dict()
-    
-    data['PrimaryNam'] = 'name'
-    data['Descriptio'] = 'highway'
-    data['SurfaceTyp'] = 'surface'
-    data['OtherRestr'] = 'access'
-
-#    print (data)
-#    for i in data:
-#        print (i)
-        
-    return data
-    print("Unimplemented")
-
