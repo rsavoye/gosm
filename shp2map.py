@@ -25,12 +25,18 @@
 # for highways. Different types and surfaces have tags signifying what type
 # it is.
 
+# from sys import os
+# cwd = os.getcwd()
+# sys.path.append(cwd + '/../subdirA/')
+
 from sys import argv
-import shapefile
-import ogr
+# import shapefile
+# import ogr
 import gosm
 import osm
 import kml
+import shp
+import csv
 
 # file="/home/rob/.gosmrc"
 # if __name__ == '__main__':
@@ -42,40 +48,45 @@ import kml
 dd = gosm.config(argv)
 dd.dump()
 
-# Read the conversion data
-ctable = gosm.datafile()
-ctable.open("/work/Mapping/OSM/osmtools/default.conv")
-ctable.read()
-#print ("BAR: %s " % ctable.match('name1'))
-
-#shp="/work/Mapping/Utah/ArchaeologySites/ArchaeologySites.shp"
-#shp = open("/work/Mapping/Utah/Trails/Trails-new.shp", "rb")
-#dbf = open("/work/Mapping/Utah/Trails/Trails-new.dbf", "rb")
-#sf = shapefile.Reader(shp=shp, dbf=dbf)
-#fields = sf.fields
-# fcount = len(sf.fields)
-#
-#shapes = sf.shapes()
-#print ("Shapes: %d" % len(shapes))
-
 # Read Shape (ERSI) file
-shp = gosm.shpfile(dd)
-shp.open("/work/Mapping/Utah/Trails/Trails-new.shp")
-if dd.get('dump') == True:
+shp = shp.shpfile(dd)
+if dd.get('infile') == "":
+    infile = "/work/Mapping/Utah/Trails/Trails-new.shp"
+else:
+    infile = dd.get('infile')
+
+shp.open(infile)
+if dd.get('dump') is True:
     shp.dump()
     quit()
 
 # Write KML file
 if dd.get('format') == 'kml':
-    kmlfile = '/tmp/tmp.kml'
+    if dd.get('outfile') == "":
+        kmlfile = '/tmp/tmp.kml'
+    else:
+        kmlfile = dd.get('outfile')
     kml = kml.kmlfile()
     kml.open(kmlfile)
     shp.makeKML(osm)
 
 # Write OSM file
-if dd.get('format') == "osm":
-    osmfile = "/tmp/tmp.osm"
+elif dd.get('format') == "osm":
+    if dd.get('outfile') == "":
+        osmfile = "/tmp/tmp.osm"
+    else:
+        osmfile = dd.get('outfile')
     osm = osm.osmfile(dd)
     osm.open(osmfile, shp)
     shp.makeOSM(osm)
+
+# Write CSV file
+elif dd.get('format') == "csv":
+    if dd.get('outfile') == "":
+        csvfile = "/tmp/tmp.csv"
+    else:
+        csvfile = dd.get('outfile')
+    csv = csv.osmfile(dd)
+    csv.open(csvfile, shp)
+    shp.makeCSV(csv)
 
