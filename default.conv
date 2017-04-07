@@ -1,0 +1,83 @@
+# Create an OSM tag
+# bicycle
+# mtn:scale:imba
+# access
+# sac_scale
+#
+# OSM tags
+tag,TrailID,traild
+tag,SystemName,systemname
+tag,Status,status
+tag,Designated,designated
+tag,MotorizedP,motorizedp
+tag,PrimaryMai,primarymail
+tag,TrailClass,trailclass
+tag,TransNetwo,transnetwork
+tag,ADAAccessi,adaaccess
+tag,BikeDiffic,mtb:scale:imba
+tag,HikeDiffic,sac_scale
+tag,RoadConcur,roadconcur
+tag,InfoURL,infourl
+tag,Comments,comments
+tag,TagsSource,tagssource
+tag,LastUpdate,lastupdate
+tag,CartoCode,cartocode
+tag,SHAPE_Leng,leng
+# OSM fields
+column,PrimaryNam,name
+column,Descriptio,description
+#Descriptio,highway
+column,SurfaceTyp,surface
+column,OtherRestr,access
+column,DataSource,source
+# Attributes for the surface column
+attribute,surface,unpaved
+attribute,surface,dirt
+attribute,surface,earth
+attribute,surface,grass
+attribute,surface,gravel
+attribute,surface,mud
+attribute,surface,ice
+attribute,surface,ground
+attribute,surface,unpaved
+attribute,mtb:scale:imba,MINIMAL,0
+attribute,mtb:scale:imba,EASIER,1
+attribute,mtb:scale:imba,MODERATE,2
+attribute,mtb:scale:imba,HIGH,3
+attribute,mtb:scale:imba,EXPERT,4
+attribute,mtb:scale:imba,EXTREME,4
+attribute,sac_scale,MINIMAL,hiking
+attribute,sac_scale,EASIER,hiking
+attribute,sac_scale,MODERATE,mountain_hiking
+attribute,sac_scale,DIFFICULT,demanding_mountain_hiking
+attribute,sac_scale,EXTREME,alpine_hiking
+# source: ARPNF
+column,REV_DATE,lastupdate
+column,DATA_SOURC,source
+column,ACCURACY,accuracy
+column,REC_SITE_C,rev_site_c
+column,TYPE,amenity
+tag,NAME,name
+column,REC_SITE_I,rec_site_i
+column,OPERATIONA,operational
+column,STATUS,status
+column,POINT_X,point_x
+column,POINT_Y,point_y
+tag,LATITUDE,lat
+tag,LONGITUDE,lon
+#atribute,tourism,GROUP PICNIC SITE,picnic_site
+#atribute,leisure,FISHING SITE,fishing
+#tag,type,TRAILHEAD,
+#atribute,leisure,SKI AREA ALPINE,sports_centre,winter_sports
+#atribute,amenity,CAMPGROUND
+#tag,GROUP CAMPGROUND
+#atribute,tourism,OBSERVATION SITE
+#atribute,tourism,PICNIC SITE,picnic_site
+#atribute,tourism,INTERPRETIVE VISITOR CENTER (MAJOR)
+#atribute,tourism,SNOWPARK
+#atribute,tourism,OHV STAGING AREA
+#atribute,tourism,WILDLIFE VIEWING SITE
+#atribute,tourism,ORGANIZATION SITE
+# atribute,boat,BOATING SITE,yes
+#atribute,tourism,INTERPRETIVE SITE
+#atribute,tourism,LOOKOUT/CABIN
