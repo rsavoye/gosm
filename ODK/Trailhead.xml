@@ -1,0 +1,88 @@
+<h:html xmlns="http://www.w3.org/2002/xforms" xmlns:h="http://www.w3.org/1999/xhtml" xmlns:ev="http://www.w3.org/2001/xml-events" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:jr="http://openrosa.org/javarosa">
+  <h:head><!-- ODK Aggregate upload time: 2017-04-08T14:49:10.994+0000 on http://tcwgrob:8080/ODKAggregate -->
+    <h:title>Trailhead</h:title>
+    <model>
+      <instance>
+        <data id="build_Trailhead_1491662890">
+          <meta>
+            <instanceID/>
+          </meta>
+          <name/>
+          <location/>
+          <attributes/>
+        </data>
+      </instance>
+      <itext>
+        <translation lang="eng">
+          <text id="/data/name:label">
+            <value>Name</value>
+          </text>
+          <text id="/data/name:hint">
+            <value>Name of this trailhead</value>
+          </text>
+          <text id="/data/location:label">
+            <value>Location</value>
+          </text>
+          <text id="/data/location:hint">
+            <value>Where is this ?</value>
+          </text>
+          <text id="/data/attributes:label">
+            <value>Attributes</value>
+          </text>
+          <text id="/data/attributes:option0">
+            <value>Parking</value>
+          </text>
+          <text id="/data/attributes:option1">
+            <value>Camping</value>
+          </text>
+          <text id="/data/attributes:option2">
+            <value>Toilet</value>
+          </text>
+          <text id="/data/attributes:option3">
+            <value>Bicycle</value>
+          </text>
+          <text id="/data/attributes:option4">
+            <value>Horse</value>
+          </text>
+        </translation>
+      </itext>
+      <bind nodeset="/data/meta/instanceID" type="string" readonly="true()" calculate="concat('uuid:', uuid())"/>
+      <bind nodeset="/data/name" type="string"/>
+      <bind nodeset="/data/location" type="geopoint"/>
+      <bind nodeset="/data/attributes" type="select"/>
+    </model>
+  </h:head>
+  <h:body>
+    <input ref="/data/name">
+      <label ref="jr:itext('/data/name:label')"/>
+      <hint ref="jr:itext('/data/name:hint')"/>
+    </input>
+    <input ref="/data/location">
+      <label ref="jr:itext('/data/location:label')"/>
+      <hint ref="jr:itext('/data/location:hint')"/>
+    </input>
+    <select ref="/data/attributes">
+      <label ref="jr:itext('/data/attributes:label')"/>
+      <item>
+        <label ref="jr:itext('/data/attributes:option0')"/>
+        <value>parking</value>
+      </item>
+      <item>
+        <label ref="jr:itext('/data/attributes:option1')"/>
+        <value>camp_site</value>
+      </item>
+      <item>
+        <label ref="jr:itext('/data/attributes:option2')"/>
+        <value>toliet</value>
+      </item>
+      <item>
+        <label ref="jr:itext('/data/attributes:option3')"/>
+        <value>bicycle</value>
+      </item>
+      <item>
+        <label ref="jr:itext('/data/attributes:option4')"/>
+        <value>horse</value>
+      </item>
+    </select>
+  </h:body>
+</h:html>

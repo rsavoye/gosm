@@ -1,0 +1,5 @@
+These XML files are for the ODKAggregator and ODK Collect. These are used with
+ODK Collect on Android to collect data on waypoints. Once the data is sent to ODKAggregate, it can be exported as a KML or CSV file.For KML, all the data 
+that was entered is in the table if you click on the waypoint. The CSV format
+is much easier to parse, so we parse the CSV to make an OSM file for import
+into Josm and then upload to OSM.

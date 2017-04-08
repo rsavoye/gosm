@@ -1,0 +1,129 @@
+<h:html xmlns="http://www.w3.org/2002/xforms" xmlns:h="http://www.w3.org/1999/xhtml" xmlns:ev="http://www.w3.org/2001/xml-events" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:jr="http://openrosa.org/javarosa">
+  <h:head><!-- ODK Aggregate upload time: 2017-04-08T13:34:49.429+0000 on http://tcwgrob:8080/ODKAggregate -->
+    <h:title>Amenity</h:title>
+    <model>
+      <instance>
+        <data id="build_Amenity_1491658465">
+          <meta>
+            <instanceID/>
+          </meta>
+          <name/>
+          <location/>
+          <amenity/>
+        </data>
+      </instance>
+      <itext>
+        <translation lang="eng">
+          <text id="/data/name:label">
+            <value>Name</value>
+          </text>
+          <text id="/data/location:label">
+            <value>Location</value>
+          </text>
+          <text id="/data/amenity:label">
+            <value>Amenity</value>
+          </text>
+          <text id="/data/amenity:option0">
+            <value>Parking Lot</value>
+          </text>
+          <text id="/data/amenity:option1">
+            <value>Trailhead</value>
+          </text>
+          <text id="/data/amenity:option2">
+            <value>Fire Station</value>
+          </text>
+          <text id="/data/amenity:option3">
+            <value>Bar</value>
+          </text>
+          <text id="/data/amenity:option4">
+            <value>Cafe</value>
+          </text>
+          <text id="/data/amenity:option5">
+            <value>Pub</value>
+          </text>
+          <text id="/data/amenity:option6">
+            <value>Restaursnt</value>
+          </text>
+          <text id="/data/amenity:option7">
+            <value>School</value>
+          </text>
+          <text id="/data/amenity:option8">
+            <value>Taxi Stand</value>
+          </text>
+          <text id="/data/amenity:option9">
+            <value>Bank</value>
+          </text>
+          <text id="/data/amenity:option10">
+            <value>Hospital</value>
+          </text>
+          <text id="/data/amenity:option11">
+            <value>Internet Cafe</value>
+          </text>
+        </translation>
+      </itext>
+      <bind nodeset="/data/meta/instanceID" type="string" readonly="true()" calculate="concat('uuid:', uuid())"/>
+      <bind nodeset="/data/name" type="string"/>
+      <bind nodeset="/data/location" type="geopoint"/>
+      <bind nodeset="/data/amenity" type="select1"/>
+    </model>
+  </h:head>
+  <h:body>
+    <input ref="/data/name">
+      <label ref="jr:itext('/data/name:label')"/>
+    </input>
+    <input ref="/data/location">
+      <label ref="jr:itext('/data/location:label')"/>
+    </input>
+    <select1 ref="/data/amenity">
+      <label ref="jr:itext('/data/amenity:label')"/>
+      <item>
+        <label ref="jr:itext('/data/amenity:option0')"/>
+        <value>parking</value>
+      </item>
+      <item>
+        <label ref="jr:itext('/data/amenity:option1')"/>
+        <value>trailhead</value>
+      </item>
+      <item>
+        <label ref="jr:itext('/data/amenity:option2')"/>
+        <value>fire_station</value>
+      </item>
+      <item>
+        <label ref="jr:itext('/data/amenity:option3')"/>
+        <value>bar</value>
+      </item>
+      <item>
+        <label ref="jr:itext('/data/amenity:option4')"/>
+        <value>cafe</value>
+      </item>
+      <item>
+        <label ref="jr:itext('/data/amenity:option5')"/>
+        <value>pub</value>
+      </item>
+      <item>
+        <label ref="jr:itext('/data/amenity:option6')"/>
+        <value>Restaurant</value>
+      </item>
+      <item>
+        <label ref="jr:itext('/data/amenity:option7')"/>
+        <value>school</value>
+      </item>
+      <item>
+        <label ref="jr:itext('/data/amenity:option8')"/>
+        <value>taxi</value>
+      </item>
+      <item>
+        <label ref="jr:itext('/data/amenity:option9')"/>
+        <value>bank</value>
+      </item>
+      <item>
+        <label ref="jr:itext('/data/amenity:option10')"/>
+        <value>hospital</value>
+      </item>
+      <item>
+        <label ref="jr:itext('/data/amenity:option11')"/>
+        <value>internet_cafe</value>
+      </item>
+    </select1>
+  </h:body>
+</h:html>

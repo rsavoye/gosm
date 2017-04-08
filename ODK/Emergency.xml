@@ -1,0 +1,73 @@
+<h:html xmlns="http://www.w3.org/2002/xforms" xmlns:h="http://www.w3.org/1999/xhtml" xmlns:ev="http://www.w3.org/2001/xml-events" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:jr="http://openrosa.org/javarosa">
+  <h:head><!-- ODK Aggregate upload time: 2017-04-08T13:35:03.043+0000 on http://tcwgrob:8080/ODKAggregate -->
+    <h:title>Emergency</h:title>
+    <model>
+      <instance>
+        <data id="build_Emergency_1491657731">
+          <meta>
+            <instanceID/>
+          </meta>
+          <name/>
+          <coordinates/>
+          <emergency/>
+        </data>
+      </instance>
+      <itext>
+        <translation lang="eng">
+          <text id="/data/name:label">
+            <value>Name</value>
+          </text>
+          <text id="/data/coordinates:label">
+            <value>Location</value>
+          </text>
+          <text id="/data/emergency:label">
+            <value>Emergency</value>
+          </text>
+          <text id="/data/emergency:option0">
+            <value>Water Tank</value>
+          </text>
+          <text id="/data/emergency:option1">
+            <value>Fire Hydrant</value>
+          </text>
+          <text id="/data/emergency:option2">
+            <value>Landing Zone</value>
+          </text>
+          <text id="/data/emergency:option3">
+            <value>Drafting Spot</value>
+          </text>
+        </translation>
+      </itext>
+      <bind nodeset="/data/meta/instanceID" type="string" readonly="true()" calculate="concat('uuid:', uuid())"/>
+      <bind nodeset="/data/name" type="string"/>
+      <bind nodeset="/data/coordinates" type="geopoint"/>
+      <bind nodeset="/data/emergency" type="select1"/>
+    </model>
+  </h:head>
+  <h:body>
+    <input ref="/data/name">
+      <label ref="jr:itext('/data/name:label')"/>
+    </input>
+    <input ref="/data/coordinates">
+      <label ref="jr:itext('/data/coordinates:label')"/>
+    </input>
+    <select1 ref="/data/emergency">
+      <label ref="jr:itext('/data/emergency:label')"/>
+      <item>
+        <label ref="jr:itext('/data/emergency:option0')"/>
+        <value>water_tank</value>
+      </item>
+      <item>
+        <label ref="jr:itext('/data/emergency:option1')"/>
+        <value>fire_hydrant</value>
+      </item>
+      <item>
+        <label ref="jr:itext('/data/emergency:option2')"/>
+        <value>landing_zone</value>
+      </item>
+      <item>
+        <label ref="jr:itext('/data/emergency:option3')"/>
+        <value>suction_point</value>
+      </item>
+    </select1>
+  </h:body>
+</h:html>

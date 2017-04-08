@@ -1,0 +1,153 @@
+<h:html xmlns="http://www.w3.org/2002/xforms" xmlns:h="http://www.w3.org/1999/xhtml" xmlns:ev="http://www.w3.org/2001/xml-events" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:jr="http://openrosa.org/javarosa">
+  <h:head><!-- ODK Aggregate upload time: 2017-04-08T15:14:17.566+0000 on http://tcwgrob:8080/ODKAggregate -->
+    <h:title>Natural Landmark</h:title>
+    <model>
+      <instance>
+        <data id="build_Natural-Landmark_1491664431">
+          <meta>
+            <instanceID/>
+          </meta>
+          <name/>
+          <location/>
+          <waterway/>
+          <natural/>
+          <sport/>
+        </data>
+      </instance>
+      <itext>
+        <translation lang="eng">
+          <text id="/data/name:label">
+            <value>Name</value>
+          </text>
+          <text id="/data/name:hint">
+            <value>Name of this trailhead</value>
+          </text>
+          <text id="/data/location:label">
+            <value>Location</value>
+          </text>
+          <text id="/data/location:hint">
+            <value>Where is this ?</value>
+          </text>
+          <text id="/data/waterway:label">
+            <value>Waterway</value>
+          </text>
+          <text id="/data/waterway:option0">
+            <value>Waterfall</value>
+          </text>
+          <text id="/data/waterway:option1">
+            <value>River</value>
+          </text>
+          <text id="/data/waterway:option2">
+            <value>Stream</value>
+          </text>
+          <text id="/data/natural:label">
+            <value>Natural Landmark</value>
+          </text>
+          <text id="/data/natural:option0">
+            <value>Cliff</value>
+          </text>
+          <text id="/data/natural:option1">
+            <value>Earth Bank</value>
+          </text>
+          <text id="/data/natural:option2">
+            <value>Slope</value>
+          </text>
+          <text id="/data/sport:label">
+            <value>Sport</value>
+          </text>
+          <text id="/data/sport:option0">
+            <value>Climbing</value>
+          </text>
+          <text id="/data/sport:option1">
+            <value>Swimmig</value>
+          </text>
+          <text id="/data/sport:option2">
+            <value>Skiing</value>
+          </text>
+          <text id="/data/sport:option3">
+            <value>Snorkeling</value>
+          </text>
+          <text id="/data/sport:option4">
+            <value>Scuba Diving</value>
+          </text>
+          <text id="/data/sport:option5">
+            <value>Equestrian</value>
+          </text>
+        </translation>
+      </itext>
+      <bind nodeset="/data/meta/instanceID" type="string" readonly="true()" calculate="concat('uuid:', uuid())"/>
+      <bind nodeset="/data/name" type="string"/>
+      <bind nodeset="/data/location" type="geopoint"/>
+      <bind nodeset="/data/waterway" type="select1"/>
+      <bind nodeset="/data/natural" type="select1"/>
+      <bind nodeset="/data/sport" type="select"/>
+    </model>
+  </h:head>
+  <h:body>
+    <input ref="/data/name">
+      <label ref="jr:itext('/data/name:label')"/>
+      <hint ref="jr:itext('/data/name:hint')"/>
+    </input>
+    <input ref="/data/location">
+      <label ref="jr:itext('/data/location:label')"/>
+      <hint ref="jr:itext('/data/location:hint')"/>
+    </input>
+    <select1 ref="/data/waterway">
+      <label ref="jr:itext('/data/waterway:label')"/>
+      <item>
+        <label ref="jr:itext('/data/waterway:option0')"/>
+        <value>waterfall</value>
+      </item>
+      <item>
+        <label ref="jr:itext('/data/waterway:option1')"/>
+        <value>river</value>
+      </item>
+      <item>
+        <label ref="jr:itext('/data/waterway:option2')"/>
+        <value>stream</value>
+      </item>
+    </select1>
+    <select1 ref="/data/natural">
+      <label ref="jr:itext('/data/natural:label')"/>
+      <item>
+        <label ref="jr:itext('/data/natural:option0')"/>
+        <value>cliff</value>
+      </item>
+      <item>
+        <label ref="jr:itext('/data/natural:option1')"/>
+        <value>earth_bank</value>
+      </item>
+      <item>
+        <label ref="jr:itext('/data/natural:option2')"/>
+        <value>slope</value>
+      </item>
+    </select1>
+    <select ref="/data/sport">
+      <label ref="jr:itext('/data/sport:label')"/>
+      <item>
+        <label ref="jr:itext('/data/sport:option0')"/>
+        <value>climbing</value>
+      </item>
+      <item>
+        <label ref="jr:itext('/data/sport:option1')"/>
+        <value>swimming</value>
+      </item>
+      <item>
+        <label ref="jr:itext('/data/sport:option2')"/>
+        <value>skiing</value>
+      </item>
+      <item>
+        <label ref="jr:itext('/data/sport:option3')"/>
+        <value>diving</value>
+      </item>
+      <item>
+        <label ref="jr:itext('/data/sport:option4')"/>
+        <value>scuba_diving</value>
+      </item>
+      <item>
+        <label ref="jr:itext('/data/sport:option5')"/>
+        <value>euuestrian</value>
+      </item>
+    </select>
+  </h:body>
+</h:html>
