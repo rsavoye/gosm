@@ -124,6 +124,9 @@ for dir in odkdirs:
                         outfile.write('"latitude","longitude","altitude","accuracy",')
                         continue
                         
+                    if field == 'meta':
+                        continue
+
                     outfile.write('"' + field + '",')
                 # Drop the trailing comma and add a newline to finish this entry
                 outfile.truncate(outfile.tell() - 1)
@@ -135,7 +138,7 @@ for dir in odkdirs:
                     for item in gps:
                         outfile.write('"' + item + '",')
                     continue
-                    #import pdb; pdb.set_trace()
+                #import pdb; pdb.set_trace()
                 if type(doc['data'][field]) is str:
                     print(field + ": " + doc['data'][field])
                     outfile.write('"' + doc['data'][field] + '",')
