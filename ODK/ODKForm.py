@@ -25,132 +25,6 @@
 # for highways. Different types and surfaces have tags signifying what type
 # it is.
 
-
-import os
-from lxml import etree
-
-
-class ODKForm(object):
-    """Support for parsing an XLS Form"""
-    def __init__(self):
-        print("Do Nothing")
-
-    def parse(self, file):
-        print("Do Nothing")
-        doc = etree.parse(file)
-
-        head = list()
-        body = list()
-        base = ""
-        title = ""
-        nodesets = list()
-        for docit in doc.getiterator():
-            if base == "":
-                base = docit.base
-                print("BAR: %r" % (docit.tag))
-            if docit.prefix == 'h':
-                index = docit.tag.find('}') + 1
-                if docit.tag[index:] == 'title':
-                    title = docit.text
-                    # Process the header
-                elif docit.tag[index:] == 'head':
-                    for elit in docit.getiterator():
-                        index = elit.tag.find('}') + 1
-                        if elit.tag[index:] == 'text':
-                            print("HEADY: %r" % elit)
-                            if elit.attrib != "":
-                                attr = dict(elit.attrib)
-                                print("HEAD: %r" % (attr['id']))
-                                head.append(attr['id'])
-
-                # Process the body
-                elif docit.tag[index:] == 'body':
-                    for elit in docit.getiterator():
-                        print("BODY: %r %r" % (elit.tag, elit.text))
-                        for ref,datatype in elit.items():
-                            print("\tFOOBAR: %r , %r" % (ref, datatype))
-                            if datatype == '/data/text':
-                                print("TEXT")
-                                import pdb; pdb.set_trace()
-                                #value = l
-                            elif datatype == '/data/numeric':
-                                print("NUMBERIC")
-                                #value = l
-                            elif datatype == '/data/timestamp':
-                                print("TIMESTAMP")
-                                #value = l
-                            elif datatype == '/data/time':
-                                print("TIME")
-                                #value = l
-                            elif datatype[:12] == '/data/select':
-                                count = datatype[15:]
-                                print("SELECT %r" % count)
-                                for select in elit.getiterator():
-                                    if type(select.text) == str:
-                                        if select.text[0] != '\n':
-                                            print("\tSELECT: %r" % (select.text))
-                                            #import pdb; pdb.set_trace()
-                                            #value = l
-                            elif datatype[:12] == '/data/choice':
-                                count = datatype[13:]
-                                print("CHOICE %r" % count)
-                                for choice in elit.getiterator():
-                                    if type(choice.text) == str:
-                                        if choice.text[0] != '\n':
-                                            print("\tCHOICE: %r" % (choice.text))
-                                            #import pdb; pdb.set_trace()
-                                            #value = l
-                            elif datatype == '/data/location':
-                                print("LOCATION")
-                                #value = l
-                            elif datatype == '/data/group':
-                                print("GROUP")
-                                #value = l
-
-            index = docit.tag.find('}') + 1
-            if docit.tag[index:] == 'bind':
-                #import pdb; pdb.set_trace()
-                node = dict(docit.attrib)
-                print("YES: %r" % node)
-                nodesets.append(node)
-
-        xmlfile = dict()
-        xmlfile['head'] = head
-        xmlfile['body'] = body
-        xmlfile['base'] = base
-        xmlfile['nodesets'] = nodesets
-
-        # print("HEAD: %r" % xmlfile['head'])
-
-        return xmlfile
-
-#
-# End of Class definitions
-#
-
-file = open("/work/Mapping/ODK/Test.xml")
-odkform = ODKForm()
-xmlfile = odkform.parse(file)
-print("HEAD: %r" % xmlfile['head'])
-print("BODY: %r" % xmlfile['body'])
-print("BASE: %r" % xmlfile['base'])
-# print("NODESETS: %r" % nodesets[2]['type'])
-
-quit()
-
-for i in doc.getiterator():
-    if i.prefix == 'h':
-        index = i.tag.find('}') + 1
-        print("FOO: %r %r %r" % (i.attrib, i.tag[index:], i.text))
-
-    if i.attrib == '/data/name:label':
-        print("LABEL: %r" % i.attrib)
-    if i.attrib == '/data/name:hint':
-        print("HINT: %r" % i.attrib)
-    if type(i.tag) == str:
-        index = i.tag.find('}') + 1
-        print("2: %r %r" % (i.tag[index:], i.text))
-
 # The ElementTree class has these fields:
 # .attrib       - A dictionary containing the element's
 #                 attributes. The keys are the attribute names, and
@@ -169,9 +43,115 @@ for i in doc.getiterator():
 # .text         - The text inside the element, up to the start tag of
 #                 the first child element. If there was no text there,
 #                 this attribute will have the value None.
-print(doc)
-try:
-    el = doc.find('model')
-    print(el)
-except:
-    print("Failed")
+
+import os
+from lxml import etree
+
+
+class ODKForm(object):
+    """Support for parsing an XLS Form"""
+    def __init__(self):
+        pass
+
+    def parse(self, file):
+        doc = etree.parse(file)
+
+        head = list()
+        body = dict()
+        fields = list()
+        base = ""
+        title = ""
+        nodesets = dict()
+        for docit in doc.getiterator():
+            if base == "":
+                base = docit.base
+                #print("BAR: %r" % (docit.tag))
+            if docit.prefix == 'h':
+                index = docit.tag.find('}') + 1
+                if docit.tag[index:] == 'title':
+                    title = docit.text
+                    # Process the header
+                elif docit.tag[index:] == 'head':
+                    for elit in docit.getiterator():
+                        index = elit.tag.find('}') + 1
+                        if elit.tag[index:] == 'text':
+                            #print("HEADY: %r" % elit)
+                            if elit.attrib != "":
+                                attr = dict(elit.attrib)
+                                #print("HEAD: %r" % (attr['id']))
+                                id = attr['id']
+                                head.append(id)
+                                index = id.find(':')
+                                field = id[6:index]
+                                index = index + 1
+                                opt = id[index:]
+                                # print("FIELD %r %r" % (field, opt))
+                                if opt == 'label':
+                                    item = (field, opt)
+                                    fields.append(item)
+                    #print("FIELDS1: %r" % fields)
+                # Process the body
+                elif docit.tag[index:] == 'body':
+                    for elit in docit.getiterator():
+                        # print("BODY TEXT: %r %r" % (elit.tag, elit.text))
+                        for ref,datatype in elit.items():
+                            dtype = datatype[6:]
+                            # print("\tFOOBAR: %r , %r" % (ref, dtype))
+                            options = list()
+                            for select in elit.getiterator():
+                                if type(select.text) == str:
+                                    if select.text[0] != '\n':
+                                        # print("\tSELECT BODY: %r" % (select.text))
+                                        options.append(select.text)
+                                        #import pdb; pdb.set_trace()
+                                #value = l
+                                #body[dtype] = options
+                            if len(options) > 0:
+                                body[dtype] = options
+
+            index = docit.tag.find('}') + 1
+            if docit.tag[index:] == 'bind':
+                # import pdb; pdb.set_trace()
+                btype = docit.attrib['type']
+                bname = docit.attrib['nodeset'].replace("/data/","")
+                nodesets[bname] = btype
+
+        self.xmlfile = dict()
+        self.xmlfile['fields'] = fields
+        self.xmlfile['head'] = head
+        self.xmlfile['body'] = body
+        self.xmlfile['base'] = base
+        self.xmlfile['nodesets'] = nodesets
+        # print("HEAD: %r" % xmlfile['head'])
+        #data = self.join(fields)
+        #print("DATA: %r" % data)
+        #for xxx,kkk in data.items():
+        #    print("DATA: %r %r" % (xxx, kkk))
+        #    for iii in kkk:
+        #        print("DATA2: %r" % iii)
+        #    #import pdb; pdb.set_trace()
+
+        return self.xmlfile
+
+    def getNodeType(self, name):
+        nodesets = self.xmlfile['nodesets']
+        try:
+            node = nodesets[name]
+        except:
+            node  = ""
+        return node
+
+#
+# End of Class definitions
+#
+
+# file = open("/work/Mapping/ODK/Test.xml")
+# odkform = ODKForm()
+# xmlfile = odkform.parse(file)
+# print("HEAD: %r" % xmlfile['head'])
+# print("BODY: %r" % xmlfile['body'])
+# print("BASE: %r" % xmlfile['base'])
+# print("FIELDS: %r" % xmlfile['fields'])
+# print("NODESETS: %r" % xmlfile['nodesets'])
+# print(odkform.getNodeType('name'))
+
