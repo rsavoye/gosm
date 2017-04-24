@@ -40,7 +40,7 @@ kml_file_header ()
     <open>1</open>
 EOF
     
-    cat ${topdir}/styles.xml >> ${outfile}
+    cat ${topdir}/styles.kml >> ${outfile}
 
     return 0
 }
