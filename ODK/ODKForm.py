@@ -73,7 +73,10 @@ class ODKForm(object):
                     # Process the header
                 elif docit.tag[index:] == 'head':
                     for elit in docit.getiterator():
-                        index = elit.tag.find('}') + 1
+                        try:
+                            index = elit.tag.find('}') + 1
+                        except:
+                            continue
                         if elit.tag[index:] == 'text':
                             #print("HEADY: %r" % elit)
                             if elit.attrib != "":
@@ -109,7 +112,10 @@ class ODKForm(object):
                             if len(options) > 0:
                                 body[dtype] = options
 
-            index = docit.tag.find('}') + 1
+            try:
+                index = docit.tag.find('}') + 1
+            except:
+                continue
             if docit.tag[index:] == 'bind':
                 # import pdb; pdb.set_trace()
                 btype = docit.attrib['type']

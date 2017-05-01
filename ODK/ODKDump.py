@@ -30,7 +30,14 @@ import xmltodict
 import getopt
 import os
 import odk
+import ODKForm
 
+def find_all(name, path):
+    result = []
+    for root, dirs, files in os.walk(path):
+        if name in files:
+            result.append(os.path.join(root, name))
+    return result
 
 class config(object):
     """Config data for this program."""
@@ -41,8 +48,8 @@ class config(object):
         # Default values for user options
         self.options = dict()
         self.options['format'] = "csv"
-        self.options['indir'] = "/tmp/odk/instances"
-        self.options['outdir'] = "/tmp/odk"
+        self.options['indir'] = os.getcwd()
+        self.options['outdir'] = os.getcwd()
 
         # Process the command line arguments
         # default values
@@ -93,14 +100,48 @@ args = config(argv)
 topdir = args.get('indir')
 # outfile = open(args.get('outfile'), 'w')
 
+#file = open("/work/Mapping/ODK/Test.xml")
+#odkform = ODKForm.ODKForm()
+#xmlfile = odkform.parse(file)
+## print("HEAD: %r" % xmlfile['head'])
+#print("BODY: %r" % xmlfile['body'])
+#print("BASE: %r" % xmlfile['base'])
+#print("FIELDS: %r" % xmlfile['fields'])
+#print("NODESETS: %r" % xmlfile['nodesets'])
+
+formdir = topdir + '/forms'
+try:
+    odkdirs = os.listdir(formdir)
+except:
+    print("ERROR: %s doesn't exist!" % formdir)
+    quit()
+
+forms = dict()
+odkform = ODKForm.ODKForm()
+for file in odkdirs:
+    try:
+        fullfile = topdir + '/forms/' + file
+        handle = open(fullfile)
+        print("Opened %s" % fullfile)
+    except:
+        print("ERROR: Can't open %s" % fullfile)
+
+    name = file.replace(".xml","")
+    xmlfile = odkform.parse(handle)
+    forms[name] = xmlfile
+
 current = ""
 outfile = ""
 outdir = args.get('outdir')
-print("Traversing " + topdir + " recursively...")
-odkdirs = os.listdir(topdir)
+fullpath = topdir + '/instances'
+print("Traversing " + fullpath + " recursively...")
+odkdirs = os.listdir(fullpath)
 list.sort(odkdirs)
 for dir in odkdirs:
-    instance = os.listdir(topdir + '/' + dir)
+    if os.path.isfile(dir):
+        continue
+    #import pdb; pdb.set_trace()
+    instance = os.listdir(fullpath + '/' + dir)
     for inst in instance:
         print("Opening XML file " + inst)
         index = inst.find('_')
@@ -109,7 +150,7 @@ for dir in odkdirs:
             current = form
             outfile = open(outdir + '/' + form + ".csv", 'w')
 
-        with open(topdir + '/' + dir + '/' + inst, 'rb') as file:
+        with open(fullpath + '/' + dir + '/' + inst, 'rb') as file:
             xml = file.read(10000)
 #            print(xml)
             doc = xmltodict.parse(xml)
@@ -118,31 +159,59 @@ for dir in odkdirs:
             # same version of the XLSform.
             if outfile.tell() == 0:
                 for field in doc['data']:
-                    # A Location field contains multiple internal fields,
-                    # latitude, longitude, altitude, accuracy
-                    if field == 'location' or field == 'coordinates':
+                    if field == 'meta' or field == '@id':
+                        continue
+                    fval = forms[form]
+                    nodesets = fval['nodesets']
+                    # Get the type of this nodeset
+                    try:
+                        ftype = nodesets[field]
+                    except:
+                        ftype = 'string'
+                    # A Some field types contains multiple internal fields,
+                    # Location - latitude, longitude, altitude, accuracy
+                    if ftype == 'geopoint':
                         outfile.write('"latitude","longitude","altitude","accuracy",')
                         continue
+                    elif ftype == 'string': 
+                        outfile.write('"' + field + '",')
                         
-                    if field == 'meta':
-                        continue
-
-                    outfile.write('"' + field + '",')
                 # Drop the trailing comma and add a newline to finish this entry
                 outfile.truncate(outfile.tell() - 1)
                 outfile.write('\n')
 
             for field in doc['data']:
-                if field == 'location' or field == 'coordinates':
+                if field == 'meta' or field == '@id':
+                    continue
+                fval = forms[form]
+                nodesets = fval['nodesets']
+                # Get the type of this nodeset
+                try:
+                    ftype = nodesets[field]
+                except:
+                    ftype = 'string'
+ 
+                if ftype == 'geopoint':
                     gps = doc['data'][field].split(' ')
                     for item in gps:
                         outfile.write('"' + item + '",')
                     continue
-                #import pdb; pdb.set_trace()
-                if type(doc['data'][field]) is str:
-                    print(field + ": " + doc['data'][field])
-                    outfile.write('"' + doc['data'][field] + '",')
+                elif ftype == 'string':
+                    if str(doc['data'][field]) == 'None':
+                        outfile.write(',,')
+                    else:
+                        outfile.write('"' + str(doc['data'][field]) + '",')
+                # Numeric - 
+                #elif ftype == 'int':
+                # Date -
+                #elif ftype == 'date':
+                # Time -
+                #elif ftype == 'time':
 
+            # Terminate the line in the output file.
             outfile.truncate(outfile.tell() - 1)
             outfile.write('\n')
 
+
+print("Input files in directory: %s/{forms,instances}" % args.get('indir'))
+print("Output files in directory: %s" % outdir)
