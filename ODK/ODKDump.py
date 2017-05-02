@@ -173,11 +173,12 @@ for dir in odkdirs:
                     if ftype == 'geopoint':
                         outfile.write('"latitude","longitude","altitude","accuracy",')
                         continue
-                    elif ftype == 'string': 
+                    # elif ftype == 'string':
+                    else:
                         outfile.write('"' + field + '",')
                         
                 # Drop the trailing comma and add a newline to finish this entry
-                outfile.truncate(outfile.tell() - 1)
+                outfile.seek(outfile.tell() - 1)
                 outfile.write('\n')
 
             for field in doc['data']:
@@ -190,18 +191,20 @@ for dir in odkdirs:
                     ftype = nodesets[field]
                 except:
                     ftype = 'string'
- 
+
+                comma = ''
                 if ftype == 'geopoint':
                     gps = doc['data'][field].split(' ')
                     for item in gps:
                         outfile.write('"' + item + '",')
                     continue
-                elif ftype == 'string':
+                #elif ftype == 'string':
+                else:
                     if str(doc['data'][field]) == 'None':
-                        outfile.write(',,')
+                        outfile.write(comma + '"",')
                     else:
                         outfile.write('"' + str(doc['data'][field]) + '",')
-                # Numeric - 
+                # Numeric -
                 #elif ftype == 'int':
                 # Date -
                 #elif ftype == 'date':
@@ -209,9 +212,9 @@ for dir in odkdirs:
                 #elif ftype == 'time':
 
             # Terminate the line in the output file.
-            outfile.truncate(outfile.tell() - 1)
-            outfile.write('\n')
-
+            outfile.seek(outfile.tell() - 1)
+            outfile.write("\n")
+-
 
 print("Input files in directory: %s/{forms,instances}" % args.get('indir'))
 print("Output files in directory: %s" % outdir)
