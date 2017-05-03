@@ -5,10 +5,12 @@
 # sac_scale
 #
 # OSM tags
-tag,TrailID,traild
+tag,TrailID,trailid
 tag,SystemName,systemname
-tag,Status,status
-tag,Designated,designated
+# tag,Status,status
+tag,Status,Ignore
+# tag,Designated,designated
+tag,Designated,Ignore
 tag,MotorizedP,motorizedp
 tag,PrimaryMai,primarymail
 tag,TrailClass,trailclass
@@ -16,20 +18,27 @@ tag,TransNetwo,transnetwork
 tag,ADAAccessi,adaaccess
 tag,BikeDiffic,mtb:scale:imba
 tag,HikeDiffic,sac_scale
-tag,RoadConcur,roadconcur
+# tag,RoadConcur,roadconcur
+tag,RoadConcur,Ignore
 tag,InfoURL,infourl
-tag,Comments,comments
-tag,TagsSource,tagssource
+# tag,Comments,comments
+tag,Comments,Ignore
+# tag,TagsSource,tagssource
+tag,TagsSource,Ignore
 tag,LastUpdate,lastupdate
-tag,CartoCode,cartocode
+# tag,CartoCode,cartocode
+tag,CartoCode,Ignore
 tag,SHAPE_Leng,leng
+tag,TrailheadI,trailhead_id
 # OSM fields
 column,PrimaryNam,name
 column,Descriptio,description
 #Descriptio,highway
-column,SurfaceTyp,surface
+# column,SurfaceTyp,surface
+column,SurfaceTyp,Ignore
 column,OtherRestr,access
-column,DataSource,source
+# column,DataSource,source
+column,DataSource,Ignore
 # Attributes for the surface column
 #attribute,surface,unpaved
 #attribute,surface,dirt
@@ -56,3 +65,12 @@ attribute,sac_scale,DIFFICULT,demanding_mountain_hiking
 attribute,sac_scale,EXTREME,alpine_hiking
 
 #attribute,highway,path','footway','tertiary','service','gravel','road','residential','secondary','primary|','trunk','motorway_link','trunk_link','secondary_link','teriary_link','track')
+# There are more fields in the Shapefile than we want in OSM.
+#ignore:Status
+#ignore:Designated
+#ignore:RoadConcur
+#ignore:InfoURL
+#ignore:Comments
+#ignore:LastUpdate
+#ignore:CartoCode
+#ignore:SHAPE_Leng
