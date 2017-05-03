@@ -57,7 +57,7 @@ class config(object):
             self.usage(argv)
             
         # Read the config file to get our OSM credentials, if we have any
-        file = "/home/rob/.gosmrc"
+        file = os.getenv('HOME') + "/.gosmrc"
         try:
             gosmfile = open(file, 'r')
         except:
