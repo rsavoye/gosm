@@ -29,14 +29,14 @@
 # cwd = os.getcwd()
 # sys.path.append(cwd + '/../subdirA/')
 
+import os
+import sys
 from sys import argv
-# import shapefile
-# import ogr
+sys.path.append(os.path.dirname(argv[0]) + '/osmpylib')
+
 import gosm
 import osm
-import kml
 import shp
-import csv
 
 # file="/home/rob/.gosmrc"
 # if __name__ == '__main__':
@@ -79,6 +79,7 @@ elif dd.get('format') == "osm":
     osm = osm.osmfile(dd)
     osm.open(osmfile, shp)
     shp.makeOSM(osm)
+    print("Output file: %r" % osmfile)
 
 # Write CSV file
 elif dd.get('format') == "csv":
@@ -89,4 +90,5 @@ elif dd.get('format') == "csv":
     csv = csv.osmfile(dd)
     csv.open(csvfile, shp)
     shp.makeCSV(csv)
+    print("Output file: %r" % csvfile)
 
