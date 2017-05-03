@@ -109,6 +109,11 @@ class osmfile(gosm.verbose):
         except:
             newtag = "MISSING: " + field
 
+        # Some fields we ignore, so we don't pollute OSM with lots of meaningless
+        # data.
+        if newtag == 'Ignore':
+            return tags
+
         if newval.find('BIKE') >= 0:
             newtag = 'bicycle'
             newval = 'yes'

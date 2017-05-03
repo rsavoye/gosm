@@ -83,16 +83,8 @@ class shpfile(gosm.verbose):
         gosm.verbose.__init__(self, options)
         
     def open(self, file):
-        # self.shp="/work/Mapping/Utah/ArchaeologySites/ArchaeologySites.shp"
-        # sf = shapefile.Reader("/work/Mapping/Utah/Trailheads/Trailheads.shp")
         self.shp = open(file, "rb")
         self.debug("Opened inut file: %s" % file)
-        # index = file.find('.')
-        # base = file[:index]
-        # shp = open(base + ".shp", "r")
-        # dbf = open(base + ".dbf", "r")
-#        print (shp)
-#        print (dbf)
         self.sf = shapefile.Reader(file)
 #        self.sf = shapefile.Reader(shp=shp, dbf=dbf)
         self.fields = self.sf.fields
@@ -123,10 +115,6 @@ class shpfile(gosm.verbose):
                     print(" '%r' " % str(record))
                     continue
             silly.write("\n")
-#            print("FOOBY: %r %r" % (k, self.options['limit']))
-#            if k >= self.options['limit'] and self.options['limit'] != 0:
-#                break
-#            k = k + 1
 
         return
 
