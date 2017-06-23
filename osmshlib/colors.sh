@@ -39,37 +39,48 @@ colors[LIGHTBLUE]="${opacity}e6d8ad"
 colors[DARKGREEN]="${opacity}008000"
 colors[GRAY]="${opacity}888888"
 
-road_colors()
+# $1 - The Highway type
+# $2 - The surface type
+# $3 - Access
+roads_color()
 {
-    if test x"${debug}" = x"yes"; then
-	echo "ski_color ($*)*" >> /tmp/debug.log
-    fi
-    # For highway surface typesq
-    case ${node[highway]} in
+    local highway="$1"
+    local surface="$2"
+    local access="$3"
+    local color="GRAY"
+
+    # For highway surface types
+    case ${highway} in
 	tertiary|service|gravel) # (like Upper Moon)
-	    color="${color:-BLUE}"
+	    color="BLUE"
 	    ;;
 	unclassified) # (like Rollins Pass)
-	    color="${color:-BLACK}"
+	    color="BLACK"
 	    ;;
 	road|residential|secondary|primary|trunk|motorway_link|trunk_link|secondary_link|teriary_link)
-	    color="${color:-GREEN}"
+	    color="GREEN"
 	    ;;
-	path|footway|surface)
-	    color="${color:-YELLOW}"
-	    ;;
-	cycleway|bridleway|track)
-	    color="${color:-YELLOW}"
+	# Track colors usually get changed based on the surface type.
+	track)
+	    color="YELLOW"
 	    ;;
 	*)
-	    color="${color:-RED}"
 #	    echo "WARNING: unknown highway surface"
 	    ;;
     esac
-#    case ${node[surface]} in
-#	unpaved|asphalt|concrete|dirt|earth|grass|gravel_turf|fine_gravel|gravel|mud|ice) color="${color:-ORANGE}" ;;
-#	*) ;;
-#    esac
+
+    # These road surfaces are potentially bad, flag them
+    case ${surface} in
+	unpaved|dirt|earth|grass|*gravel*|mud|ice|ground|unpaved) color="ORANGE" ;;
+#	unpaved|asphalt|concrete|dirt|earth|grass|gravel_turf|fine_gravel|gravel|mud|ice) color="ORANGE" ;;
+	*) ;;
+    esac
+
+    case ${access} in
+	private|no|forestry|discouraged) color="RED" ;;
+#	public|yes|permissive) color="" ;;
+	*) ;;
+    esac
 
     echo ${color}
 

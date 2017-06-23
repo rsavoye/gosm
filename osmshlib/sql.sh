@@ -63,14 +63,14 @@ sql_file ()
 #EOF
 #		else
 	    cat <<EOF >> ${sqlout}
-SELECT line.osm_id,line.name,ST_AsKML(line.way),line.tags->'sac_scale',line.tags->'bicycle',line.tags->'mtb:scale:imba',line.access FROM planet_osm_line AS line WHERE line.highway='footway' OR line.highway = 'path';
+SELECT line.osm_id,line.name,ST_AsKML(line.way),line.tags->'sac_scale',line.tags->'bicycle',line.tags->'mtb:scale:imba',line.access FROM planet_osm_line AS line WHERE line.highway='footway' OR line.highway = 'path' OR line.highway = 'cycleway';
 EOF
 #		fi
 #		cat <<EOF >> ${sqlout}
 #SELECT planet_osm_line.osm_id,planet_osm_line.name,planet_osm_line.tags->'sac_scale',planet_osm_line.tags->'bicycle',planet_osm_line.tags->'mtb:scale:imba',planet_osm_line.access,ST_AsKML(planet_osm_line.way) FROM planet_osm_line,planet_osm_polygon WHERE ((planet_osm_line.highway = 'footway' OR planet_osm_line.highway = 'path') AND planet_osm_line.tags?'piste:type' != 't') ${polysql};
 #EOF
 	    ;;
-	piste)
+	piste*)
 	    cat <<EOF >> ${sqlout}
 SELECT line.osm_id,line.name,ST_AsKML(line.way),line.tags->'piste:type',line.tags->'piste:difficulty',line.tags->'piste:grooming',line.aerialway,line.access FROM planet_osm_line AS line WHERE line.tags?'piste:type' = 't' OR line.aerialway = 'chair_lift';
 EOF
@@ -81,11 +81,11 @@ EOF
 	    ;;
 	trailhead)
 	    cat <<EOF >> ${sqlout}
-SELECT osm_id,name,ST_AsKML(way) from planet_osm_point WHERE amenity='parking' AND name LIKE '%Trailhead';
+SELECT osm_id,name,ST_AsKML(way) from planet_osm_point WHERE (amenity='parking' OR type='trailhead' OR leisure='trailhead' OR amenity='trailhead') AND name LIKE '%Trailhead';
 SELECT osm_id,name,ST_AsKML(way) from planet_osm_polygon WHERE amenity='parking' AND name LIKE '%Trailhead';
 EOF
 	    ;;
-	camp)
+	camp*)
 	    cat <<EOF >> ${sqlout}
 SELECT osm_id,name,ST_AsKML(way),tags->'fee',tags->'toilets',tags->'website',tags->'operator',tags->'sites',amenity from planet_osm_point WHERE tourism='camp_site' OR amenity='campground';
 EOF
@@ -110,7 +110,7 @@ EOF
 SELECT osm_id,name,ST_AsKML(way) from planet_osm_point WHERE tags->'internet_access'='wlan';
 EOF
 	    ;;
-	waterfall)
+	waterfall*)
 	    cat <<EOF >> ${sqlout}
 SELECT osm_id,name,ST_AsKML(way),tags->'name.en',tags->'description' from planet_osm_point WHERE waterway='waterfall';
 EOF
@@ -120,7 +120,7 @@ EOF
 SELECT osm_id,name,ST_AsKML(way),name.en,description from planet_osm_point WHERE tags->'sport'='swimming' AND tags->'amenity'!='swimming_pool' ${polysql};
 EOF
 	    ;;
-	huts)
+	hut*)
 	    cat <<EOF >> ${sqlout}
 SELECT osm_id,name,ST_AsKML(way),tourism,tags->'phone',tags->'email',tags->'website',tags->'addr:street',tags->'addr:housenumber' from planet_osm_point WHERE tourism='wilderness_hut' OR tourism='alpine_hut' ${polysql};
 EOF
@@ -135,9 +135,9 @@ EOF
 SELECT osm_id,name,ST_AsKML(way),tourism,tags->'phone',tags->'email',tags->'website',tags->'addr:street',tags->'addr:housenumber' from planet_osm_point WHERE tourism='hotel' OR tourism='hostel' OR tourism='guest_house' ${polysql};
 EOF
 	    ;;
-	roads)
+	road*)
 	    cat <<EOF >> ${sqlout}
-SELECT osm_id,name,ST_AsKML(way),highway from planet_osm_line WHERE highway='secondary' OR highway='tertiary' OR highway='unclassified' OR highway='residential' OR highway='service' OR planet_osm_line.highway='track';
+SELECT line.osm_id,line.name,ST_AsKML(line.way),line.highway,line.surface,line.access from planet_osm_line AS line WHERE (line.highway!='') AND (line.highway!='path' OR line.highway!='footway' OR line.highway!='cycleway');
 EOF
 	    ;;
 	*)

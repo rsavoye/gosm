@@ -76,12 +76,16 @@ class osmfile(gosm.verbose):
         #        timestamp = ""  # LastUpdate
         timestamp = time.strftime("%Y-%m-%dT%TZ")
         self.file.write("    <node id='" + str(self.osmid) + "\' visible='true'")
+        self.file.write(" version='1'")
         self.file.write(" timestamp='" + timestamp + "\'")
-        self.file.write(" user='" + self.options.get('user') + "' uid='" + str(self.options.get('uid')) + "'")
+        self.file.write(" uid='" + str(self.options.get('uid')) + "'")
+        self.file.write(" user='" + self.options.get('user') + "'")
         self.file.write(" lat='" + str(lat) + "\'" + " lon='" + str(lon) + "'>\n")
-        for name, value in tags.items():
-            if str(value)[0] != 'b':
-                self.file.write("        <tag k='" + name + "' v='" + str(value) + "' />\n")
+# Don't add tags to nodes for now
+#        for name, value in tags.items():
+#            if str(value)[0] != 'b':
+#                self.file.write("        <tag k='" + name + "' v='" + str(value) + "' />\n")
+
 # FIXME: Add as a default ?
 #        self.file.write("<tag k='created_by' v='Gosm 0.1'/>\n")
 #        self.file.write("<tag k='name' v='" + name + "'/>\n")
@@ -160,6 +164,7 @@ class osmfile(gosm.verbose):
         self.file.write("    <way id='" + str(self.osmid) +
                         "\' visible='true'")
         timestamp = time.strftime("%Y-%m-%dT%TZ")
+        self.file.write(" version='1'")
         self.file.write(" timestamp='" + timestamp + "\'")
         self.file.write(" user='" + self.options.get('user') + "' uid='" +
                         str(self.options.get('uid')) + "'>'\n")

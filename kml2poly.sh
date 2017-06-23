@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # 
-#   Copyright (C) 2016
+#   Copyright (C) 2016, 2017
 #   Free Software Foundation, Inc.
 # 
 # This program is free software; you can redistribute it and/or modify

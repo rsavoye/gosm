@@ -237,8 +237,11 @@ parse_roads()
 
     data[OSMID]="`echo ${line} | cut -d '|' -f 1`"
     data[NAME]="`echo ${line} | cut -d '|' -f 2`"
-    data[WAY]="`echo ${linestring:12} | cut -d '<' -f 1-3`"
-#    data[COLOR]="`roads_color "${piste_type}" "${piste_difficulty}" "${piste_grooming}" "${aerialway}" "${access}"`"
+    data[WAY]="`echo ${line} | grep -o "<LineString>.*</LineString>" | sed -e 's:<LineString>::' -e 's:</LineString>::'`"
+    data[HIGHWAY]="`echo ${line} | cut -d '|' -f 4`"
+    data[SURFACE]="`echo ${line} | cut -d '|' -f 5`"
+    data[ACCESS]="`echo ${line} | cut -d '|' -f 6`"
+    data[COLOR]="`roads_color "${data[HIGHWAY]}" "${data[SURFACE]}" "${data[ACCESS]}"`"
 
     echo `declare -p data`
     return 0

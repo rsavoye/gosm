@@ -58,7 +58,7 @@ usage()
         --title(-t)    title
         --output(-o)   output file name
 
-    Multiple polygons or data seubets can be specified. The optionsl :name is used
+    Multiple polygons or data subsets can be specified. The optionsl :name is used
     for the Folder name imstead of defaulting to the polygon or database name.
 EOF
     exit
