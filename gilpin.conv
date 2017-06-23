@@ -1,0 +1,41 @@
+# OSM fields
+column,fullname,name
+column,roadclass,highway
+# OSM tags
+tag,munileft,Ignore
+tag,muniright,Ignore
+tag,strtetype,Ignore
+tag,stroute,Ignore
+tag,mtfcc,Ignore
+tag,msagright,Ignore
+tag,ctyroute,Ignore
+tag,TrailID,traild
+tag,SystemName,systemname
+tag,stateright,Ignore
+tag,msagleft,Ignore
+tag,inwater,Ignore
+tag,altname,alt_name
+tag,esnright,Ignore
+tag,shape_Leng,Ignore
+tag,coleft,Ignore
+tag,coright,Ignore
+tag,stateleft,Ignore
+tag,esnleft,Ignore
+tag,zipright,Ignore
+tag,lasteditor,Ignore
+#fullname' v='Kingston Peak Rd' />
+tag,lastupdate,lastupdate
+tag,centerline,Ignore
+tag,zipleft,Ignore
+# Attributes
+attribute,highway,4WD,unclassified
+attribute,highway,Service,service
+attribute,highway,Arterial,road
+attribute,highway,Collector,road
+attribute,highway,Local,road
+attribute,surface,unpaved
+attribute,sac_scale,MINIMAL,hiking
+attribute,sac_scale,EASIER,hiking
+attribute,sac_scale,MODERATE,mountain_hiking
+attribute,sac_scale,DIFFICULT,demanding_mountain_hiking
+attribute,sac_scale,EXTREME,alpine_hiking
