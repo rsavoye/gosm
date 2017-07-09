@@ -54,7 +54,6 @@ class osmfile(object):
 
         # Read the conversion data
         file = self.options.get('convfile')
-        print("FOO: %r" % file)
         if file != False:
             self.ctable = convfile(file)
             self.ctable.read()
