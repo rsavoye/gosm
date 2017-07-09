@@ -23,6 +23,9 @@ import getopt
 import os
 import odk
 import ODKForm
+import osm
+import kml
+import logging
 
 def find_all(name, path):
     result = []
@@ -42,16 +45,17 @@ class config(object):
         self.options['format'] = "csv"
         self.options['indir'] = os.getcwd()
         self.options['outdir'] = os.getcwd()
+        self.options['logging'] = 0
 
         # Process the command line arguments
         # default values
         try:
-            print(argv)
-            (opts, val) = getopt.getopt(argv[1:], "h,o:,i:,f:",
-                ["help", "format=", "outfile", "indir"])
-        except getopt.GetoptError:
-            print('Invalid arguments.')
-            return
+            (opts, val) = getopt.getopt(argv[1:], "h,o:,i:,f:,v",
+                ["help", "format=", "outfile", "indir", "verbose"])
+        except getopt.GetoptError as e:
+            logging.error('%r' % e)
+            self.usage(argv)
+            quit()
             
         for (opt, val) in opts:
             if opt == '--help' or opt == '-h':
@@ -63,6 +67,8 @@ class config(object):
                 self.options['outdir'] = val
             elif opt == "--indir" or opt == '-i':
                 self.options['indir'] = val
+            elif opt == "--verbose" or opt == '-v':
+                self.options['logging'] += 1
                             
     def get(self, opt):
         try:
@@ -77,6 +83,7 @@ class config(object):
 \t--format[-f]  output format [osm, kml, cvs] (default=csv)
 \t--outdir(-o)  Output directory
 \t--infile(-i)  Input file name
+\t--verbose(-v) Verbosity level
 
 This program scans the top level directory for ODK data files as produced
 by the ODKCollect app for Android. Each XLSForm type gets it's own output
@@ -88,6 +95,13 @@ file containing all the waypoints entered using that form.
 # Process the command line arguments
 args = config(argv)
 # print(args)
+
+if args.get('logging') == 1:
+    logging.basicConfig(level=logging.INFO)
+elif args.get('logging') == 2:
+    logging.basicConfig(level=logging.DEBUG)
+
+osm = osm.osmfile(args)
 
 topdir = args.get('indir')
 # outfile = open(args.get('outfile'), 'w')
@@ -105,7 +119,7 @@ formdir = topdir + '/forms'
 try:
     odkdirs = os.listdir(formdir)
 except:
-    print("ERROR: %s doesn't exist!" % formdir)
+    logging.error("%s doesn't exist!" % formdir)
     quit()
 
 forms = dict()
@@ -114,9 +128,9 @@ for file in odkdirs:
     try:
         fullfile = topdir + '/forms/' + file
         handle = open(fullfile)
-        print("Opened %s" % fullfile)
+        logginbg.info("Opened %s" % fullfile)
     except:
-        print("ERROR: Can't open %s" % fullfile)
+        logging.error("Can't open %s" % fullfile)
 
     name = file.replace(".xml","")
     xmlfile = odkform.parse(handle)
@@ -126,7 +140,7 @@ current = ""
 outfile = ""
 outdir = args.get('outdir')
 fullpath = topdir + '/instances'
-print("Traversing " + fullpath + " recursively...")
+logging.info("Traversing " + fullpath + " recursively...")
 odkdirs = os.listdir(fullpath)
 list.sort(odkdirs)
 for dir in odkdirs:
@@ -135,7 +149,7 @@ for dir in odkdirs:
     #import pdb; pdb.set_trace()
     instance = os.listdir(fullpath + '/' + dir)
     for inst in instance:
-        print("Opening XML file " + inst)
+        logging.info("Opening XML file " + inst)
         index = inst.find('_')
         form = inst[:index]
         if form != current:
@@ -206,7 +220,7 @@ for dir in odkdirs:
             # Terminate the line in the output file.
             outfile.seek(outfile.tell() - 1)
             outfile.write("\n")
--
+
 
 print("Input files in directory: %s/{forms,instances}" % args.get('indir'))
 print("Output files in directory: %s" % outdir)
