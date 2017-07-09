@@ -14,25 +14,30 @@
 # You should have received a copy of the GNU General Public License
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
-# 
+#
 
-import gosm
+import os.path
 import time
+import logging
+from datafile import convfile
 
 
-class osmfile(gosm.verbose):
+class osmfile(object):
     """OSM File output"""
     def __init__(self, options):
         self.options = options
-        gosm.verbose.__init__(self, options)
+        #self.verbose.__init__(self, options)
         
         # Open the OSM output file
         file = "/tmp/foobar.osm"
         try:
-            self.file = open(file, 'w')
-            self.debug("Opened output file: " + file)
+            if os.path.isfile(file):
+                self.file = open(file, 'w')
+            else:
+                self.file = open(file, 'x')
+            logging.info("Opened output file: " + file)
         except:
-            print("ERROR: Couldn't open %s for writing!" % file)
+            logging.error("Couldn't open %s for writing!" % file)
 
 #         # Read the config file to get our OSM credentials, if we have any
 #         file = "/home/rob/.gosmrc"
@@ -48,10 +53,11 @@ class osmfile(gosm.verbose):
         self.osmid = -30470
 
         # Read the conversion data
-        self.ctable = gosm.datafile()
         file = self.options.get('convfile')
-        self.ctable.open(file)
-        self.ctable.read()
+        print("FOO: %r" % file)
+        if file != False:
+            self.ctable = convfile(file)
+            self.ctable.read()
             
     def open(self, file, shp):
         self.file = open(file, "w")

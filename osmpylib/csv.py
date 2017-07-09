@@ -15,11 +15,7 @@
 # Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 # 
 
-# import ogr
-# import gosm
-# import osm
-import shapefile
-import sys
+import logging
 
 
 class csvfile(object):

@@ -16,6 +16,7 @@
 # 
 
 # import ogr
+import logging
 import gosm
 # import osm
 import shapefile
@@ -113,7 +114,7 @@ class shpfile(gosm.verbose):
     def makeCSV(self, csv):
         self.shapes = self.sf.shapes
         silly = sys.stdout
-        print("%r," % self.shp.name)
+        logging.debug("%r," % self.shp.name)
         for field in self.fields:
             silly.write(" '%s,' " % field[0])
         silly.write("\n")
@@ -127,7 +128,7 @@ class shpfile(gosm.verbose):
                     else:
                         silly.write(", %r " % record)
                 except:
-                    print(" '%r' " % record)
+                    logging.debug(" '%r' " % record)
                     continue
             silly.write("\n")
         return
@@ -199,7 +200,7 @@ class shpfile(gosm.verbose):
         kml.header('FOObar')
         # FIXME:
         kml.footer()
-        print("Unimplemented")
+        logging.warning("Unimplemented")
         
     def readShapes(self):
         shapeRecs = self.sf.iterShapeRecords()
@@ -207,17 +208,17 @@ class shpfile(gosm.verbose):
             print(len(entry.shape.parts))
             print(len(entry.shape.points))
             for point in entry.shape.points:
-                print("%r: %r" % (entry.record[1:2], point))
+                logging.debug("%r: %r" % (entry.record[1:2], point))
 
     def readRecords(self):
-        print("Records: %d" % len(self.sf.records()))
+        logging.debug("Records: %d" % len(self.sf.records()))
         for record in (self.sf.iterRecords()):
             foo = self.createFields(record)
-            print("------------------------- ")
+            logging.debug("------------------------- ")
             for i, j in foo.items():
                 print("FIXME: %s"  % i, j)
 
-            print("=====================")
+            logging.debug("=====================")
         
     # Create a dictionary to hold the record data
     def createFields(self, record):
@@ -229,7 +230,7 @@ class shpfile(gosm.verbose):
             try:
                 field = self.fields[i][0]
             except:
-                print("OOPS!")
+                logging.error("OOPS!")
             columns[field] = entry
             i = i + 1
 

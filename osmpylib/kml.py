@@ -15,8 +15,7 @@
 # Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 # 
 
-# import ogr
-# import gosm
+import logging
 
 
 class kmlfile(object):
@@ -64,13 +63,13 @@ class kmlfile(object):
             self.file.write('      </Placemark>\n')
 
     def wayStyle(self):
-        print("Unimplemented")
+        logging.warning("Unimplemented")
 
     def lineColor(self):
-        print("Unimplemented")
+        logging.warning("Unimplemented")
 
     def description(self):
-        print("Unimplemented")
+        logging.warning("Unimplemented")
     
     def folderStart(self, folder):
         self.folder = folder
