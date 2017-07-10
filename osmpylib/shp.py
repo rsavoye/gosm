@@ -17,8 +17,6 @@
 
 # import ogr
 import logging
-import gosm
-# import osm
 import shapefile
 import sys
 
@@ -69,15 +67,14 @@ class shpField(object):
         return self.field[3]
 
         
-class shpfile(gosm.verbose):
+class shpfile(object):
     """Hold data for an ERSI Shapefile shape."""
     def __init__(self, options):
         self.options = options
-        gosm.verbose.__init__(self, options)
         
     def open(self, file):
         self.shp = open(file, "rb")
-        self.debug("Opened inut file: %s" % file)
+        logging.info("Opened inut file: %s" % file)
         self.sf = shapefile.Reader(file)
 #        self.sf = shapefile.Reader(shp=shp, dbf=dbf)
         self.fields = self.sf.fields
@@ -87,7 +84,7 @@ class shpfile(gosm.verbose):
     def dump(self):
         print(self.sf.fields)
 
-        self.debug("Dumping file: " + self.options.get('infile'))
+        logging.info("Dumping file: " + self.options.get('infile'))
         self.shapes = self.sf.shapes
         silly = sys.stdout
         print("Fields in: %r" % self.shp.name)
@@ -168,7 +165,7 @@ class shpfile(gosm.verbose):
                             # for tag in tagger:
                                 # print("TAG1: %r %r" % (tag[0], tag[1]))
                                 
-                            self.debug("shpfile:makeOSM(tag=%r, value=%r" % (tagger[0][0], tagger[0][1]))
+                            logging.info("shpfile:makeOSM(tag=%r, value=%r" % (tagger[0][0], tagger[0][1]))
                 except:
                     # print("FLOAT %r" % (record))
                     i = i + 1
@@ -191,7 +188,7 @@ class shpfile(gosm.verbose):
                     k = k + 1
                 else:
                     k = 0
-                    # self.debug("OSM ID: %r %r %r" % (tags, lat, lon))
+                    # logging.info("OSM ID: %r %r %r" % (tags, lat, lon))
 
             osm.makeWay(refs, tags)
         osm.footer()

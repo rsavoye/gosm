@@ -34,9 +34,10 @@ import sys
 from sys import argv
 sys.path.append(os.path.dirname(argv[0]) + '/osmpylib')
 
-import gosm
+import logging
 import osm
 import shp
+import config
 
 # file="/home/rob/.gosmrc"
 # if __name__ == '__main__':
@@ -45,7 +46,7 @@ import shp
 #     def __init__(self, file=""):
 #         self.file = file        
 
-dd = gosm.config(argv)
+dd = config.config(argv)
 dd.dump()
 
 # Read Shape (ERSI) file
