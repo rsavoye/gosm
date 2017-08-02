@@ -17,14 +17,6 @@
 # Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 # 
 
-# This is a simple bourne shell script to convert raw OSM data files into
-# pretty KML. This way when the KML file is loaded into an offline mapping
-# program, all the colors mean something. For example, ski trails and
-# bike/hiking trails have difficulty ratings, so this changes the color
-# of the trail. For skiing, this matches the colors the resorts use. Same
-# for highways. Different types and surfaces have tags signifying what type
-# it is.
-
 # load commonly used functions
 osmbin="`which $0`"
 topdir="`dirname ${osmbin}`"
@@ -72,14 +64,27 @@ case ${op} in
 esac
 
 # Split a KML file, separating each Folder into it's own KML file.
-# This is primarily pf interest for apps that ignore the Folder tag.
+# This is primarily of interest for apps that ignore the Folder tag,
+# like Maps.ME.
 if test x"${op}" = x"split"; then
     declare -a fs=(`grep -n '<Folder>' ${infile} | cut -d ':' -f 1`)
     declare -a fe=(`grep -n '</Folder>' ${infile} | cut -d ':' -f 1`)
 
+    declare -p fs
+    declare -p fe
     for i in ${!fs[@]}; do
 	j=`expr ${fs[$i]} + 1`
 	name=`sed -e "$j,$j!d" ${infile} -e 's:.*<name>::'  -e 's:</name>::'`
+	echo "Processing $name, index $i, start=${fs[$i]}, end=${fe[$i]}..."
+	j=`expr ${fs[$i]} + 3`
+	k=`expr $i + 1`
+	echo "FIXME: $j -ge ${fs[$k]}"
+	if test $k -lt ${#fs[@]}; then
+	    if test $j -ge ${fs[$k]}; then
+		echo "Ignoring ${name}"
+		continue
+	    fi
+	fi
 	outfile="`echo ${name}.kml | tr ' ' '_'`"
 	kml_file_header "${outfile}" "${name}"
 	sed -e "${fs[$i]},${fe[$i]}!d" ${infile} >> "${outfile}"
