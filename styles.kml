@@ -2,6 +2,30 @@
   styles.xml - This gets included in all KML files to present a
   consistent UI.
 -->
+<Style id="Peak">
+  <IconStyle>
+    <scale>1.0</scale>
+    <Icon>
+      <href>icons/mx_natural_peak.png</href>
+    </Icon>
+  </IconStyle>
+</Style>
+<Style id="BigPeak">
+  <IconStyle>
+    <scale>1.0</scale>
+    <Icon>
+      <href>icons/mx_natural_peak_big.png</href>
+    </Icon>
+  </IconStyle>
+</Style>
+<Style id="HotSpring">
+  <IconStyle>
+    <scale>1.0</scale>
+    <Icon>
+      <href>icons/mx_natural_hot_spring.png</href>
+    </Icon>
+  </IconStyle>
+</Style>
 <Style id="Trailhead">
   <IconStyle>
     <scale>1.0</scale>
