@@ -42,7 +42,7 @@ fi
 
 # This is a list of supported subsets of data to extract.
 supportedlines="trails piste roads"
-supportedpoints="firewater helicopter emergency lodging huts wifi waterfall swimming historic camp trailhead"
+supportedpoints="firewater helicopter emergency lodging huts wifi waterfall swimming historic camp trailhead peak hotspring"
 supported="${supportedlines} ${supportedpoints}"
 
 usage()
@@ -120,8 +120,9 @@ for sub in ${subs}; do
 	    firewater)  subnames[$i]="Water Sources" ;;
 	    wifi)       subnames[$i]="Wifi Access" ;;
 	    emergency)  subnames[$i]="Emergency Buildings" ;;
-	    Lodging)    subnames[$i]="Lodging" ;;
-	    Huts)       subnames[$i]="Alpine Huts" ;;
+	    lodging)    subnames[$i]="Lodging" ;;
+	    huts)       subnames[$i]="Alpine Huts" ;;
+	    camp)       subnames[$i]="Campsites" ;;
 	    *)          subnames[$i]="${sub}" ;;
 	esac
     fi
@@ -190,6 +191,9 @@ icons[SWIMMING]="#Swimming"
 icons[LANDINGSITE]="#Helicopter"
 icons[PARKING]="#ParkingLot"
 icons[TRAILHEAD]="#Trailhead"
+icons[PEAK]="#Peak"
+icons[BIGPEAK]="#BigPeak"
+icons[HOTSPRING]="#HotSpring"
 
 get_icon()
 {
