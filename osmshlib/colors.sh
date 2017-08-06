@@ -49,6 +49,11 @@ roads_color()
     local access="$3"
     local color="GRAY"
 
+    # http://wiki.openstreetmap.org/wiki/Map_Features#Highway
+    # motorway - pink
+    # trunk - darker orange
+    # primary - light orange
+    # secondry - yellow
     # For highway surface types
     case ${highway} in
 	tertiary|service|gravel) # (like Upper Moon)

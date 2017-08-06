@@ -134,6 +134,8 @@ parse_lodging()
 	alpine_hut)     data[ICON]="AHUT" ;;
 	hotel)          data[ICON]="HOTEL" ;;
 	hostel)         data[ICON]="HOSTEL" ;;
+	camp_site)      data[ICON]="CAMPSITE" ;;
+	hot_spring)     data[ICON]="HOTSPRING" ;;
 	*) idx="`echo ${subset} | tr '[:lower:]' '[:upper:]'`" ;;
     esac
 
@@ -161,6 +163,43 @@ parse_wifi()
 
 # Parse a line that is the output of the SQL query
 # $1 - A line of text from the SQL query output
+parse_peak()
+{
+#    echo "TRACE: $*"
+
+    local line="$1"
+    declare -A data=()
+
+    data[OSMID]="`echo ${line} | cut -d '|' -f 1`"
+    data[NAME]="`echo ${line} | cut -d '|' -f 2`"
+    data[WAY]="`echo ${line} | cut -d '|' -f 3`"
+    data[ELEVATION]="`echo ${line} | cut -d '|' -f 4`"
+    data[ICON]="PEAK"
+
+    echo `declare -p data`
+    return 0
+}
+
+# Parse a line that is the output of the SQL query
+# $1 - A line of text from the SQL query output
+parse_hotspring()
+{
+#    echo "TRACE: $*"
+
+    local line="$1"
+    declare -A data=()
+
+    data[OSMID]="`echo ${line} | cut -d '|' -f 1`"
+    data[NAME]="`echo ${line} | cut -d '|' -f 2`"
+    data[WAY]="`echo ${line} | cut -d '|' -f 3`"
+    data[ICON]="HOTSPRING"
+
+    echo `declare -p data`
+    return 0
+}
+
+# Parse a line that is the output of the SQL query
+# $1 - A line of text from the SQL query output
 parse_waterfall()
 {
 #    echo "TRACE: $*"
@@ -171,7 +210,7 @@ parse_waterfall()
     data[OSMID]="`echo ${line} | cut -d '|' -f 1`"
     data[NAME]="`echo ${line} | cut -d '|' -f 2`"
     data[WAY]="`echo ${line} | cut -d '|' -f 3`"
-    data[NAMEEN]="`echo ${line} | cut -d '|' -f 4`"
+    data[NAME]="`echo ${line} | cut -d '|' -f 4`"
     data[DESCRIPTION]="`echo ${line} | cut -d '|' -f 5`"
     data[ICON]="WATERFALL"
 

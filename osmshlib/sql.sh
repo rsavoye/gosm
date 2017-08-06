@@ -81,7 +81,7 @@ EOF
 	    ;;
 	trailhead)
 	    cat <<EOF >> ${sqlout}
-SELECT osm_id,name,ST_AsKML(way) from planet_osm_point WHERE (amenity='parking' OR type='trailhead' OR leisure='trailhead' OR amenity='trailhead') AND name LIKE '%Trailhead';
+SELECT osm_id,name,ST_AsKML(way) from planet_osm_point WHERE (amenity='parking' OR amenity='trailhead' OR leisure='trailhead' OR amenity='trailhead') AND name LIKE '%Trailhead';
 SELECT osm_id,name,ST_AsKML(way) from planet_osm_polygon WHERE amenity='parking' AND name LIKE '%Trailhead';
 EOF
 	    ;;
@@ -93,6 +93,16 @@ EOF
 	historic)
 	    cat <<EOF >> ${sqlout}
 SELECT osm_id,name,ST_AsKML(way),historic from planet_osm_point WHERE historic='archaeological_site' OR historic='building' OR historic='ruins';
+EOF
+	    ;;
+	peak*)
+	    cat <<EOF >> ${sqlout}
+SELECT osm_id,name,ST_AsKML(way),ele FROM planet_osm_point WHERE "natural"='peak';
+EOF
+	    ;;
+	hots*)
+	    cat <<EOF >> ${sqlout}
+SELECT osm_id,name,ST_AsKML(way) FROM planet_osm_point WHERE "natural"='hot_spring' OR "leisure"='hot_spring' OR "amenity"='hot_spring';
 EOF
 	    ;;
 	emergency)
