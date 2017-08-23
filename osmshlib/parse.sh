@@ -128,6 +128,10 @@ parse_lodging()
     if test x"${tmp}" != x; then
 	data[HOUSENUMBER]="`echo ${line} | cut -d '|' -f 9`"
     fi
+    tmp="`echo ${line} | cut -d '|' -f 10`"
+    if test x"${tmp}" != x; then
+	data[NAMEEN]="`echo ${line} | cut -d '|' -f 10`"
+    fi
     case ${data[TOURISM]} in
 	chalet)         data[ICON]="CHALET" ;;
 	wilderness_hut) data[ICON]="WHUT" ;;
