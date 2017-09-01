@@ -42,19 +42,19 @@ apk3:
 
 # Make a python package for pip
 pip:
-	zip -r gonflate.zip *
+	zip -r gosm.zip osmpylib/*.py
 
 pip3-install:
-	pip3 install .
+	pip3 install --upgrade -e osmpylib
 
 pip3-uninstall:
-	pip3 uninstall Gonflate
-
-pip2-install:
-	pip2 install .
+	pip3 uninstall Gosm
 
 pip2-uninstall:
-	pip2 uninstall Gonflate
+	pip2 uninstall Gosm
 
-run:
-	python3 ./gonflate.py
+# Run regression tests
+check:
+	osmpylib/test.py
+
+xforms:
