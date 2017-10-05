@@ -24,20 +24,20 @@ from datafile import convfile
 
 class osmfile(object):
     """OSM File output"""
-    def __init__(self, options):
+    def __init__(self, options, form=""):
         self.options = options
-        #self.verbose.__init__(self, options)
-        
+        self.outfile = options.get('outdir') + '/' + form + ".osm"
         # Open the OSM output file
-        file = "/tmp/foobar.osm"
+        if self.outfile == False:
+            self.outfile = "/tmp/foobar.osm"
         try:
-            if os.path.isfile(file):
-                self.file = open(file, 'w')
+            if os.path.isfile(self.outfile):
+                self.file = open(self.outfile, 'w')
             else:
-                self.file = open(file, 'x')
-            logging.info("Opened output file: " + file)
+                self.file = open(self.outfile, 'x')
+            logging.info("Opened output file: " + self.outfile)
         except:
-            logging.error("Couldn't open %s for writing!" % file)
+            logging.error("Couldn't open %s for writing!" % self.outfile)
 
 #         # Read the config file to get our OSM credentials, if we have any
 #         file = "/home/rob/.gosmrc"
