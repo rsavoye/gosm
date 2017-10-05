@@ -38,6 +38,7 @@
 
 import os
 from lxml import etree
+from lxml.etree import tostring
 
 
 class ODKForm(object):
@@ -80,10 +81,20 @@ class ODKForm(object):
                                 field = id[6:index]
                                 index = index + 1
                                 opt = id[index:]
-                                # print("FIELD %r %r" % (field, opt))
+                                #print("FIELD %r %r" % (field, opt))
                                 if opt == 'label':
                                     item = (field, opt)
                                     fields.append(item)
+                                if opt[0:6] == 'option':
+                                    text = str(etree.tostring(elit[0]))
+                                    start = text.find('>') + 1
+                                    end =  text.find('<',start)
+                                    value = text[start:end]
+                                    #print('OPTION %r' % value)
+                                    item = (field + ':' + opt, value)
+                                    fields.append(item)
+                                   # import pdb; pdb.set_trace()
+
                     #print("FIELDS1: %r" % fields)
                 # Process the body
                 elif docit.tag[index:] == 'body':
