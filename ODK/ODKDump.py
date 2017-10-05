@@ -23,9 +23,14 @@ import getopt
 import os
 import odk
 import ODKForm
-import osm
-import kml
+import gisnode
+from osm import osmfile
+import csv
+#import kml
 import logging
+from fastkml import kml
+#from shapely.geometry import Point, LineString, Polygon
+
 
 def find_all(name, path):
     result = []
@@ -42,7 +47,7 @@ class config(object):
             
         # Default values for user options
         self.options = dict()
-        self.options['format'] = "csv"
+        self.options['format'] = "format"
         self.options['indir'] = os.getcwd()
         self.options['outdir'] = os.getcwd()
         self.options['logging'] = 0
@@ -80,7 +85,7 @@ class config(object):
     def usage(self, argv):
         print(argv[0] + ": options: ")
         print("""\t--help(-h)   Help
-\t--format[-f]  output format [osm, kml, cvs] (default=csv)
+        \t--format[-f]  output format [osm, kml, cvs] (default=osm)
 \t--outdir(-o)  Output directory
 \t--infile(-i)  Input file name
 \t--verbose(-v) Verbosity level
@@ -100,8 +105,6 @@ if args.get('logging') == 1:
     logging.basicConfig(level=logging.INFO)
 elif args.get('logging') == 2:
     logging.basicConfig(level=logging.DEBUG)
-
-osm = osm.osmfile(args)
 
 topdir = args.get('indir')
 # outfile = open(args.get('outfile'), 'w')
@@ -128,9 +131,9 @@ for file in odkdirs:
     try:
         fullfile = topdir + '/forms/' + file
         handle = open(fullfile)
-        logginbg.info("Opened %s" % fullfile)
-    except:
-        logging.error("Can't open %s" % fullfile)
+        logging.info("Opened %s" % fullfile)
+    except FileNotFoundError as e:
+        logging.error("Can't open %s, %r" % (fullfile, e))
 
     name = file.replace(".xml","")
     xmlfile = odkform.parse(handle)
@@ -139,6 +142,7 @@ for file in odkdirs:
 current = ""
 outfile = ""
 outdir = args.get('outdir')
+format = args.get('format')
 fullpath = topdir + '/instances'
 logging.info("Traversing " + fullpath + " recursively...")
 odkdirs = os.listdir(fullpath)
@@ -154,39 +158,36 @@ for dir in odkdirs:
         form = inst[:index]
         if form != current:
             current = form
+
+        if format == 'csv':
+            csvfile = open('/tmp/' + form + '.csv', 'w', newline='')
             outfile = open(outdir + '/' + form + ".csv", 'w')
+        elif format == 'osm':
+            osm = osmfile(args, form)
+            osm.header()
+        elif format == 'kml':
+            kmlfile = kml.KML()
+            outfile = open(outdir + '/' + form + ".kml", 'w')
+        
+        ns = '{http://www.opengis.net/kml/2.2}'
+        #d = kml.Document(ns, 'docid', 'doc name', 'doc description')
+        #d.name = "bar"
+        #kmlfile.append(d)
+        #p = kml.Placemark(ns, 'id', 'name', 'description')
+#        p.geometry =  Point(0.0, 0.0)
+        #p.name = "foo"
+        #kmlfile.append(p)
+        #print(kmlfile.to_string(prettyprint=True))
+        #gisnode = gisnode()
 
         with open(fullpath + '/' + dir + '/' + inst, 'rb') as file:
             xml = file.read(10000)
-#            print(xml)
+            #print(xml)
             doc = xmltodict.parse(xml)
             # Write the field headers to the output file. We only do this
             # once, as the headers don't change as long as they used the
             # same version of the XLSform.
-            if outfile.tell() == 0:
-                for field in doc['data']:
-                    if field == 'meta' or field == '@id':
-                        continue
-                    fval = forms[form]
-                    nodesets = fval['nodesets']
-                    # Get the type of this nodeset
-                    try:
-                        ftype = nodesets[field]
-                    except:
-                        ftype = 'string'
-                    # A Some field types contains multiple internal fields,
-                    # Location - latitude, longitude, altitude, accuracy
-                    if ftype == 'geopoint':
-                        outfile.write('"latitude","longitude","altitude","accuracy",')
-                        continue
-                    # elif ftype == 'string':
-                    else:
-                        outfile.write('"' + field + '",')
-                        
-                # Drop the trailing comma and add a newline to finish this entry
-                outfile.seek(outfile.tell() - 1)
-                outfile.write('\n')
-
+            fields = list()
             for field in doc['data']:
                 if field == 'meta' or field == '@id':
                     continue
@@ -197,29 +198,105 @@ for dir in odkdirs:
                     ftype = nodesets[field]
                 except:
                     ftype = 'string'
-
-                comma = ''
+                    # A Some field types contains multiple internal fields,
+                    # Location - latitude, longitude, altitude, accuracy
                 if ftype == 'geopoint':
-                    gps = doc['data'][field].split(' ')
-                    for item in gps:
-                        outfile.write('"' + item + '",')
+                    fields.append("latitude")
+                    fields.append("longitude")
+                    fields.append("altitude")
+                    fields.append("accuracy")
                     continue
-                #elif ftype == 'string':
-                else:
-                    if str(doc['data'][field]) == 'None':
-                        outfile.write(comma + '"",')
-                    else:
-                        outfile.write('"' + str(doc['data'][field]) + '",')
-                # Numeric -
-                #elif ftype == 'int':
-                # Date -
-                #elif ftype == 'date':
-                # Time -
-                #elif ftype == 'time':
+                if ftype == 'int':
+                    print('Int')
+                if ftype == 'select':
+                    print('Select')
+                if ftype == 'select1':
+                    print('Multi Select')
+            if format == 'osm':
+                osm.footer()
 
-            # Terminate the line in the output file.
-            outfile.seek(outfile.tell() - 1)
-            outfile.write("\n")
+            #import pdb; pdb.set_trace()
+#             elif outfile.tell() == 0:
+#                 fields = list()
+#                 for field in doc['data']:
+#                     if field == 'meta' or field == '@id':
+#                         continue
+#                     fval = forms[form]
+#                     nodesets = fval['nodesets']
+#                     # Get the type of this nodeset
+#                     try:
+#                         ftype = nodesets[field]
+#                     except:
+#                         ftype = 'string'
+#                         # A Some field types contains multiple internal fields,
+#                         # Location - latitude, longitude, altitude, accuracy
+#                     if ftype == 'geopoint':
+#                         fields.append("latitude")
+#                         fields.append("longitude")
+#                         fields.append("altitude")
+#                         fields.append("accuracy")
+#                         if format == 'csv':
+#                             outfile.write('"latitude","longitude","altitude","accuracy",')
+#                         continue
+#                     # elif ftype == 'string':
+#                     else:
+#                         if format == 'csv':
+#                             outfile.write('"' + field + '",')
+#                             fields.append(field)
+
+# #                with open('/tmp/' + form + '.csv', 'w', newline='') as csvfile:
+#                 if format == 'csv':
+#                     csvf = csv.writer(csvfile, delimiter=',',
+#                                       quotechar='"', quoting=csv.QUOTE_ALL)
+#                     csvf.writerow(fields)
+                    
+#                     # Drop the trailing comma and add a newline to finish this entry
+#                     outfile.seek(outfile.tell() - 1)
+#                     outfile.write('\n')
+#                     outs = list()
+#             for field in doc['data']:
+#                 if field == 'meta' or field == '@id':
+#                     continue
+#                 if format == 'kml':
+#                     node = kml.Placemark(ns, 'id', 'name', 'description')
+                    
+#                 fval = forms[form]
+#                 nodesets = fval['nodesets']
+#                 # Get the type of this nodeset
+#                 try:
+#                     ftype = nodesets[field]
+#                 except:
+#                     ftype = 'string'
+
+#                 comma = ''
+#                 if ftype == 'geopoint':
+#                     gps = doc['data'][field].split(' ')
+#                     for item in gps:
+#                         if format == 'csv':
+#                             outs.append(item)
+#                             outfile.write('"' + item + '",')
+#                         elif format == 'osm':
+#                             osm.node(gps[0], gps[1])
+#                     continue
+#                 #elif ftype == 'string':
+#                 else:
+#                     if str(doc['data'][field]) == 'None':
+#                         outfile.write(comma + '"",')
+#                         outs.append('')
+#                     else:
+#                         outs.append(str(doc['data'][field]))
+#                         outfile.write('"' + str(doc['data'][field]) + '",')
+#                         # Numeric -
+#                         #elif ftype == 'int':
+#                         # Date -
+#                         #elif ftype == 'date':
+#                         # Time -
+#                         #elif ftype == 'time':
+#             csvf.writerow(outs)
+
+#             # Terminate the line in the output file.
+#             outfile.seek(outfile.tell() - 1)
+#             outfile.write("\n")
 
 
 print("Input files in directory: %s/{forms,instances}" % args.get('indir'))
