@@ -51,12 +51,13 @@ class config(object):
         self.options['indir'] = os.getcwd()
         self.options['outdir'] = os.getcwd()
         self.options['logging'] = 0
+        self.options['convfile'] = "default.conv"
 
         # Process the command line arguments
         # default values
         try:
-            (opts, val) = getopt.getopt(argv[1:], "h,o:,i:,f:,v",
-                ["help", "format=", "outfile", "indir", "verbose"])
+            (opts, val) = getopt.getopt(argv[1:], "h,o:,i:,f:,v,c:",
+                ["help", "format=", "outfile", "indir", "verbose", "convfile"])
         except getopt.GetoptError as e:
             logging.error('%r' % e)
             self.usage(argv)
@@ -74,6 +75,8 @@ class config(object):
                 self.options['indir'] = val
             elif opt == "--verbose" or opt == '-v':
                 self.options['logging'] += 1
+            elif opt == "convfile" or opt == '-c':
+                self.options['convfile'] = val
                             
     def get(self, opt):
         try:
@@ -86,9 +89,11 @@ class config(object):
         print(argv[0] + ": options: ")
         print("""\t--help(-h)   Help
         \t--format[-f]  output format [osm, kml, cvs] (default=osm)
+\t--format[-f]  output format [osm, kml, cvs] (default=osm)
 \t--outdir(-o)  Output directory
 \t--infile(-i)  Input file name
 \t--verbose(-v) Verbosity level
+\t--convfile(-c)  Conversion data file name
 
 This program scans the top level directory for ODK data files as produced
 by the ODKCollect app for Android. Each XLSForm type gets it's own output
@@ -200,20 +205,28 @@ for dir in odkdirs:
                     ftype = 'string'
                     # A Some field types contains multiple internal fields,
                     # Location - latitude, longitude, altitude, accuracy
+                print("FTYPE = " + ftype)
+                print("FVAL = %r" % fval)
+                print("FIELD = %r" % doc['data'][field])
+                alltags = list()
                 if ftype == 'geopoint':
-                    fields.append("latitude")
-                    fields.append("longitude")
-                    fields.append("altitude")
-                    fields.append("accuracy")
-                    continue
-                if ftype == 'int':
+                     gps = doc['data'][field].split(' ')
+                     print("GPS: " + gps[0])
+                elif ftype == 'int':
                     print('Int')
-                if ftype == 'select':
-                    print('Select')
-                if ftype == 'select1':
+                    tags = osm.makeTag(field, 6)
+                    alltags.append(tags)
+                    osm.node(gps[0], gps[1], alltags)
+                elif ftype == 'select':
+                    print('Select: ' + str(doc['data'][field]))
+                    if doc['data'][field]:
+                        for data in doc['data'][field].split(' '):
+                            print("DATA: " + data)
+                            alltags.append(osm.makeTag(field, data))
+                        osm.node(gps[0], gps[1], alltags)
+                elif ftype == 'select1':
                     print('Multi Select')
-            if format == 'osm':
-                osm.footer()
+            osm.footer()
 
             #import pdb; pdb.set_trace()
 #             elif outfile.tell() == 0:
