@@ -30,6 +30,7 @@ import csv
 import logging
 from fastkml import kml
 #from shapely.geometry import Point, LineString, Polygon
+import pdb                      # FIXME: remove later
 
 
 def find_all(name, path):
@@ -47,7 +48,7 @@ class config(object):
             
         # Default values for user options
         self.options = dict()
-        self.options['format'] = "format"
+        self.options['format'] = "osm"
         self.options['indir'] = os.getcwd()
         self.options['outdir'] = os.getcwd()
         self.options['logging'] = 0
@@ -55,6 +56,8 @@ class config(object):
 
         # Process the command line arguments
         # default values
+        if len(argv) <= 2:
+            self.usage(argv)
         try:
             (opts, val) = getopt.getopt(argv[1:], "h,o:,i:,f:,v,c:",
                 ["help", "format=", "outfile", "indir", "verbose", "convfile"])
@@ -75,6 +78,7 @@ class config(object):
                 self.options['indir'] = val
             elif opt == "--verbose" or opt == '-v':
                 self.options['logging'] += 1
+                logging.basicConfig(filename='example.log',level=logging.DEBUG)
             elif opt == "convfile" or opt == '-c':
                 self.options['convfile'] = val
                             
@@ -88,7 +92,6 @@ class config(object):
     def usage(self, argv):
         print(argv[0] + ": options: ")
         print("""\t--help(-h)   Help
-        \t--format[-f]  output format [osm, kml, cvs] (default=osm)
 \t--format[-f]  output format [osm, kml, cvs] (default=osm)
 \t--outdir(-o)  Output directory
 \t--infile(-i)  Input file name
@@ -135,6 +138,8 @@ odkform = ODKForm.ODKForm()
 for file in odkdirs:
     try:
         fullfile = topdir + '/forms/' + file
+        if os.path.isdir(fullfile):
+            continue
         handle = open(fullfile)
         logging.info("Opened %s" % fullfile)
     except FileNotFoundError as e:
@@ -152,10 +157,25 @@ fullpath = topdir + '/instances'
 logging.info("Traversing " + fullpath + " recursively...")
 odkdirs = os.listdir(fullpath)
 list.sort(odkdirs)
+out = ""
+previous = ""
 for dir in odkdirs:
     if os.path.isfile(dir):
         continue
-    #import pdb; pdb.set_trace()
+    out = dir.split('_')[0]
+    if out != previous:
+        previous = out
+        if format == 'osm':
+            osm = osmfile(args, out)
+            osm.header()
+        elif format == 'csv':
+            csvfile = open('/tmp/' + form + '.csv', 'w', newline='')
+            outfile = open(outdir + '/' + form + ".csv", 'w')
+        elif format == 'kml':
+            ns = '{http://www.opengis.net/kml/2.2}'
+            kmlfile = kml.KML()
+            outfile = open(outdir + '/' + form + ".kml", 'w')
+
     instance = os.listdir(fullpath + '/' + dir)
     for inst in instance:
         logging.info("Opening XML file " + inst)
@@ -164,22 +184,11 @@ for dir in odkdirs:
         if form != current:
             current = form
 
-        if format == 'csv':
-            csvfile = open('/tmp/' + form + '.csv', 'w', newline='')
-            outfile = open(outdir + '/' + form + ".csv", 'w')
-        elif format == 'osm':
-            osm = osmfile(args, form)
-            osm.header()
-        elif format == 'kml':
-            kmlfile = kml.KML()
-            outfile = open(outdir + '/' + form + ".kml", 'w')
-        
-        ns = '{http://www.opengis.net/kml/2.2}'
         #d = kml.Document(ns, 'docid', 'doc name', 'doc description')
         #d.name = "bar"
         #kmlfile.append(d)
         #p = kml.Placemark(ns, 'id', 'name', 'description')
-#        p.geometry =  Point(0.0, 0.0)
+        # p.geometry =  Point(0.0, 0.0)
         #p.name = "foo"
         #kmlfile.append(p)
         #print(kmlfile.to_string(prettyprint=True))
@@ -187,48 +196,63 @@ for dir in odkdirs:
 
         with open(fullpath + '/' + dir + '/' + inst, 'rb') as file:
             xml = file.read(10000)
-            #print(xml)
             doc = xmltodict.parse(xml)
-            # Write the field headers to the output file. We only do this
-            # once, as the headers don't change as long as they used the
-            # same version of the XLSform.
             fields = list()
+            gps = list()
+            try:
+                field = doc['data']
+            except:
+                logging.warning("No data in this instance")
+                continue
+            alltags = list()
+            #if form == 'TeaHouse':
+            #    import pdb; pdb.set_trace()
             for field in doc['data']:
                 if field == 'meta' or field == '@id':
                     continue
+                #print("FIELD = %r" % field)
                 fval = forms[form]
                 nodesets = fval['nodesets']
                 # Get the type of this nodeset
                 try:
                     ftype = nodesets[field]
                 except:
-                    ftype = 'string'
+                    pass
                     # A Some field types contains multiple internal fields,
                     # Location - latitude, longitude, altitude, accuracy
-                print("FTYPE = " + ftype)
-                print("FVAL = %r" % fval)
-                print("FIELD = %r" % doc['data'][field])
-                alltags = list()
+                #print("\tFTYPE = %r" % ftype)
+                #print("\tFVAL = %r" % fval)
+                #print("\tVALUE = %r" % doc['data'][field])
                 if ftype == 'geopoint':
-                     gps = doc['data'][field].split(' ')
-                     print("GPS: " + gps[0])
+                    gps = doc['data'][field].split(' ')
+                    #print("\tGPS: %r" % gps)
+                elif ftype == 'string':
+                    #print("\tString: %r" % doc['data'][field])
+                    alltags.append(osm.makeTag(field, doc['data'][field]))
                 elif ftype == 'int':
-                    print('Int')
-                    tags = osm.makeTag(field, 6)
-                    alltags.append(tags)
-                    osm.node(gps[0], gps[1], alltags)
+                    number = doc['data'][field]
+                    #print('\tInt %r' % number)
+                    if number is not None:
+                        alltags.append(osm.makeTag(field, number))
+                # Select fields usually are a yes/no.
                 elif ftype == 'select':
-                    print('Select: ' + str(doc['data'][field]))
+                    #print('\tSelect: ' + str(doc['data'][field]))
                     if doc['data'][field]:
                         for data in doc['data'][field].split(' '):
-                            print("DATA: " + data)
+                            #print("DATA: " + data)
                             alltags.append(osm.makeTag(field, data))
-                        osm.node(gps[0], gps[1], alltags)
                 elif ftype == 'select1':
                     print('Multi Select')
-            osm.footer()
+                #print("FIXME: %r" % (gps, field))
+            try:
+                osm.node(gps[0], gps[1], alltags)
+            except:
+                pass
 
-            #import pdb; pdb.set_trace()
+    #osm.footer()
+
+# FIXME: CSV old hack, fix later
+#             import pdb; pdb.set_trace()
 #             elif outfile.tell() == 0:
 #                 fields = list()
 #                 for field in doc['data']:
