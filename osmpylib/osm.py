@@ -106,8 +106,6 @@ class osmfile(object):
         # newval = cgi.escape(newval)
         tag = dict()
         logging.info("OSM:makeTag(field=%r, value=%r)" % (field, newval))
-
-        #import pdb; pdb.set_trace()
         try:
             newtag = self.ctable.match(field)
         except:
@@ -117,47 +115,19 @@ class osmfile(object):
         # to an official OSM tag.
         if newtag == '':
             newtag = field
-        # # Some fields we ignore, so we don't pollute OSM with lots of meaningless
-        # # data.
-        # if newtag == 'Ignore':
-        #     return tags
 
-        # if newval.find('BIKE') >= 0:
-        #     newtag = 'bicycle'
-        #     newval = 'yes'
-        #     tag = (newtag, newval)
-        #     tags.append(tag)
-
-        # # See if it's a hiking trail
-        # elif newval.find('HIKE') >= 0 or newval.find('WALKING') >= 0:
-        #     newtag = 'highway'
-        #     newval = 'path'    # or footway
-        #     tag = (newtag, newval)
-        #     tags.append(tag)
-
-        # # See if it's a horse trail
-        # elif newval.find('HORSE') >= 0:
-        #     newtag = 'horse'
-        #     newval = 'yes'
-        #     tag = (newtag, newval)
-        #     tags.append(tag)
-
-        # # See if it's an ATV trail
-        # elif newval.find('ATV') >= 0:
-        #     newtag = 'atv'
-        #     newval = 'yes'
-        #     tag = (newtag, newval)
-        #     tags.append(tag)
-        # else:
-        #     newval = value
         try:
             newval = self.ctable.attribute(newtag, newval)
-            print("ATTRS: %r %r" % (newtag, newval))
+            # print("ATTRS1: %r %r" % (newtag, newval))
+            change = newval.split('=')
+            if len(change) > 1:
+                newtag = change[0]
+                newval = change[1]
+                # print("ATTRS2: %r %r" % (newtag, newval))
             tag[newtag] = newval
         except:
             pass                # newval = value
 
-        #print ("TAGS: %r" % tag)
         return tag
 
     def makeWay(self, refs, tags):
