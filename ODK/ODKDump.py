@@ -20,6 +20,7 @@
 from sys import argv
 import xmltodict
 import getopt
+import glob
 import os
 import odk
 import ODKForm
@@ -126,131 +127,69 @@ topdir = args.get('indir')
 #print("FIELDS: %r" % xmlfile['fields'])
 #print("NODESETS: %r" % xmlfile['nodesets'])
 
-formdir = topdir + '/forms'
-try:
-    odkdirs = os.listdir(formdir)
-except:
-    logging.error("%s doesn't exist!" % formdir)
-    quit()
-
-forms = dict()
-odkform = ODKForm.ODKForm()
-for file in odkdirs:
-    try:
-        fullfile = topdir + '/forms/' + file
-        if os.path.isdir(fullfile):
-            continue
-        handle = open(fullfile)
-        logging.info("Opened %s" % fullfile)
-    except FileNotFoundError as e:
-        logging.error("Can't open %s, %r" % (fullfile, e))
-
-    name = file.replace(".xml","")
-    xmlfile = odkform.parse(handle)
-    forms[name] = xmlfile
-
-current = ""
-outfile = ""
-outdir = args.get('outdir')
-format = args.get('format')
-fullpath = topdir + '/instances'
-logging.info("Traversing " + fullpath + " recursively...")
-odkdirs = os.listdir(fullpath)
-list.sort(odkdirs)
-out = ""
-previous = ""
-for dir in odkdirs:
-    if os.path.isfile(dir):
-        continue
-    out = dir.split('_')[0]
-    if out != previous:
-        previous = out
-        if format == 'osm':
-            osm = osmfile(args, out)
-            osm.header()
-        elif format == 'csv':
-            csvfile = open('/tmp/' + form + '.csv', 'w', newline='')
-            outfile = open(outdir + '/' + form + ".csv", 'w')
-        elif format == 'kml':
-            ns = '{http://www.opengis.net/kml/2.2}'
-            kmlfile = kml.KML()
-            outfile = open(outdir + '/' + form + ".kml", 'w')
-
-    instance = os.listdir(fullpath + '/' + dir)
-    for inst in instance:
-        logging.info("Opening XML file " + inst)
-        index = inst.find('_')
-        form = inst[:index]
-        if form != current:
-            current = form
-
-        #d = kml.Document(ns, 'docid', 'doc name', 'doc description')
-        #d.name = "bar"
-        #kmlfile.append(d)
-        #p = kml.Placemark(ns, 'id', 'name', 'description')
-        # p.geometry =  Point(0.0, 0.0)
-        #p.name = "foo"
-        #kmlfile.append(p)
-        #print(kmlfile.to_string(prettyprint=True))
-        #gisnode = gisnode()
-
-        with open(fullpath + '/' + dir + '/' + inst, 'rb') as file:
-            xml = file.read(10000)
-            doc = xmltodict.parse(xml)
-            fields = list()
-            gps = list()
-            try:
-                field = doc['data']
-            except:
-                logging.warning("No data in this instance")
+def parse(instance, form):
+    with open(instance, 'rb') as file:
+        fields = list()
+        gps = list()
+        alltags = list()
+        xml = file.read(10000)  # Instances are small, read the whole file
+        doc = xmltodict.parse(xml)
+        try:
+            field = doc['data']
+        except:
+            logging.warning("No data in this instance")
+            return False
+        #if form == 'TeaHouse':
+        #    import pdb; pdb.set_trace()
+        for field in doc['data']:
+            if field == 'meta' or field == '@id':
                 continue
-            alltags = list()
-            #if form == 'TeaHouse':
-            #    import pdb; pdb.set_trace()
-            for field in doc['data']:
-                if field == 'meta' or field == '@id':
-                    continue
-                #print("FIELD = %r" % field)
-                fval = forms[form]
-                nodesets = fval['nodesets']
-                # Get the type of this nodeset
-                try:
-                    ftype = nodesets[field]
-                except:
-                    pass
-                    # A Some field types contains multiple internal fields,
-                    # Location - latitude, longitude, altitude, accuracy
-                #print("\tFTYPE = %r" % ftype)
-                #print("\tFVAL = %r" % fval)
-                #print("\tVALUE = %r" % doc['data'][field])
-                if ftype == 'geopoint':
-                    gps = doc['data'][field].split(' ')
-                    #print("\tGPS: %r" % gps)
-                elif ftype == 'string':
-                    #print("\tString: %r" % doc['data'][field])
-                    alltags.append(osm.makeTag(field, doc['data'][field]))
-                elif ftype == 'int':
-                    number = doc['data'][field]
-                    #print('\tInt %r' % number)
-                    if number is not None:
-                        alltags.append(osm.makeTag(field, number))
-                # Select fields usually are a yes/no.
-                elif ftype == 'select':
-                    #print('\tSelect: ' + str(doc['data'][field]))
-                    if doc['data'][field]:
-                        for data in doc['data'][field].split(' '):
-                            #print("DATA: " + data)
-                            alltags.append(osm.makeTag(field, data))
-                elif ftype == 'select1':
-                    print('Multi Select')
-                #print("FIXME: %r" % (gps, field))
+            #print("FIELD = %r" % field)
+            nodesets = form[1]['nodesets']
+            # Get the type of this nodeset
             try:
-                osm.node(gps[0], gps[1], alltags)
+                ftype = nodesets[field]
             except:
                 pass
+            # A Some field types contains multiple internal fields,
+            # Location - latitude, longitude, altitude, accuracy
+            #print("\tFTYPE = %r" % ftype)
+            #print("\tFVAL = %r" % fval)
+            #print("\tVALUE = %r" % doc['data'][field])
+            if ftype == 'geopoint':
+                gps = doc['data'][field].split(' ')
+                #print("\tGPS: %r" % gps)
+            elif ftype == 'string':
+                #print("\tString: %r" % doc['data'][field])
+                alltags.append(osm.makeTag(field, doc['data'][field]))
+            elif ftype == 'int':
+                number = doc['data'][field]
+                #print('\tInt %r' % number)
+                if number is not None:
+                    alltags.append(osm.makeTag(field, number))
+                    # Select fields usually are a yes/no.
+            elif ftype == 'select':
+                #print('\tSelect: ' + str(doc['data'][field]))
+                if doc['data'][field]:
+                    for data in doc['data'][field].split(' '):
+                        #print("DATA: " + data)
+                        alltags.append(osm.makeTag(field, data))
+            elif ftype == 'select1':
+                #print('Multi Select')
+                if doc['data'][field]:
+                    for data in doc['data'][field].split(' '):
+                        #print("DATA: " + data)
+                        alltags.append(osm.makeTag(field, data))
+                        #print("FIXME: %r" % (gps, field))
+    ret = dict()
+    ret['GPS'] = gps
+    ret['TAGS'] = alltags
 
-    #osm.footer()
-
+    return ret
+#                try:
+#                    osm.node(gps[0], gps[1], alltags)
+#                except:
+#                    pass
 # FIXME: CSV old hack, fix later
 #             import pdb; pdb.set_trace()
 #             elif outfile.tell() == 0:
@@ -334,6 +273,82 @@ for dir in odkdirs:
 #             # Terminate the line in the output file.
 #             outfile.seek(outfile.tell() - 1)
 #             outfile.write("\n")
+
+formdir = topdir + '/forms'
+try:
+    odkdirs = os.listdir(formdir)
+except:
+    logging.error("%s doesn't exist!" % formdir)
+    quit()
+
+forms = dict()
+odkform = ODKForm.ODKForm()
+for file in odkdirs:
+    try:
+        fullfile = topdir + '/forms/' + file
+        if os.path.isdir(fullfile):
+            continue
+        handle = open(fullfile)
+        logging.info("Opened %s" % fullfile)
+    except FileNotFoundError as e:
+        logging.error("Can't open %s, %r" % (fullfile, e))
+
+    name = file.replace(".xml","")
+    xmlfile = odkform.parse(handle)
+    forms[name] = xmlfile
+
+current = ""
+outfile = ""
+outdir = args.get('outdir')
+format = args.get('format')
+fullpath = topdir + '/instances'
+logging.info("Traversing " + fullpath + " recursively...")
+out = ""
+previous = ""
+for form in forms.items():
+    logging.info("Processing XForm %r" % form[0])
+    #import pdb; pdb.set_trace()
+
+    if format == 'osm':
+        outfile = form[0]
+        osm = osmfile(args, outfile)
+        osm.header()
+    # elif format == 'csv':
+    #     csvfile = open('/tmp/' + form + '.csv', 'w', newline='')
+    #     outfile = open(outdir + '/' + form + ".csv", 'w')
+    # elif format == 'kml':
+    #     ns = '{http://www.opengis.net/kml/2.2}'
+    #     kmlfile = kml.KML()
+    #     outfile = open(outdir + '/' + form + ".kml", 'w')
+
+    pattern = fullpath + "/" + form[0] + "*"
+    odkdirs = glob.glob(pattern)
+    list.sort(odkdirs)
+    for xmldir in odkdirs:
+        logging.info("Opening directory " + xmldir)
+        # FIXME: Ignore the *-media directories.
+        #import pdb; pdb.set_trace()
+        for xmlfile in glob.glob(xmldir + "/*.xml"):
+            if os.path.isfile(xmlfile):
+                logging.info("Opening XML file " + xmlfile)
+                #import pdb; pdb.set_trace()
+                data = parse(xmlfile, form)
+                if data != False:
+                    osm.node(data['GPS'][0], data['GPS'][1], data['TAGS'])
+
+    if format == 'osm':
+        osm.footer()
+
+        #d = kml.Document(ns, 'docid', 'doc name', 'doc description')
+        #d.name = "bar"
+        #kmlfile.append(d)
+        #p = kml.Placemark(ns, 'id', 'name', 'description')
+        # p.geometry =  Point(0.0, 0.0)
+        #p.name = "foo"
+        #kmlfile.append(p)
+        #print(kmlfile.to_string(prettyprint=True))
+        #gisnode = gisnode()
+
 
 
 print("Input files in directory: %s/{forms,instances}" % args.get('indir'))
