@@ -38,6 +38,7 @@
 
 import os
 from lxml import etree
+import logging
 from lxml.etree import tostring
 
 
@@ -47,6 +48,7 @@ class ODKForm(object):
         pass
 
     def parse(self, file):
+        logging.info("Parsing file %r" % file.name)
         doc = etree.parse(file)
 
         head = list()
