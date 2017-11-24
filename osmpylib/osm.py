@@ -46,11 +46,8 @@ class osmfile(object):
         except:
             logging.error("Couldn't open %s for writing!" % outfile)
 
-        # Read the conversion data
-#        file = self.options.get('convfile')
-#        if file != False:
-#            self.ctable = convfile(file)
-#            self.ctable.read()
+        # This is the file that contains all the filtering data
+        self.ctable = convfile(options.get('convfile'))
 
     def isclosed(self):
         return self.file.closed
@@ -79,7 +76,7 @@ class osmfile(object):
         for i in tags:
             for name, value in i.items():
                 if str(value)[0] != 'b':
-                    if value != 'None':
+                    if value != 'None' or value != 'Ignore':
                         tag = self.makeTag(name, value)
                         for newname, newvalue in tag.items():
                             self.file.write("        <tag k='" + newname + "' v='" + str(newvalue) + "' />\n")
@@ -105,33 +102,30 @@ class osmfile(object):
         newval = newval.replace("'", "")
         # newval = cgi.escape(newval)
         tag = dict()
-        logging.info("OSM:makeTag(field=%r, value=%r)" % (field, newval))
+        #logging.debug("OSM:makeTag(field=%r, value=%r)" % (field, newval))
+
         try:
             newtag = self.ctable.match(field)
         except:
-            newtag = "MISSING: " + field
-
-        # If it's not in the conversion file, assume it maps directly
-        # to an official OSM tag.
-        if newtag == '':
+            logging.debug("MISSING Field: %r" % field)
+             # If it's not in the conversion file, assume it maps directly
+             # to an official OSM tag.
             newtag = field
 
-        try:
-            newval = self.ctable.attribute(newtag, newval)
-            # print("ATTRS1: %r %r" % (newtag, newval))
-            change = newval.split('=')
-            if len(change) > 1:
-                newtag = change[0]
-                newval = change[1]
-                # print("ATTRS2: %r %r" % (newtag, newval))
-            tag[newtag] = newval
-        except:
-            pass                # newval = value
+        newval = self.ctable.attribute(newtag, newval)
+        #print("ATTRS1: %r %r" % (newtag, newval))
+        change = newval.split('=')
+        if len(change) > 1:
+            newtag = change[0]
+            newval = change[1]
+            #print("ATTRS2: %r %r" % (newtag, newval))
+        tag[newtag] = newval
 
         return tag
 
-    def makeWay(self, refs, tags):
-        # self.debug("osmfile::way(refs=%r, tags=%r)" % (refs, tags))
+    def makeWay(self, refs, tags=list()):
+        #logging.debug("osmfile::way(refs=%r, tags=%r)" % (refs, tags))
+        #logging.debug("osmfile::way(tags=%r)" % (tags))
         self.file.write("    <way id='" + str(self.osmid) +
                         "\' visible='true'")
         timestamp = time.strftime("%Y-%m-%dT%TZ")
@@ -149,11 +143,14 @@ class osmfile(object):
             self.file.write("        <nd ref='" + str(ref) + "' />\n")
 
         value = ""
-        
-        for name, value in tags.items():
-            if str(value)[0] != 'b':
-                self.file.write("        <tag k='" + name + "' v='" +
-                                str(value) + "' />\n")
+
+        for i in tags:
+            for name, value in i.items():
+                if name == "Ignore" or value == '':
+                    continue
+                if str(value)[0] != 'b':
+                    self.file.write("        <tag k='" + name + "' v='" +
+                                    str(value) + "' />\n")
             
         self.file.write("    </way>\n")
         
