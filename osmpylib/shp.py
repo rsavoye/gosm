@@ -73,10 +73,13 @@ class shpfile(object):
         self.options = options
         
     def open(self, file):
-        self.shp = open(file, "rb")
-        logging.info("Opened inut file: %s" % file)
+        logging.info("Opened shp input files: %s" % file)
         self.sf = shapefile.Reader(file)
-#        self.sf = shapefile.Reader(shp=shp, dbf=dbf)
+        shpfile = file + ".shp"
+        self.shp = open(shpfile, "rb")
+        #dbffile = file + ".dbf"
+        #self.dbf = open(dbffile, "rb")
+        #self.sf = shapefile.Reader(shp=shpfile, dbf=dbffile)
         self.fields = self.sf.fields
         self.shapeRecs = self.sf.shapeRecords()
 
