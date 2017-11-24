@@ -2,6 +2,7 @@
 column,fullname,name
 column,roadclass,highway
 # OSM tags
+tag,strtetype,highway
 tag,munileft,Ignore
 tag,muniright,Ignore
 tag,strtetype,Ignore
@@ -27,12 +28,20 @@ tag,lasteditor,Ignore
 tag,lastupdate,lastupdate
 tag,centerline,Ignore
 tag,zipleft,Ignore
+tag,fedroute,Ignore
+tag,fedrtetype,Ignore
+tag,afedrte,Ignore
+tag,afedrtetyp,Ignore
+tag,astrte,Ignore
+tag,astrtetype,Ignore
+tag,onewaydir,Ignore
 # Attributes
-attribute,highway,4WD,unclassified
+attribute,highway,4WD,4wd_only=yes
 attribute,highway,Service,service
-attribute,highway,Arterial,road
-attribute,highway,Collector,road
-attribute,highway,Local,road
+attribute,highway,Arterial,secondary
+attribute,highway,Collector,tertiary
+attribute,highway,Highway,secondary
+attribute,highway,Local,tertiary
 attribute,surface,unpaved
 attribute,sac_scale,MINIMAL,hiking
 attribute,sac_scale,EASIER,hiking
