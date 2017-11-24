@@ -139,6 +139,7 @@ class shpfile(object):
         shapeRecs = self.sf.iterShapeRecords()
         silly.write("   Processing OSM file: \r")
         for entry in shapeRecs:
+            alltags = list()
             end = (len(entry.record))
             tags = dict()
 
@@ -161,14 +162,22 @@ class shpfile(object):
                         # tags[self.fields[i][0]] = cgi.escape(s)
 
                         tagger = osm.makeTag(self.fields[i][0], s)
+#                        print("FIXME: tagger %r" % tagger)
+                        # Some fields are ignored
+                        try:
+                            if tagger['Ignore'] == 'Ignore':
+                                continue
+                        except:
+                            alltags.append(tagger)
+
 #                        tagger = osm.makeTag(self.fields[i][0], record)
-                        if len(tagger) > 0:
-                        # print("TAGS: %r" % tagger)
-                            tags[tagger[0][0]] = tagger[0][1]
-                            # for tag in tagger:
-                                # print("TAG1: %r %r" % (tag[0], tag[1]))
-                                
-                            logging.info("shpfile:makeOSM(tag=%r, value=%r" % (tagger[0][0], tagger[0][1]))
+#                        if len(tagger) > 0:
+#                            print("TAGS: %r" % tagger)
+#                            tags[tagger[0][0]] = tagger[0][1]
+#                            # for tag in tagger:
+#                                # print("TAG1: %r %r" % (tag[0], tag[1]))
+
+#                            logging.info("shpfile:makeOSM(tag=%r, value=%r" % (tagger[0][0], tagger[0][1]))
                 except:
                     # print("FLOAT %r" % (record))
                     i = i + 1
@@ -193,11 +202,12 @@ class shpfile(object):
                     k = 0
                     # logging.info("OSM ID: %r %r %r" % (tags, lat, lon))
 
-            osm.makeWay(refs, tags)
+            osm.makeWay(refs, alltags)
+
         osm.footer()
 
     def makeKML(self, kml):
-        kml.header('FOObar')
+        kml.header('TODO')
         # FIXME:
         kml.footer()
         logging.warning("Unimplemented")
