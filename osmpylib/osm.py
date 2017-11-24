@@ -25,7 +25,7 @@ from config import config
 
 class osmfile(object):
     """OSM File output"""
-    def __init__(self, options, form=""):
+    def __init__(self, options, outfile=False):
         self.options = options
         #self.file = False
         # Read the config file to get our OSM credentials, if we have any
@@ -34,24 +34,23 @@ class osmfile(object):
         self.visible = 'true'
         self.osmid = -30470
 
-        self.outfile = self.options.get('outdir') + '/' + form + ".osm"
         # Open the OSM output file
-        if self.outfile == False:
-            self.outfile = "/tmp/foobar.osm"
+        if outfile == False:
+            self.outfile = self.options.get('outdir') + "foobar.osm"
         try:
-            if os.path.isfile(self.outfile):
-                self.file = open(self.outfile, 'w')
+            if os.path.isfile(outfile):
+                self.file = open(outfile, 'w')
             else:
-                self.file = open(self.outfile, 'x')
-            logging.info("Opened output file: " + self.outfile)
+                self.file = open(outfile, 'x')
+            logging.info("Opened output file: " + outfile)
         except:
-            logging.error("Couldn't open %s for writing!" % self.outfile)
+            logging.error("Couldn't open %s for writing!" % outfile)
 
         # Read the conversion data
-        file = self.options.get('convfile')
-        if file != False:
-            self.ctable = convfile(file)
-            self.ctable.read()
+#        file = self.options.get('convfile')
+#        if file != False:
+#            self.ctable = convfile(file)
+#            self.ctable.read()
 
     def isclosed(self):
         return self.file.closed
@@ -80,9 +79,10 @@ class osmfile(object):
         for i in tags:
             for name, value in i.items():
                 if str(value)[0] != 'b':
-                    tag = self.makeTag(name, value)
-                    for newname, newvalue in tag.items():
-                        self.file.write("        <tag k='" + newname + "' v='" + str(newvalue) + "' />\n")
+                    if value != 'None':
+                        tag = self.makeTag(name, value)
+                        for newname, newvalue in tag.items():
+                            self.file.write("        <tag k='" + newname + "' v='" + str(newvalue) + "' />\n")
 
 
 # FIXME: Add as a default ?
