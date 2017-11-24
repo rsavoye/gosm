@@ -1,0 +1,24 @@
+# OSM fields
+# OSM tags
+# Attributes
+attribute,features,solar,generator:source=solar
+attribute,features,toilet,toilet:seated=yes
+attribute,features,outhouse,toilet:squat=yes
+attribute,features,grid,power=plant
+attribute,features,hydro,generator:source=hydro
+attribute,features,restaurant,amenity=restaurant
+attribute,features,internet,internet_access=wlan
+attribute,features,cell,internet_access=cellular
+
+# Household solar powerplant
+# Node power=generator
+# generator:source=solar
+# generator:method=photovoltaic
+# generator:type=solar_photovoltaic_panel
+# generator:output:electricity=small_installation
+# generator:place=roof
+
+# toilet:outhouse = yes
+# toilet = yes
+# toilet:squat 	yes/no 	Toilet which can be used in the squatting position are available.
+# toilet:seated 	yes/no 	Toilets which can be used in the seated position are available.
