@@ -168,8 +168,12 @@ class shpfile(object):
                             if tagger['Ignore'] == 'Ignore':
                                 continue
                         except:
+                            try:
+                                if tagger['4wd_only'] == 'yes':
+                                    tagger['highway'] = "unclassified"
+                            except:
+                                pass
                             alltags.append(tagger)
-
 #                        tagger = osm.makeTag(self.fields[i][0], record)
 #                        if len(tagger) > 0:
 #                            print("TAGS: %r" % tagger)
