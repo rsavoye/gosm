@@ -17,14 +17,6 @@
 # Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 # 
 
-# This is a simple bourne shell script to convert raw OSM data files into
-# pretty KML. This way when the KML file is loaded into an offline mapping
-# program, all the colors mean something. For example, ski trails and
-# bike/hiking trails have difficulty ratings, so this changes the color
-# of the trail. For skiing, this matches the colors the resorts use. Same
-# for highways. Different types and surfaces have tags signifying what type
-# it is.
-
 # from sys import os
 # cwd = os.getcwd()
 # sys.path.append(cwd + '/../subdirA/')
@@ -40,115 +32,7 @@ import shp
 import config
 
 
-class config(object):
-    """Config data for this program."""
-    def __init__(self, argv):
-        # Read the config file to get our OSM credentials, if we have any
-        file = os.getenv('HOME') + "/.gosmrc"
-        try:
-            gosmfile = open(file, 'r')
-        except:
-            logging.warning("Couldn't open %s for writing! not using OSM credentials" % file)
-            return
-
-        # Default values for user options
-        self.options = dict()
-        self.options['logging'] = True
-        self.options['limit'] = 0
-        self.options['format'] = "osm"
-        self.options['user'] = ""
-        self.options['uid'] = 0
-        self.options['dump'] = False
-        self.options['verbose'] = False
-        self.options['infile'] = os.path.dirname(argv[0])
-        self.options['outdir'] = "/tmp/"
-        self.options['outfile'] = self.options['outdir'] + "tmp." + self.options.get('format')
-        self.options['convfile'] = os.path.dirname(argv[0]) + "/default.conv"
-
-        if len(argv) <= 2:
-            self.usage(argv)
-
-        try:
-            (opts, val) = getopt.getopt(argv[1:], "h,o:,i:,f:,v,c:,d",
-                ["help", "format=", "outfile", "infile", "verbose", "convfile", "dump"])
-        except getopt.GetoptError as e:
-            logging.error('%r' % e)
-            self.usage(argv)
-            quit()
-
-        for (opt, val) in opts:
-            if opt == '--help' or opt == '-h':
-                self.usage(argv)
-            elif opt == '--format' or opt == '-f':
-                self.options['format'] = val
-                format = val
-            elif opt == "--outfile" or opt == '-o':
-                self.options['outfile'] = val
-            elif opt == "--infile" or opt == '-i':
-                self.options['infile'] = val
-            elif opt == "--verbose" or opt == '-v':
-                self.options['verbose'] = True
-                logging.basicConfig(filename='shp2map.log',level=logging.DEBUG)
-            elif opt == "--dump" or opt == '-d':
-                self.options['dump'] = True
-            elif opt == "convfile" or opt == '-c':
-                self.options['convfile'] = val
-
-        try:
-            lines = gosmfile.readlines()
-        except:
-            logging.error("Couldn't read lines from %s" % gosmfile.name)
-
-        for line in lines:
-            if line[1] == '#':
-                continue
-            # First field of the CSV file is the name
-            index = line.find('=')
-            name = line[:index]
-            # Second field of the CSV file is the value
-            value = line[index + 1:]
-            index = len(value)
-#            print ("FIXME: %s %s %d" % (name, value[:index - 1], index))
-            if name == "uid":
-                self.options['uid'] = value[:index - 1]
-            if name == "user":
-                self.options['user'] = value[:index - 1]
-            if name == "infile":
-                self.options['infile'] = value[:index - 1]
-            if name == "outfile":
-                self.options['outfile'] = value[:index - 1]
-            if name == "convfile":
-                self.options['convfile'] = value[:index - 1]
-
-    def get(self, opt):
-        try:
-            return self.options[opt]
-        except:
-            return False
-
-    # Basic help message
-    def usage(self, argv):
-        print(argv[0] + ": options: ")
-        print("""\t--help(-h)   Help
-\t--format[-f]  output format [osm, kml, cvs] (default=osm)
-\t--user          OSM User name (optional)
-\t--uid           OSM User ID (optional)
-\t--dump{-d)      Dump the Shape fields
-\t--outfile(-o)   Output file name
-\t--infile(-i)    Input file name
-\t--convfile(-c)  Conversion data file name
-\t--limit(-l)     Limit the output records
-\t--verbose(-v)   Enable verbosity
-        """)
-        quit()
-
-    def dump(self):
-        logging.info("Dumping config")
-        for i, j in self.options.items():
-            print("\t%s: %s" % (i, j))
-
-
-dd = config(argv)
+dd = config.config(argv)
 dd.dump()
 
 # The logfile contains multiple runs, so add a useful delimiter
