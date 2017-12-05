@@ -19,6 +19,7 @@
 import logging
 import shapefile
 import sys
+import re
 
 
 # This class holds a field from the Shapefile. It has 4 fields.
@@ -143,9 +144,27 @@ class shpfile(object):
             end = (len(entry.record))
             tags = dict()
 
+            i = 1
+            matched = False
+            for record in entry.record:
+                pattern = self.options.get('filter')
+                match = self.fields[i][0] + "=" + str(record)
+                if pattern != '' and match !='':
+                    m = re.search(pattern, match)
+                    #logging.debug("RE.SEARCH: %r %r %r" % (pattern, match, m))
+                    if m != None:
+                        logging.debug("Matched!! %r" % pattern)
+                        matched = True
+                        break
+                i = i + 1
+
+            if matched == False and pattern != '':
+                continue
+
             # Process the tags for this record
             i = 1
             for record in entry.record[:end]:
+
                 try:
                     if record.isspace() is True:
                         # print ("SPACE: %r" % record)
@@ -159,10 +178,9 @@ class shpfile(object):
                         s = s.replace("'", "")
                         s = s.replace("<", "lt")
                         s = s.replace(">", "gt")
-                        # tags[self.fields[i][0]] = cgi.escape(s)
-
+                        # tags[self.fields[i][0]] = cgi.escape(s
                         tagger = osm.makeTag(self.fields[i][0], s)
-#                        print("FIXME: tagger %r" % tagger)
+                        #print("FIXME: tagger %r" % tagger)
                         # Some fields are ignored
                         try:
                             if tagger['Ignore'] == 'Ignore':
@@ -170,7 +188,7 @@ class shpfile(object):
                         except:
                             try:
                                 if tagger['4wd_only'] == 'yes':
-                                    tagger['highway'] = "unclassified"
+                                    tagger['highway'] = "track"
                             except:
                                 pass
                             alltags.append(tagger)
