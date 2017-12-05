@@ -20,8 +20,7 @@ import os.path
 import time
 import logging
 from datafile import convfile
-from config import config
-
+import config
 
 class osmfile(object):
     """OSM File output"""
@@ -29,7 +28,7 @@ class osmfile(object):
         self.options = options
         #self.file = False
         # Read the config file to get our OSM credentials, if we have any
-        self.config = config(self.options)
+        # self.config = config.config(self.options)
         self.version = 3
         self.visible = 'true'
         self.osmid = -30470
@@ -65,13 +64,12 @@ class osmfile(object):
 
     def node(self, lat="", lon="", tags=list()):
         #        timestamp = ""  # LastUpdate
-        #import pdb; pdb.set_trace()
         timestamp = time.strftime("%Y-%m-%dT%TZ")
         self.file.write("    <node id='" + str(self.osmid) + "\' visible='true'")
         self.file.write(" version='1'")
         self.file.write(" timestamp='" + timestamp + "\'")
-        self.file.write(" uid='" + str(self.config.get('uid')) + "'")
-        self.file.write(" user='" + self.config.get('user') + "'")
+        self.file.write(" uid='" + str(self.options.get('uid')) + "'")
+        self.file.write(" user='" + self.options.get('user') + "'")
         self.file.write(" lat='" + str(lat) + "\'" + " lon='" + str(lon) + "'>\n")
         for i in tags:
             for name, value in i.items():
