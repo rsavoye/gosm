@@ -30,6 +30,8 @@ usage()
 --polyfile(-p) FILE(s) - Polyfile(s) to produce data subsets
 --help(-h)             - Display usage
 --database(-d)         - Database to use
+--user(-u)	       - Database user name
+--passwd(-p)	       - Database password
 This program is a simple utility to setup a database properly for importing
 data from wither and OSM file or a Shapefile (ERSI).
 EOF
@@ -44,12 +46,18 @@ infile="$1"
 polys=""
 dbname=""
 
-OPTS="`getopt -o p:d:h -l polyfile:database:,help`"
+if test -e ~/.gosmrc; then
+    . ~/.gosmrc
+fi
+
+OPTS="`getopt -o p:d:hu:p: -l polyfile:database:,help,dvuser:,dbpasswd:`"
 while test $# -gt 0; do
     case $1 in
         -i|--infile) infile=$2 ;;
         -p|--polyfile) polys=$2 ;;
         -d|--database) dbname=$2 ;;
+	-du|--dbuser) dbuser=$2;;
+	-dp|--passwd) dbpass=$2 ;;
         -h|--help) usage ;;
         --) break ;;
     esac
@@ -84,22 +92,22 @@ while test $i -lt ${#polyfiles[@]} -o x"${polys}" = x; do
     # Note that the user running this script must have the right permissions.
     if test "${exists}" -eq 0; then
 	echo "Creating postgresql database ${dbname}"
-	createdb -EUTF8 ${dbname} -T template0
+	createdb -EUTF8 ${dbname} ${dbname} ${dbpass} -T template0
 	if test $? -gt 0; then
 	    echo "ERROR: createdb ${dbname} failed!"
 	    exit
 	fi
-	psql ${dbname} -c 'create extension hstore;'
+	psql -d ${dbname} ${dbuser:--U ${dbuser}} ${dbpass} -c 'create extension hstore;'
 	if test $? -gt 0; then
 	    echo "ERROR: couldn't add hstore extension!"
 	    exit
 	fi
-	psql ${dbname} -c 'create extension postgis;'
+	psql -d ${dbname} ${dbuser:--U ${dbuser}} ${dbpass} -c 'create extension postgis;'
 	if test $? -gt 0; then	
 	    echo "ERROR: couldn't add postgis extension!"
 	    exit
 	fi
-	psql ${dbname} -c 'create extension dblink;'
+	psql -d ${dbname} ${dbuser:--U ${dbuser}} ${dbpass} -c 'create extension dblink;'
 	if test $? -gt 0; then	
 	    echo "ERROR: couldn't add dblink extension!"
 	    exit
@@ -121,7 +129,7 @@ while test $i -lt ${#polyfiles[@]} -o x"${polys}" = x; do
 		    exit
 		fi
 	    fi
-	    osm2pgsql -v --slim -C 1500 -d ${dbname} --number-processes 8 ${infile} --hstore
+	    osm2pgsql -v --slim -C 1500 -d ${dbname} --number-processes 8 ${infile} --hstore --input-reader xml --drop
 	    if test $? -gt 0; then
 		exit
 	    fi
