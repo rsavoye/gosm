@@ -96,7 +96,6 @@ class shpfile(object):
             silly.write(" '%s' " % field[0])
         silly.write("\n")
         shapeRecs = self.sf.iterShapeRecords()
-        k = 0
         for entry in shapeRecs:
             end = (len(entry.record))
             for record in entry.record[:end]:
@@ -108,7 +107,7 @@ class shpfile(object):
                 except:
                     print(" '%r' " % str(record))
                     continue
-            silly.write("\n")
+            silly.write("===================================================================\n")
 
         return
 
@@ -149,16 +148,16 @@ class shpfile(object):
             for record in entry.record:
                 pattern = self.options.get('filter')
                 match = self.fields[i][0] + "=" + str(record)
-                if pattern != '' and match !='':
+                if pattern != '' and match != '':
                     m = re.search(pattern, match)
-                    #logging.debug("RE.SEARCH: %r %r %r" % (pattern, match, m))
-                    if m != None:
+                    # logging.debug("RE.SEARCH: %r %r %r" % (pattern, match, m))
+                    if m is not True:
                         logging.debug("Matched!! %r" % pattern)
                         matched = True
                         break
                 i = i + 1
 
-            if matched == False and pattern != '':
+            if matched is False and pattern is not '':
                 continue
 
             # Process the tags for this record
@@ -180,7 +179,7 @@ class shpfile(object):
                         s = s.replace(">", "gt")
                         # tags[self.fields[i][0]] = cgi.escape(s
                         tagger = osm.makeTag(self.fields[i][0], s)
-                        #print("FIXME: tagger %r" % tagger)
+                        # print("FIXME: tagger %r" % tagger)
                         # Some fields are ignored
                         try:
                             if tagger['Ignore'] == 'Ignore':
@@ -223,8 +222,9 @@ class shpfile(object):
                 else:
                     k = 0
                     # logging.info("OSM ID: %r %r %r" % (tags, lat, lon))
+                    # logging.info("REFS %r" % refs)
 
-            osm.makeWay(refs, alltags)
+                osm.makeWay(refs, alltags)
 
         osm.footer()
 
@@ -233,7 +233,7 @@ class shpfile(object):
         # FIXME:
         kml.footer()
         logging.warning("Unimplemented")
-        
+
     def readShapes(self):
         shapeRecs = self.sf.iterShapeRecords()
         for entry in shapeRecs:
@@ -251,7 +251,7 @@ class shpfile(object):
                 print("FIXME: %s"  % i, j)
 
             logging.debug("=====================")
-        
+
     # Create a dictionary to hold the record data
     def createFields(self, record):
         columns = dict()

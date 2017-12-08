@@ -79,11 +79,6 @@ class osmfile(object):
                         for newname, newvalue in tag.items():
                             self.file.write("        <tag k='" + newname + "' v='" + str(newvalue) + "' />\n")
 
-
-# FIXME: Add as a default ?
-#        self.file.write("<tag k='created_by' v='Gosm 0.1'/>\n")
-#        self.file.write("<tag k='name' v='" + name + "'/>\n")
-
         self.file.write("    </node>\n")
         self.osmid = self.osmid - 1
 
@@ -106,18 +101,22 @@ class osmfile(object):
             newtag = self.ctable.match(field)
         except:
             logging.debug("MISSING Field: %r" % field)
-             # If it's not in the conversion file, assume it maps directly
+            # If it's not in the conversion file, assume it maps directly
              # to an official OSM tag.
             newtag = field
 
         newval = self.ctable.attribute(newtag, newval)
-        #print("ATTRS1: %r %r" % (newtag, newval))
+        # print("ATTRS1: %r %r" % (newtag, newval))
         change = newval.split('=')
         if len(change) > 1:
             newtag = change[0]
             newval = change[1]
-            #print("ATTRS2: %r %r" % (newtag, newval))
-        tag[newtag] = newval
+            # print("ATTRS2: %r %r" % (newtag, newval))
+        if newtag == 'name':
+            tag[newtag] = newval.capitalize()
+            # print("CAPITALIZE %r %r" % (newtag, newval))
+        else:
+            tag[newtag] = newval
 
         return tag
 
