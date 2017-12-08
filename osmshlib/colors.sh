@@ -23,22 +23,38 @@
 # for highways. Different types and surfaces have tags signifying what type
 # it is.
 
-# KML Color chart
+# KML Color chart from http://www.zonums.com/gmaps/kml_color
 declare -A colors=()
 opacity="ff"
+colors[WHITE]="${opacity}ffffff"
 colors[RED]="${opacity}0000ff"
 colors[BLACK]="${opacity}000000"
-colors[BLUE]="${opacity}ff0000"
-colors[GREEN]="${opacity}00ff00"
 colors[CYAN]="${opacity}ffff00"
 colors[MAGENTA]="${opacity}ff00ff"
 colors[YELLOW]="${opacity}00ffff"
 colors[ORANGE]="${opacity}00a5ff"
 colors[PURPLE]="${opacity}800080"
+colors[GRAY]="${opacity}888888"
+colors[BLUE]="${opacity}ff0000"
 colors[LIGHTBLUE]="${opacity}e6d8ad"
 colors[DARKGREEN]="${opacity}008000"
-colors[GRAY]="${opacity}888888"
+colors[GREEN]="${opacity}00ff00"
 
+# smoothness=excellent roller blade/skate board and all below
+# smoothness=good racing bike and all below
+# smoothness=intermediate city bike/sport cars/wheel chair/Scooter and all below
+# smoothness=bad trekking bike/normal cars/Rickshaw and all below
+# smoothness=very_bad Car with high clearance/ Mountain bike without crampons and all below
+# smoothness=horrible 4wd and all below
+# smoothness=very_horrible tractor/ATV/tanks/trial/Mountain bike
+# smoothness=impassable no wheeled vehicles 
+
+# Road styles are complicacted, as the final result is a mix of the highway type,
+# the smoothness, the surface, and the tracktype. Since our goal is oriented
+# towards emergency response, our main criteria is what type f apparatus to
+# respond in, ie... fire truck, pickup, or UTV. As not all tags exist for all
+# data, they're ranked by most likely to least likely to exist, but if they exist,
+# they should replace any existing value.
 # $1 - The Highway type
 # $2 - The surface type
 # $3 - Access
@@ -47,6 +63,8 @@ roads_color()
     local highway="$1"
     local surface="$2"
     local access="$3"
+    local smoothness="$4"
+    local tracktype="$5"
     local color="GRAY"
 
     # http://wiki.openstreetmap.org/wiki/Map_Features#Highway
@@ -87,12 +105,33 @@ roads_color()
 	*) ;;
     esac
 
+    case ${smoothness} in
+	excellent) ;; # roller blade/skate board and all below
+	good) ;; # racing bike and all below
+	intermediate) ;; # city bike/sport cars/wheel chair/Scooter and all below
+	bad) color="WHITE";; # trekking bike/normal cars/Rickshaw and all below
+	very_bad) ;; # Car with high clearance/ Mountain bike without crampons and all below
+	horrible) ;; # 4wd and all below
+	very_horrible) ;; # tractor/ATV/tanks/trial/Mountain bike
+	impassable) ;; #no wheeled vehicles 
+	*) ;;
+    esac
+
+    case ${tracktype} in
+	grade1) ;; # Solid, paved or compacted
+	grade2) ;; # Mostly Solid, unpaved, mix of sand, silt, and clay
+	grade3) ;; # Mix of hard and soft materials
+	grade4) ;; # Unpaved, lacks hard material, might be grass
+	grade5) ;; # 
+	*) ;;
+    esac
     echo ${color}
 
     return 0
 }
 
 # http://wiki.openstreetmap.org/wiki/Piste_Maps#Type
+# OSM colors used are green, blue, red, black, orange, yellow
 ski_color()
 {
     if test x"${debug}" = x"yes"; then
@@ -180,6 +219,13 @@ ski_color()
 # $1 - The SAC scale
 # $2 - The MTB scale
 # $3 - The access. ie... don't go here if not allowed
+# Tag SAC Scale (as seen on ground signs) Alpine Paper Maps (Austria)
+# sac_scale=hiking T1 yellow solid red
+# sac_scale=mountain_hiking T2 red dashed red
+# sac_scale=demanding_mountain_hiking T3 red dashed red
+# sac_scale=alpine_hiking T4 blue dotted red
+# sac_scale=demanding_alpine_hiking T5 blue dotted red
+# sac_scale=difficult_alpine_hiking T6 blue dotted red 
 trails_color()
 {
     if test x"${debug}" = x"yes"; then
