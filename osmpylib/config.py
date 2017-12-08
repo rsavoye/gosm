@@ -30,7 +30,6 @@ class config(object):
         except:
             logging.warning("Couldn't open %s for writing! not using OSM credentials" % file)
             return
-        import pdb; pdb.set_trace()
 
         # Default values for user options
         self.options = dict()
