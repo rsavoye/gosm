@@ -147,7 +147,7 @@ EOF
 	    ;;
 	road*)
 	    cat <<EOF >> ${sqlout}
-SELECT line.osm_id,line.name,ST_AsKML(line.way),line.highway,line.surface,line.access from planet_osm_line AS line WHERE (line.highway!='') AND (line.highway!='path' OR line.highway!='footway' OR line.highway!='cycleway');
+SELECT line.osm_id,line.name,ST_AsKML(line.way),line.highway,line.surface,line.access,line.tags->'smoothness',line.tags->'tracktype' from planet_osm_line AS line WHERE (line.highway!='') AND (line.highway!='path' OR line.highway!='footway' OR line.highway!='cycleway');
 EOF
 	    ;;
 	*)
