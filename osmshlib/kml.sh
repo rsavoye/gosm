@@ -125,6 +125,13 @@ EOF
 	cat <<EOF >> ${outfile}
             <styleUrl>#line_${style}</styleUrl>
 EOF
+    # Only lines have the WIDTH set
+    if test x"${data[WIDTH]}" != x; then
+	cat <<EOF >> ${outfile}
+            <width>${data[WIDTH]}</width>
+EOF
+    fi
+
     fi
     if test x"${data[FILL]}" != x; then
 	cat <<EOF >> ${outfile}
@@ -138,7 +145,7 @@ EOF
 	for i in ${!data[@]}; do
 	    case $i in
 		# ignore these, they're not part of the descriptiom
-		FILL|NAME|WAY|ICON|TOURISM|AMENITY|WATERWAY|HIGHWAY|EMERGENCY|COLOR) ;;
+		WIDTH|FILL|NAME|WAY|ICON|TOURISM|AMENITY|WATERWAY|HIGHWAY|EMERGENCY|COLOR) ;;
 		*)
 		    if test x"${data[$i]}" != x; then
 			local cap="${i:0:1}"
