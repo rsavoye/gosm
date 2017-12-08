@@ -284,7 +284,32 @@ parse_roads()
     data[HIGHWAY]="`echo ${line} | cut -d '|' -f 4`"
     data[SURFACE]="`echo ${line} | cut -d '|' -f 5`"
     data[ACCESS]="`echo ${line} | cut -d '|' -f 6`"
-    data[COLOR]="`roads_color "${data[HIGHWAY]}" "${data[SURFACE]}" "${data[ACCESS]}"`"
+    data[SMOOTHNESS]="`echo ${line} | cut -d '|' -f 7`"
+    data[TRACETYPE]="`echo ${line} | cut -d '|' -f 8`"
+    data[COLOR]="`roads_color "${data[HIGHWAY]}" "${data[SURFACE]}" "${data[ACCESS]}" "${data[SMOOTHNESS]}" "${data[TRACKTYPE]}"`"
+
+    width=4
+    case $data[SMOOTHNESS] in
+	excellent) ;; # roller blade/skate board and all below
+	good) ;; # racing bike and all below
+	intermediate) ;; # city bike/sport cars/wheel chair/Scooter and all below
+	bad) width=3 ;; # trekking bike/normal cars/Rickshaw and all below
+	very_bad) ;; # Car with high clearance/ Mountain bike without crampons and all below
+	horrible) width=2;; # 4wd and all below
+	very_horrible) ;; # tractor/ATV/tanks/trial/Mountain bike
+	impassable) ;; #no wheeled vehicles 
+	*) ;;
+    esac
+
+    case $data[TRACKTYPE] in
+	grade1) ;; # Solid, paved or compacted
+	grade2) ;; # Mostly Solid, unpaved, mix of sand, silt, and clay
+	grade3) width=2 ;; # Mix of hard and soft materials
+	grade4) ;; # Unpaved, lacks hard material, might be grass
+	grade5) ;; # 
+	*) ;;
+    esac
+    data[WIDTH]="${width}"
 
     echo `declare -p data`
     return 0
