@@ -1,0 +1,76 @@
+tag,RTE_CN,Ignore
+tag,ID,Ignore
+tag,NAME,name
+tag,BMP,Ignore
+tag,EMP,Ignore
+tag,SEG_LENGTH,Ignore
+tag,GIS_MILES,Ignore
+tag,SYMBOL,Ignore
+tag,JURISDICTI,Ignore
+tag,OPERATIONA,smoothness
+tag,SURFACETYP,surface
+tag,SYSTEM,Ignore
+tag,SEASONAL,Ignore
+tag,PASSENGERV,Ignore
+tag,PASSENGE_1,Ignore
+tag,HIGHCLEARA,Ignore
+tag,HIGHCLEA_1,Ignore
+tag,TRUCK,lhv
+tag,TRUCK_DATE,Ignore
+tag,BUS,psv
+tag,BUS_DATESO,Ignore
+tag,MOTORHOME,bdouble
+tag,MOTORHOME_,Ignore
+tag,FOURWD_GT5,Ignore
+tag,FOURWD_G_1,Ignore
+tag,TWOWD_GT50,Ignore
+tag,TWOWD_GT_1,Ignore
+tag,TRACKED_OH,Ignore
+tag,TRACKED__1,Ignore
+tag,OTHER_OHV_,Ignore
+tag,OTHER_OHV1,Ignore
+tag,ATV,atv
+tag,ATV_DATESO,Ignore
+tag,MOTORCYCLE,motorcycle
+tag,MOTORCYC_1,Ignore
+tag,OTHERWHEEL,Ignore
+tag,OTHERWHE_1,Ignore
+tag,TRACKED__2,Ignore
+tag,TRACKED__3,Ignore
+tag,OTHER_OH_1,Ignore
+tag,OTHER_OH_2,Ignore
+tag,ADMINORG,Ignore
+tag,SECURITYID,Ignore
+tag,DISTRICTNA,Ignore
+tag,FORESTNAME,Ignore
+tag,FIELD_ID,Ignore
+tag,SBS_SYMBOL,Ignore
+tag,ROUTESTATU,Ignore
+tag,GLOBALID,Ignore
+tag,TA_SYMBOL,Ignore
+tag,SHAPE_LEN ,Ignore
+
+
+# Smootness attribute
+attribute,smoothness,1 - BASIC CUSTODIAL CARE (CLOSED),service
+attribute,smoothness,2 - HIGH CLEARANCE VEHICLES,very_bad
+attribute,smoothness,3 - SUITABLE FOR PASSENGER CARS,bad
+attribute,smoothness,4 - MODERATE DEGREE OF USER COMFORT,intermediate
+
+attribute,psv,open,yes
+attribute,lhv,open,yes
+attribute,bdouble,open,yes
+attribute,motorcycle,open,yesa
+ttribute,atv,open,yes
+
+# Surface attribute
+attribute,surface,AGG - CRUSHED AGGREGATE OR GRAVEL,gravel
+attribute,surface,NAT - NATIVE MATERIAL,dirt
+attribute,surface,AC - ASPHALT,asphalt
+attribute,surface,P - PAVED,paved
+
+# Road, Not Maintained for Passenger Car
+# attribute,tracktype,'Dirt Road, Suitable for Passenger Car',grade3
+
+
+# 'EX - EXISTING'
