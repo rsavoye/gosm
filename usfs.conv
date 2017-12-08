@@ -56,12 +56,13 @@ attribute,smoothness,1 - BASIC CUSTODIAL CARE (CLOSED),service
 attribute,smoothness,2 - HIGH CLEARANCE VEHICLES,very_bad
 attribute,smoothness,3 - SUITABLE FOR PASSENGER CARS,bad
 attribute,smoothness,4 - MODERATE DEGREE OF USER COMFORT,intermediate
+attribute,smoothness,5 - HIGH DEGREE OF USER COMFORT,good
 
 attribute,psv,open,yes
 attribute,lhv,open,yes
 attribute,bdouble,open,yes
-attribute,motorcycle,open,yesa
-ttribute,atv,open,yes
+attribute,motorcycle,open,yes
+attribute,atv,open,yes
 
 # Surface attribute
 attribute,surface,AGG - CRUSHED AGGREGATE OR GRAVEL,gravel
@@ -70,7 +71,5 @@ attribute,surface,AC - ASPHALT,asphalt
 attribute,surface,P - PAVED,paved
 
 # Road, Not Maintained for Passenger Car
-# attribute,tracktype,'Dirt Road, Suitable for Passenger Car',grade3
-
-
-# 'EX - EXISTING'
+# Dirt Road, Suitable for Passenger Car',grade3
+# Gravel Road, Suitable for Passenger Car
