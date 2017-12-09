@@ -44,7 +44,7 @@ tag,SECURITYID,Ignore
 tag,DISTRICTNA,Ignore
 tag,FORESTNAME,Ignore
 tag,FIELD_ID,Ignore
-tag,SBS_SYMBOL,Ignore
+tag,SBS_SYMBOL,highway
 tag,ROUTESTATU,Ignore
 tag,GLOBALID,Ignore
 tag,TA_SYMBOL,Ignore
@@ -54,10 +54,13 @@ tag,SHAPE_LEN ,Ignore
 # Smootness attribute
 attribute,smoothness,1 - BASIC CUSTODIAL CARE (CLOSED),service
 attribute,smoothness,2 - HIGH CLEARANCE VEHICLES,very_bad
+# These are actually the same, the source data was missing the rest.
+attribute,smoothness,2,very_bad
 attribute,smoothness,3 - SUITABLE FOR PASSENGER CARS,bad
 attribute,smoothness,4 - MODERATE DEGREE OF USER COMFORT,intermediate
 attribute,smoothness,5 - HIGH DEGREE OF USER COMFORT,good
 
+# Vehicle access
 attribute,psv,open,yes
 attribute,lhv,open,yes
 attribute,bdouble,open,yes
@@ -69,7 +72,10 @@ attribute,surface,AGG - CRUSHED AGGREGATE OR GRAVEL,gravel
 attribute,surface,NAT - NATIVE MATERIAL,dirt
 attribute,surface,AC - ASPHALT,asphalt
 attribute,surface,P - PAVED,paved
+attribute,surface,IMP - IMPROVED NATIVE MATERIAL,comppacted
 
-# Road, Not Maintained for Passenger Car
-# Dirt Road, Suitable for Passenger Car',grade3
-# Gravel Road, Suitable for Passenger Car
+# Highway types, Forest Service roads aren't fancy
+attribute,highway,Road Not Maintained for Passenger Car,4wd_only=yes
+attribute,highway,Dirt Road Suitable for Passenger Car,unclassified
+attribute,highway,Gravel Road Suitable for Passenger Car,unclassified
+attribute,highway,Paved Road,tertiary
