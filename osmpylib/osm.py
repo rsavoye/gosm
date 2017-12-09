@@ -42,7 +42,7 @@ class osmfile(object):
             else:
                 self.file = open(outfile, 'x')
             logging.info("Opened output file: " + outfile)
-        except:
+        except Exception as inst:
             logging.error("Couldn't open %s for writing!" % outfile)
 
         # This is the file that contains all the filtering data
@@ -99,7 +99,7 @@ class osmfile(object):
 
         try:
             newtag = self.ctable.match(field)
-        except:
+        except Exception as inst:
             logging.debug("MISSING Field: %r" % field)
             # If it's not in the conversion file, assume it maps directly
              # to an official OSM tag.

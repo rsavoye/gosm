@@ -27,7 +27,7 @@ class config(object):
         file = os.getenv('HOME') + "/.gosmrc"
         try:
             gosmfile = open(file, 'r')
-        except:
+        except Exception as inst:
             logging.warning("Couldn't open %s for writing! not using OSM credentials" % file)
             return
 
@@ -76,7 +76,7 @@ class config(object):
 
         try:
             lines = gosmfile.readlines()
-        except:
+        except Exception as inst:
             logging.error("Couldn't read lines from %s" % gosmfile.name)
 
         for line in lines:
@@ -84,7 +84,7 @@ class config(object):
                 # Ignore blank lines or comments
                 if line == '' or line[1] == '#':
                     continue
-            except:
+            except Exception as inst:
                 pass
             # First field of the CSV file is the name
             index = line.find('=')
@@ -109,7 +109,7 @@ class config(object):
     def get(self, opt):
         try:
             return self.options[opt]
-        except:
+        except Exception as inst:
             return False
 
     # Basic help message

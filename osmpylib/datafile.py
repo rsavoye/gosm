@@ -16,7 +16,7 @@
 # 
 
 import logging
-import os
+# import re
 
 
 class convfile(object):
@@ -31,30 +31,32 @@ class convfile(object):
     def open(self, file):
         try:
             self.file = open(file, "r")
-        except:
-            logging.error("Couldn't open " + file)
+        except Exception as inst:
+            logging.error("Couldn't open %r: %r" % (file), inst)
         self.read()
 
     def read(self):
-        #import pdb; pdb.set_trace()
-        if self.file == False:
+        if self.file is False:
             self.file.open(self.filespec)
         try:
             lines = self.file.readlines()
-        except:
-            logging.error("Couldn't read lines from %r" % self.file)
+        except Exception as inst:
+            logging.error("Couldn't read lines from %r: %r" % (self.file), inst)
             return
         curname = ""
         for line in lines:
             if line[0] == '#':
                 continue
-            # First field of the CSV file is the name
+            # Drop any embedded commas
+            line.replace(", ", " ")
             tmp = line.split(',')
+            # First field of the CSV file is the name
             type = tmp[0]
             try:
                 name = tmp[1]
-            except:
+            except Exception as inst:
                 name = 'unknown'
+
             # store so we know when a set of attributes changes
             tmptab = dict()
             if curname == name:
@@ -64,16 +66,16 @@ class convfile(object):
                 curname = name
             try:
                 value = tmp[2]
-            except:
+            except Exception as inst:
                 value = ""
 
             if type == 'attribute':
                 try:
                     attr = tmp[3].replace("\n", "")
-                except:
+                except Exception as inst:
                     attr = ""
 
-                    # print("datafile:read(name=%r, value=%r, attr=%r) is attribute" % (name, value, attr))
+                # print("datafile:read(name=%r, value=%r, attr=%r) is attribute" % (name, value, attr))
                 items[value] = attr
                 self.attrtable[name] = items
             elif type == 'tag':
@@ -84,26 +86,28 @@ class convfile(object):
                 self.table[name] = value.replace("\n", "")
 
     def attribute(self, name, attr):
-        #logging.debug("datafile:attribute(%r) %r" % (name, attr))
+        # logging.debug("datafile:attribute(%r) %r" % (name, attr))
+        # m = re.search(pattern, match)
+        # Drop any embedded commas
         try:
-            value = self.attrtable[name][attr]
-            #print("Yes VAL: %r" % value)
+            value = self.attrtable[name][attr.replace(", ", " ")]
+            # print("Yes VAL: %r" % value)
             return value
         except KeyError:
-            #print("No VAL for: %r" % name)
+            # print("No VAL for: %r" % name)
             return attr
 
     def match(self, instr):
-        #logging.debug("datafile:match(%r) %r" % (name, instr))
+        # logging.debug("datafile:match(%r) %r" % (name, instr))
         try:
             field = self.table[instr]
-        except:
+        except Exception as inst:
             field = instr
         return field
     
     def dump(self):
         logging.info("Dumping datafile")
-        for i,j in self.table.items():
+        for i, j in self.table.items():
             logging.info("FOOBAR: %r" % (i, j))
             
 

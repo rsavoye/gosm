@@ -103,8 +103,8 @@ class shpfile(object):
                     if record.isspace() is True:
                         silly.write(" 'blank' ")
                     else:
-                        silly.write(" %r " % str(record))
-                except:
+                        silly.write(" %r " % str(record).replace("\n", ""))
+                except Exception as inst:
                     print(" '%r' " % str(record))
                     continue
             silly.write("===================================================================\n")
@@ -127,7 +127,7 @@ class shpfile(object):
                         silly.write(",' ")
                     else:
                         silly.write(", %r " % record)
-                except:
+                except Exception as inst:
                     logging.debug(" '%r' " % record)
                     continue
             silly.write("\n")
@@ -184,11 +184,12 @@ class shpfile(object):
                         try:
                             if tagger['Ignore'] == 'Ignore':
                                 continue
-                        except:
+                        except Exception as inst:
                             try:
                                 if tagger['4wd_only'] == 'yes':
                                     tagger['highway'] = "track"
-                            except:
+                                    tagger['smoothness'] = "very_bad"
+                            except Exception as inst:
                                 pass
                             alltags.append(tagger)
 #                        tagger = osm.makeTag(self.fields[i][0], record)
@@ -199,7 +200,7 @@ class shpfile(object):
 #                                # print("TAG1: %r %r" % (tag[0], tag[1]))
 
 #                            logging.info("shpfile:makeOSM(tag=%r, value=%r" % (tagger[0][0], tagger[0][1]))
-                except:
+                except Exception as inst:
                     # print("FLOAT %r" % (record))
                     i = i + 1
                     continue  
@@ -261,7 +262,7 @@ class shpfile(object):
         for entry in record:
             try:
                 field = self.fields[i][0]
-            except:
+            except Exception as inst:
                 logging.error("OOPS!")
             columns[field] = entry
             i = i + 1
