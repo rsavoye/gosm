@@ -145,14 +145,14 @@ class shpfile(object):
 
             i = 1
             matched = False
+            pattern = self.options.get('filter')
             for record in entry.record:
-                pattern = self.options.get('filter')
                 match = self.fields[i][0] + "=" + str(record)
-                if pattern != '' and match != '':
+                if pattern is not '' and match is not '':
                     m = re.search(pattern, match)
                     # logging.debug("RE.SEARCH: %r %r %r" % (pattern, match, m))
-                    if m is not True:
-                        logging.debug("Matched!! %r" % pattern)
+                    if m is not None:
+                        # logging.debug("Matched!! %r" % pattern)
                         matched = True
                         break
                 i = i + 1
