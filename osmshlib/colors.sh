@@ -94,7 +94,7 @@ roads_color()
 
     # These road surfaces are potentially bad, flag them
     case ${surface} in
-	unpaved|dirt|earth|grass|*gravel*|mud|ice|ground|unpaved) color="ORANGE" ;;
+	#unpaved|dirt|earth|grass|*gravel*|mud|ice|ground|unpaved) color="ORANGE" ;;
 #	unpaved|asphalt|concrete|dirt|earth|grass|gravel_turf|fine_gravel|gravel|mud|ice) color="ORANGE" ;;
 	*) ;;
     esac
@@ -106,14 +106,23 @@ roads_color()
     esac
 
     case ${smoothness} in
-	excellent) ;; # roller blade/skate board and all below
-	good) ;; # racing bike and all below
-	intermediate) ;; # city bike/sport cars/wheel chair/Scooter and all below
-	bad) color="WHITE";; # trekking bike/normal cars/Rickshaw and all below
-	very_bad) ;; # Car with high clearance/ Mountain bike without crampons and all below
-	horrible) ;; # 4wd and all below
-	very_horrible) ;; # tractor/ATV/tanks/trial/Mountain bike
-	impassable) ;; #no wheeled vehicles 
+	# roller blade/skate board and all below
+	excellent) color="GREEN" ;;
+	# racing bike and all below
+	good) color="GREEN" ;;
+	# city bike/sport cars/wheel chair/Scooter and all below
+	intermediate) color="YELLOW" ;;
+	# trekking bike/normal cars/Rickshaw and all below
+	bad) color="YELLOW" ;;
+	# Car with high clearance/ Mountain bike without crampons and all 
+	# below
+	very_bad) color="BLUE" ;;
+	# 4wd and all below
+	horrible) color="BLUE" ;;
+	# tractor/ATV/tanks/trial/Mountain bike
+	very_horrible) color="RED" ;;
+	# no wheeled vehicles 
+	impassable) color="BLACK" ;;
 	*) ;;
     esac
 
