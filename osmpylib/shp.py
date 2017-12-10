@@ -86,12 +86,12 @@ class shpfile(object):
 
     # Dump the contents of the Shapefile.
     def dump(self):
-        print(self.sf.fields)
+        logging.debug(self.sf.fields)
 
         logging.info("Dumping file: " + self.options.get('infile'))
         self.shapes = self.sf.shapes
         silly = sys.stdout
-        print("Fields in: %r" % self.shp.name)
+        logging.debug("Fields in: %r" % self.shp.name)
         for field in self.fields:
             silly.write(" '%s' " % field[0])
         silly.write("\n")
@@ -105,7 +105,7 @@ class shpfile(object):
                     else:
                         silly.write(" %r " % str(record).replace("\n", ""))
                 except Exception as inst:
-                    print(" '%r' " % str(record))
+                    logging.debug(" '%r' " % str(record))
                     continue
             silly.write("===================================================================\n")
 
@@ -150,7 +150,7 @@ class shpfile(object):
                 match = self.fields[i][0] + "=" + str(record)
                 if pattern is not '' and match is not '':
                     m = re.search(pattern, match)
-                    # logging.debug("RE.SEARCH: %r %r %r" % (pattern, match, m))
+                    logging.debug("RE.SEARCH: %r %r %r" % (pattern, match, m))
                     if m is not None:
                         # logging.debug("Matched!! %r" % pattern)
                         matched = True
@@ -166,7 +166,7 @@ class shpfile(object):
 
                 try:
                     if record.isspace() is True:
-                        # print ("SPACE: %r" % record)
+                        # logging.debug ("SPACE: %r" % record)
                         i = i + 1
                         continue
                     else:
@@ -179,7 +179,7 @@ class shpfile(object):
                         s = s.replace(">", "gt")
                         # tags[self.fields[i][0]] = cgi.escape(s
                         tagger = osm.makeTag(self.fields[i][0], s)
-                        # print("FIXME: tagger %r" % tagger)
+                        # logging.debug("FIXME: tagger %r" % tagger)
                         # Some fields are ignored
                         try:
                             if tagger['Ignore'] == 'Ignore':
@@ -194,25 +194,25 @@ class shpfile(object):
                             alltags.append(tagger)
 #                        tagger = osm.makeTag(self.fields[i][0], record)
 #                        if len(tagger) > 0:
-#                            print("TAGS: %r" % tagger)
+#                            logging.debug("TAGS: %r" % tagger)
 #                            tags[tagger[0][0]] = tagger[0][1]
 #                            # for tag in tagger:
-#                                # print("TAG1: %r %r" % (tag[0], tag[1]))
+#                                # logging.debug("TAG1: %r %r" % (tag[0], tag[1]))
 
 #                            logging.info("shpfile:makeOSM(tag=%r, value=%r" % (tagger[0][0], tagger[0][1]))
                 except Exception as inst:
-                    # print("FLOAT %r" % (record))
+                    # logging.debug("FLOAT %r" % (record))
                     i = i + 1
                     continue  
                 i = i + 1
-                # print a rotating character, so we know it's working
+                # logging.debug a rotating character, so we know it's working
             rot = ("|", "/", "-", "\\", "*")
 
             # Process all the points in the Shape file
             k = 0
             refs = []
             for point in entry.shape.points:
-                # print("%r: %r" % (entry.record[1:2], point))
+                # logging.debug("POINTS: %r: %r" % (entry.record[1:2], point))
                 lon = point[0]
                 lat = point[1]
                 node = osm.node(lat, lon, tags)
@@ -222,10 +222,10 @@ class shpfile(object):
                     k = k + 1
                 else:
                     k = 0
-                    # logging.info("OSM ID: %r %r %r" % (tags, lat, lon))
-                    # logging.info("REFS %r" % refs)
+                    # logging.debug("OSM ID: %r %r %r" % (tags, lat, lon))
+            # logging.debug("REFS %r" % refs)
 
-                osm.makeWay(refs, alltags)
+            osm.makeWay(refs, alltags)
 
         osm.footer()
 
@@ -238,8 +238,8 @@ class shpfile(object):
     def readShapes(self):
         shapeRecs = self.sf.iterShapeRecords()
         for entry in shapeRecs:
-            print(len(entry.shape.parts))
-            print(len(entry.shape.points))
+            logging.debug(len(entry.shape.parts))
+            logging.debug(len(entry.shape.points))
             for point in entry.shape.points:
                 logging.debug("%r: %r" % (entry.record[1:2], point))
 
@@ -249,15 +249,15 @@ class shpfile(object):
             foo = self.createFields(record)
             logging.debug("------------------------- ")
             for i, j in foo.items():
-                print("FIXME: %s"  % i, j)
+                logging.debug("FIXME: %s"  % i, j)
 
             logging.debug("=====================")
 
     # Create a dictionary to hold the record data
     def createFields(self, record):
         columns = dict()
-        # print (record)
-        # print (self.fields)
+        # logging.debug (record)
+        # logging.debug (self.fields)
         i = 1
         for entry in record:
             try:
