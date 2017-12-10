@@ -57,7 +57,7 @@ class osmfile(object):
             self.file.write('<osm version="0.6" generator="gosm 0.1" timestamp="2017-03-13T21:43:02Z">\n')
 
     def footer(self):
-        #print("FIXME: %r" % self.file)
+        #logging.debug("FIXME: %r" % self.file)
         self.file.write("</osm>\n")
         if self.file != False:
             self.file.close()
@@ -95,33 +95,36 @@ class osmfile(object):
         newval = newval.replace("'", "")
         # newval = cgi.escape(newval)
         tag = dict()
-        #logging.debug("OSM:makeTag(field=%r, value=%r)" % (field, newval))
+        # logging.debug("OSM:makeTag(field=%r, value=%r)" % (field, newval))
 
         try:
             newtag = self.ctable.match(field)
         except Exception as inst:
             logging.debug("MISSING Field: %r" % field)
             # If it's not in the conversion file, assume it maps directly
-             # to an official OSM tag.
+            # to an official OSM tag.
             newtag = field
 
         newval = self.ctable.attribute(newtag, newval)
-        # print("ATTRS1: %r %r" % (newtag, newval))
+        # logging.debug("ATTRS1: %r %r" % (newtag, newval))
         change = newval.split('=')
         if len(change) > 1:
             newtag = change[0]
             newval = change[1]
-            # print("ATTRS2: %r %r" % (newtag, newval))
+            # logging.debug("ATTRS2: %r %r" % (newtag, newval))
         if newtag == 'name':
             tag[newtag] = newval.capitalize()
-            # print("CAPITALIZE %r %r" % (newtag, newval))
+            # logging.debug("CAPITALIZE %r %r" % (newtag, newval))
         else:
             tag[newtag] = newval
 
         return tag
 
     def makeWay(self, refs, tags=list()):
-        #logging.debug("osmfile::way(refs=%r, tags=%r)" % (refs, tags))
+        if len(refs) is 0:
+            logging.debug("ERROR: No refs! %r" % tags)
+            return
+        # logging.debug("osmfile::way(refs=%r, tags=%r)" % (refs, tags))
         #logging.debug("osmfile::way(tags=%r)" % (tags))
         self.file.write("    <way id='" + str(self.osmid) +
                         "\' visible='true'")
