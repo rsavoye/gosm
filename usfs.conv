@@ -1,3 +1,4 @@
+# For USFS Roads
 tag,RTE_CN,Ignore
 tag,ID,Ignore
 tag,NAME,name
@@ -41,15 +42,79 @@ tag,OTHER_OH_1,Ignore
 tag,OTHER_OH_2,Ignore
 tag,ADMINORG,Ignore
 tag,SECURITYID,Ignore
-tag,DISTRICTNA,Ignore
+tag,DISTRICTNA,addr:district
 tag,FORESTNAME,Ignore
 tag,FIELD_ID,Ignore
 tag,SBS_SYMBOL,highway
 tag,ROUTESTATU,Ignore
 tag,GLOBALID,Ignore
 tag,TA_SYMBOL,Ignore
-tag,SHAPE_LEN ,Ignore
+tag,SHAPE_LEN,Ignore
 
+# For USFS trails
+tag,ATTRIBUTES,Ignore
+tag,TRAIL_NO,Ignore
+tag,TRAIL_CN,Ignore
+tag,ADMIN_ORG,Ignore
+tag,MANAGING_O,Ignore
+tag,SECURITY_I,Ignore
+tag,MINIMUM_TR,Ignore
+tag,TYPICAL__2,Ignore
+tag,SPECIAL_MG,Ignore
+tag,TERRA_BASE,Ignore
+tag,TRAIL_NAME,name
+#  IMPORTED COMPACTED MATERIAL, AC- ASPHALT, NAT - NATIVE MATERIAL, SNOW
+tag,TRAIL_SURF,surface
+tag,TRAIL_TYPE,Ignore
+tag,TRAIL_CLAS,Ignore
+#  NOT ACCESSIBLE or ACCESSIBLE
+tag,ACCESSIBIL,Ignore
+# VS - VERY SOFT, S - SOFT,  P - PAVED,  F - FIRM, H - HARD
+tag,SURFACE_FI,tracktype
+# 0-5%, 5-8%, 8-10%, 10-12%, 12-20%, 20-30%, 30-40%, 40-50%, >50%
+tag,TYPICAL_TR,Ignore
+#tag,TYPICAL_TR,incline
+tag,TYPICAL__1,Ignore
+tag,MVUM_SYMBO,Ignore
+tag,TERRA_MOTO,psv
+tag,SNOW_MOTOR,Ignore
+tag,WATER_MOTO,Ignore
+tag,ALLOWED_TE,route
+tag,ALLOWED_SN,piste
+tag,HIKER_PEDE,Ignore
+tag,HIKER_PE_1,Ignore
+tag,HIKER_PE_2,Ignore
+tag,PACK_SADDL,Ignore
+tag,PACK_SAD_1,Ignore
+tag,PACK_SAD_2,Ignore
+tag,BICYCLE_MA,Ignore
+tag,BICYCLE_AC,Ignore
+tag,BICYCLE_RE,Ignore
+tag,MOTORCYCLE,Ignore
+tag,MOTORCYC_1,Ignore
+tag,MOTORCYC_2,Ignore
+tag,ATV_MANAGE,atv
+tag,ATV_ACCPT_,Ignore
+tag,ATV_RESTRI,Ignore
+tag,FOURWD_MAN,Ignore
+tag,FOURWD_ACC,Ignore
+tag,FOURWD_RES,Ignore
+tag,SNOWMOBILE,Ignore
+tag,SNOWMOBI_1,Ignore
+tag,SNOWMOBI_2,Ignore
+tag,SNOWSHOE_M,Ignore
+tag,SNOWSHOE_A,Ignore
+tag,SNOWSHOE_R,Ignore
+tag,XCOUNTRY_S,Ignore
+tag,XCOUNTRY_1,Ignore
+tag,XCOUNTRY_2,Ignore
+tag,MOTOR_WATE,Ignore
+tag,MOTOR_WA_1,Ignore
+tag,MOTOR_WA_2,Ignore
+tag,NONMOTOR_W,Ignore
+tag,NONMOTOR_1,Ignore
+tag,NONMOTOR_2,Ignore
+tag,NFST,Ignore
 
 # Smootness attribute
 attribute,smoothness,1 - BASIC CUSTODIAL CARE (CLOSED),service
@@ -60,22 +125,57 @@ attribute,smoothness,3 - SUITABLE FOR PASSENGER CARS,bad
 attribute,smoothness,4 - MODERATE DEGREE OF USER COMFORT,intermediate
 attribute,smoothness,5 - HIGH DEGREE OF USER COMFORT,good
 
-# Vehicle access
+# Vehicle access, passenger vehicle
+attribute,psv,N,no
+attribute,psv,Y,yes
 attribute,psv,open,yes
+# Vehicle access, 4wd
+attribute,lhv,N,no
+attribute,lhv,Y,yes
 attribute,lhv,open,yes
+# Vehicle access, truck
 attribute,bdouble,open,yes
 attribute,motorcycle,open,yes
+# Vehicle access, ATV
+attribute,atv,N,no
+attribute,atv,Y,yes
 attribute,atv,open,yes
 
-# Surface attribute
+# Surface attributes for Roads
 attribute,surface,AGG - CRUSHED AGGREGATE OR GRAVEL,gravel
 attribute,surface,NAT - NATIVE MATERIAL,dirt
 attribute,surface,AC - ASPHALT,asphalt
 attribute,surface,P - PAVED,paved
 attribute,surface,IMP - IMPROVED NATIVE MATERIAL,comppacted
+# For Trails
+attribute,surface,AC- ASPHALT,asphalt
+attribute,surface,CHUNK WOOD,wood
+attribute,surface,CON - CONCRETE,concrete
+attribute,surface,IMPORTED COMPACTED MATERIAL,
+attribute,surface,IMPORTED LOOSE MATERIAL,earth
+attribute,surface,OTHER,Ignore
+attribute,surface,SNOW,Ignore
+attribute,surface,WATER,Ignore
+#
+attribute,tracktype,P - PAVED,grade1
+attribute,tracktype,F - FIRM,grade2
+attribute,tracktype,H - HARD,grade3
+attribute,tracktype,S - SOFT,grade4
+attribute,tracktype,VS - VERY SOFT,grade5
 
 # Highway types, Forest Service roads aren't fancy
 attribute,highway,Road Not Maintained for Passenger Car,4wd_only=yes
 attribute,highway,Dirt Road Suitable for Passenger Car,unclassified
 attribute,highway,Gravel Road Suitable for Passenger Car,unclassified
 attribute,highway,Paved Road,tertiary
+
+attribute,route,1,route=hiking
+attribute,route,2,route=horse
+attribute,route,3,route=bicycle
+attribute,route,4,motorcycle=yes
+attribute,route,5,atv=yes
+attribute,route,6,4wd_only=yes
+
+attribute,piste,1,piste:type=hike
+attribute,piste,2,piste:type=nordic
+attribute,piste,3,route=snowmobile
