@@ -37,6 +37,7 @@ class config(object):
         self.options['limit'] = 0
         self.options['format'] = "osm"
         self.options['filter'] = ""
+        self.options['extra'] = ""
         self.options['user'] = ""
         self.options['uid'] = 0
         self.options['dump'] = False
@@ -50,8 +51,8 @@ class config(object):
             self.usage(argv)
 
         try:
-            (opts, val) = getopt.getopt(argv[1:], "h,o:,i:,f:,v,c:,d",
-                ["help", "format=", "outfile", "infile", "verbose", "convfile", "dump"])
+            (opts, val) = getopt.getopt(argv[1:], "h,o:,i:,f:,v,c:,d,e:",
+                ["help", "format=", "outfile", "infile", "verbose", "convfile", "dump", "extra"])
         except getopt.GetoptError as e:
             logging.error('%r' % e)
             self.usage(argv)
@@ -66,6 +67,8 @@ class config(object):
                 self.options['outfile'] = val
             elif opt == "--infile" or opt == '-i':
                 self.options['infile'] = val
+            elif opt == "--extra" or opt == '-e':
+                self.options['extra'] = val
             elif opt == "--verbose" or opt == '-v':
                 self.options['verbose'] = True
                 logging.basicConfig(filename='shp2map.log',level=logging.DEBUG)
