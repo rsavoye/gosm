@@ -150,7 +150,7 @@ class shpfile(object):
                 match = self.fields[i][0] + "=" + str(record)
                 if pattern is not '' and match is not '':
                     m = re.search(pattern, match)
-                    logging.debug("RE.SEARCH: %r %r %r" % (pattern, match, m))
+                    # logging.debug("RE.SEARCH: %r %r %r" % (pattern, match, m))
                     if m is not None:
                         # logging.debug("Matched!! %r" % pattern)
                         matched = True
@@ -160,13 +160,20 @@ class shpfile(object):
             if matched is False and pattern is not '':
                 continue
 
+            routes = ['null', 'hiker', 'horse', 'bicycle', 'motorcycle', 'atv', '4wd_only']
+            snow = ['null', 'hike', 'nordic', 'snowmobile']
             # Process the tags for this record
             i = 1
             for record in entry.record[:end]:
 
                 try:
+                    # logging.debug("RECORD: %r" % record)
+                    # import pdb; pdb.set_trace()
+                    if record[0] is "N" and record[1] is "/" and record[2] is "A":
+                        # logging.debug("GOT ONE - N/A: %r" % record)
+                        continue
                     if record.isspace() is True:
-                        # logging.debug ("SPACE: %r" % record)
+                        # logging.debug("SPACE: %r" % record)
                         i = i + 1
                         continue
                     else:
@@ -177,9 +184,46 @@ class shpfile(object):
                         s = s.replace("'", "")
                         s = s.replace("<", "lt")
                         s = s.replace(">", "gt")
-                        # tags[self.fields[i][0]] = cgi.escape(s
+                        # FIXME: name may end with ohv-atv or atv or ohv'
+                        # tags[self.fields[i][0]] = cgi.escape(s)
+                        # FIXME: fix so it honors Ignore!
+                        if re.search("[0-9][0-9]/[0-9][0-9]\-", s) is not None:
+                            # logging.debug("GOT A DATE RANGE: %r" % s)
+                            #tagger = osm.makeTag(self.fields[i][0], "yes")
+                            tagger['opening_hours'] = s
+                        
                         tagger = osm.makeTag(self.fields[i][0], s)
                         # logging.debug("FIXME: tagger %r" % tagger)
+
+                        try:
+                            if tagger['route'] is not '':
+                                # logging.debug("ROUTE: %r" % tagger)
+                                route = tagger['route']
+                                del tagger['route']
+                                k = 0
+                                while k < len(route):
+                                    x = routes[int(route[k])]
+                                    # logging.debug("ROUTE: %r %r[%r]" % (route, x, k))
+                                    tagger[x] = "yes"
+                                    k = k + 1
+                        except Exception as inst:
+                            pass
+
+                        try:
+                            if tagger['piste'] is not '':
+                                # logging.debug("ROUTE: %r" % tagger)
+                                piste = tagger['piste']
+                                del tagger['piste']
+                                k = 0
+                                while k < len(piste):
+                                    x = snow[int(piste[k])]
+                                    # logging.debug("SNOW: %r %r[%r]" % (route, x, k))
+                                    tagger['route'] = "piste"
+                                    tagger['piste:type'] = x
+                                    k = k + 1
+                        except Exception as inst:
+                            pass
+
                         # Some fields are ignored
                         try:
                             if tagger['Ignore'] == 'Ignore':
@@ -192,14 +236,6 @@ class shpfile(object):
                             except Exception as inst:
                                 pass
                             alltags.append(tagger)
-#                        tagger = osm.makeTag(self.fields[i][0], record)
-#                        if len(tagger) > 0:
-#                            logging.debug("TAGS: %r" % tagger)
-#                            tags[tagger[0][0]] = tagger[0][1]
-#                            # for tag in tagger:
-#                                # logging.debug("TAG1: %r %r" % (tag[0], tag[1]))
-
-#                            logging.info("shpfile:makeOSM(tag=%r, value=%r" % (tagger[0][0], tagger[0][1]))
                 except Exception as inst:
                     # logging.debug("FLOAT %r" % (record))
                     i = i + 1
