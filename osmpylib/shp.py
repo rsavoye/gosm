@@ -163,6 +163,7 @@ class shpfile(object):
             routes = ['null', 'hiker', 'horse', 'bicycle', 'motorcycle', 'atv', '4wd_only']
             snow = ['null', 'hike', 'nordic', 'snowmobile']
             # Process the tags for this record
+            hours = False
             i = 1
             for record in entry.record[:end]:
 
@@ -189,11 +190,13 @@ class shpfile(object):
                         # FIXME: fix so it honors Ignore!
                         if re.search("[0-9][0-9]/[0-9][0-9]\-", s) is not None:
                             # logging.debug("GOT A DATE RANGE: %r" % s)
-                            #tagger = osm.makeTag(self.fields[i][0], "yes")
-                            tagger['opening_hours'] = s
-                        
+                            # tagger = osm.makeTag(self.fields[i][0], "yes")
+                            if hours is False:
+                                tagger['opening_hours'] = s
+                            hours = True
+
                         tagger = osm.makeTag(self.fields[i][0], s)
-                        # logging.debug("FIXME: tagger %r" % tagger)
+                        # logging.debug("FIXME: tagger[%r] %r" % (self.fields[i][0], tagger))
 
                         try:
                             if tagger['route'] is not '':
@@ -229,10 +232,20 @@ class shpfile(object):
                             if tagger['Ignore'] == 'Ignore':
                                 continue
                         except Exception as inst:
+                            # Some tags trigger other tags, which can't be
+                            # handled by the conversion file without getting
+                            # ugly
+                            try:
+                                if tagger['hiker'] == 'yes':
+                                    tagger['highway'] = "footway"
+                                    tagger['sac_scale'] = "mountain_hiking"
+                            except Exception as inst:
+                                pass
                             try:
                                 if tagger['4wd_only'] == 'yes':
                                     tagger['highway'] = "track"
-                                    tagger['smoothness'] = "very_bad"
+                                    # tagger['highway'] = "path"
+                                    # tagger['smoothness'] = "very_bad"
                             except Exception as inst:
                                 pass
                             alltags.append(tagger)
@@ -244,6 +257,11 @@ class shpfile(object):
                 # logging.debug a rotating character, so we know it's working
             rot = ("|", "/", "-", "\\", "*")
 
+            # Extra tags specified on the command line to add
+            if self.options.get('extra') is not '':
+                extra = self.options.get('extra').split('=')
+                tagger[extra[0]] = extra[1]
+                alltags.append(tagger)
             # Process all the points in the Shape file
             k = 0
             refs = []
