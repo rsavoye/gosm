@@ -1,4 +1,4 @@
-# For USFS Roads
+# For USFS MVUM Roads
 tag,RTE_CN,Ignore
 tag,ID,Ignore
 tag,NAME,name
@@ -72,8 +72,7 @@ tag,ACCESSIBIL,Ignore
 # VS - VERY SOFT, S - SOFT,  P - PAVED,  F - FIRM, H - HARD
 tag,SURFACE_FI,tracktype
 # 0-5%, 5-8%, 8-10%, 10-12%, 12-20%, 20-30%, 30-40%, 40-50%, >50%
-tag,TYPICAL_TR,Ignore
-#tag,TYPICAL_TR,incline
+tag,TYPICAL_TR,incline
 tag,TYPICAL__1,Ignore
 tag,MVUM_SYMBO,Ignore
 tag,TERRA_MOTO,psv
@@ -93,7 +92,7 @@ tag,BICYCLE_RE,Ignore
 tag,MOTORCYCLE,Ignore
 tag,MOTORCYC_1,Ignore
 tag,MOTORCYC_2,Ignore
-tag,ATV_MANAGE,atv
+tag,ATV_MANAGE,Ignore
 tag,ATV_ACCPT_,Ignore
 tag,ATV_RESTRI,Ignore
 tag,FOURWD_MAN,Ignore
@@ -115,9 +114,30 @@ tag,NONMOTOR_W,Ignore
 tag,NONMOTOR_1,Ignore
 tag,NONMOTOR_2,Ignore
 tag,NFST,Ignore
+tag,TRAILSTATU,Ignore
+tag,TRAILSYSTE,Ignore
+tag,TRAILCLASS,Ignore
+
+# For USFS RoadCore
+tag,SYMBOL_COD,Ignore
+tag,ROUTE_STAT,Ignore
+tag,OPER_MAINT,smoothness
+tag,OBJECTIVE_,Ignore
+tag,FUNCTIONAL,Ignore
+tag,SURFACE_TY,surface
+tag,LANES,Ignore
+tag,PRIMARY_MA,Ignore
+tag,COUNTY,Ignore
+tag,CONGRESSIO,Ignore
+tag,SERVICE_LI,Ignore
+tag,LEVEL_OF_S,Ignore
+tag,LOC_ERROR,Ignore
+tag,IVM_SYMBOL,Ignore
+tag,SYMBOL_NAM,highway
+tag,OPENFORUSE,Ignore
 
 # Smootness attribute
-attribute,smoothness,1 - BASIC CUSTODIAL CARE (CLOSED),service
+attribute,smoothness,1 - BASIC CUSTODIAL CARE (CLOSED),access=service
 attribute,smoothness,2 - HIGH CLEARANCE VEHICLES,very_bad
 # These are actually the same, the source data was missing the rest.
 attribute,smoothness,2,very_bad
@@ -153,9 +173,9 @@ attribute,surface,CHUNK WOOD,wood
 attribute,surface,CON - CONCRETE,concrete
 attribute,surface,IMPORTED COMPACTED MATERIAL,
 attribute,surface,IMPORTED LOOSE MATERIAL,earth
-attribute,surface,OTHER,Ignore
-attribute,surface,SNOW,Ignore
-attribute,surface,WATER,Ignore
+attribute,surface,OTHER,other
+attribute,surface,SNOW,snow
+attribute,surface,WATER,water
 #
 attribute,tracktype,P - PAVED,grade1
 attribute,tracktype,F - FIRM,grade2
@@ -169,13 +189,14 @@ attribute,highway,Dirt Road Suitable for Passenger Car,unclassified
 attribute,highway,Gravel Road Suitable for Passenger Car,unclassified
 attribute,highway,Paved Road,tertiary
 
-attribute,route,1,route=hiking
-attribute,route,2,route=horse
-attribute,route,3,route=bicycle
+attribute,route,1,hiking=yes
+attribute,route,2,horse=yes
+attribute,route,3,bicycle=yes
 attribute,route,4,motorcycle=yes
 attribute,route,5,atv=yes
 attribute,route,6,4wd_only=yes
 
 attribute,piste,1,piste:type=hike
 attribute,piste,2,piste:type=nordic
-attribute,piste,3,route=snowmobile
+attribute,piste,3,piste:type=snowmobile
+
