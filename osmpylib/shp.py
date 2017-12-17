@@ -78,9 +78,9 @@ class shpfile(object):
         self.sf = shapefile.Reader(file)
         shpfile = file + ".shp"
         self.shp = open(shpfile, "rb")
-        #dbffile = file + ".dbf"
-        #self.dbf = open(dbffile, "rb")
-        #self.sf = shapefile.Reader(shp=shpfile, dbf=dbffile)
+        # ,.dbffile = file + ".dbf"
+        # self.dbf = open(dbffile, "rb")
+        # self.sf = shapefile.Reader(shp=shpfile, dbf=dbffile)
         self.fields = self.sf.fields
         self.shapeRecs = self.sf.shapeRecords()
 
@@ -150,6 +150,7 @@ class shpfile(object):
                 match = self.fields[i][0] + "=" + str(record)
                 if pattern is not '' and match is not '':
                     m = re.search(pattern, match)
+
                     # logging.debug("RE.SEARCH: %r %r %r" % (pattern, match, m))
                     if m is not None:
                         # logging.debug("Matched!! %r" % pattern)
@@ -197,7 +198,6 @@ class shpfile(object):
 
                         tagger = osm.makeTag(self.fields[i][0], s)
                         # logging.debug("FIXME: tagger[%r] %r" % (self.fields[i][0], tagger))
-
                         try:
                             if tagger['route'] is not '':
                                 # logging.debug("ROUTE: %r" % tagger)
@@ -228,6 +228,20 @@ class shpfile(object):
                             pass
 
                         # Some fields are ignored
+                        try:
+                            # This is sightly tacky, but since we know there is only
+                            # one key/value in this dictionary, it's safe.
+                            key = next(iter(tagger))
+                            val = tagger[key]
+                            # print("TAGGER1: %r = %r" % (key, val))
+                            if val == 'Ignore':
+                                # print("TAGGER2: YES!!! %r" % val)
+                                # import pdb; pdb.set_trace()
+                                i = i + 1
+                                continue
+                        except Exception as inst:
+                            pass
+
                         try:
                             if tagger['Ignore'] == 'Ignore':
                                 continue
