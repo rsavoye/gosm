@@ -154,11 +154,11 @@
     </Icon>
   </IconStyle>
 </Style>
-<Style id="Cistern">
+<Style id="FirePond">
   <IconStyle>
     <scale>1.0</scale>
     <Icon>
-      <href>icons/cistern.png</href>
+      <href>icons/mx_water_point.png</href>
     </Icon>
   </IconStyle>
 </Style>
