@@ -18,7 +18,8 @@
 # 
 
 # This is a simple application to manipulate KML files, which is needed
-# for some mapping mobile apps or other data processing.
+# for some mapping mobile apps or other data processing. This doesn't use
+# fastkml, this is primarily a text processing application.
 import os
 import sys
 import epdb
@@ -38,6 +39,7 @@ class config(object):
         self.options['logging'] = True
         self.options['operation'] = "split"
         self.options['verbose'] = False
+        self.options['root'] = os.path.dirname(argv[0])
         self.options['infiles'] = os.path.dirname(argv[0])
         self.options['outdir'] = "/tmp/"
         self.options['outfile'] = self.options['outdir'] + "tmp.kml"
@@ -68,7 +70,17 @@ class config(object):
                 self.options['operation'] = "split"
             elif opt == "--verbose" or opt == '-v':
                 self.options['verbose'] = True
+                with open('kmltool.log', 'w'):
+                    pass
                 logging.basicConfig(filename='kmltool.log', level=logging.DEBUG)
+                root = logging.getLogger()
+                root.setLevel(logging.DEBUG)
+
+                ch = logging.StreamHandler(sys.stdout)
+                ch.setLevel(logging.DEBUG)
+                formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
+                ch.setFormatter(formatter)
+                root.addHandler(ch)
 
     def get(self, opt):
         try:
@@ -78,8 +90,8 @@ class config(object):
 
     # Basic help message
     def usage(self, argv):
-        print(argv[0] + ": options: ")
-        print("""\t--help(-h)   Help
+        logging.debug(argv[0] + ": options: ")
+        logging.debug("""\t--help(-h)   Help
 \t--split(-s)     Split KML folders into separate files
 \t--jpin(-j)      Join KML files together
 \t--extract(-e)   Extract a Folder from a KML file
@@ -105,6 +117,7 @@ class kmltool(object):
     # Split a KML file into separate files, one for each Folder. Maps.ME
     # doesn't support folders yet.
     def split(self):
+        """Split a KML file into separate files, one for each Folder"""
         logging.debug("spit")
         try:
             files = self.config.get('infiles')
@@ -123,7 +136,7 @@ class kmltool(object):
         schema = False
         style = False
         header = list()
-        kkk = kmlfile()
+        kml = kmlfile()
         for line in lines:
             stdout.write("   Processing KML file: %s\r" % rot[k])
             if k <= 3:
@@ -133,33 +146,33 @@ class kmltool(object):
             if line[0] == '#':
                 continue
 
-            if style is True:
-                header.append(line)
-            if schema is True:
-                header.append(line)
+            # if style is True:
+            #     header.append(line)
+            # if schema is True:
+            #     header.append(line)
                 
-            m = re.search(".*</Schema>.*", line)
-            if m is not None:
-                schema = False
-                pass
-            m = re.search(".*<Schema>.*", line)
-            if m is not None:
-                header.append(line)
-                schema = True
-                pass
-            m = re.search(".*</Style>.*", line)
-            if m is not None:
-                style = False
-                pass
-            m = re.search(".*<Style>.*", line)
-            if m is not None:
-                header.append(line)
-                style = True
-                pass
+            # m = re.search(".*</Schema>.*", line)
+            # if m is not None:
+            #     schema = False
+            #     pass
+            # m = re.search(".*<Schema>.*", line)
+            # if m is not None:
+            #     header.append(line)
+            #     schema = True
+            #     pass
+            # m = re.search(".*</Style>.*", line)
+            # if m is not None:
+            #     style = False
+            #     pass
+            # m = re.search(".*<Style>.*", line)
+            # if m is not None:
+            #     header.append(line)
+            #     style = True
+            #     pass
 
             m = re.search(".*</Folder>.*", line)
             if m is not None:
-                kkk.footer()
+                kml.footer()
                 continue
 
             m = re.search(".*<Folder>.*", line)
@@ -168,7 +181,7 @@ class kmltool(object):
                 continue
             else:
                 if self.file is not False:
-                    kkk.write(line)
+                    kml.write(line)
 
             if name is True:
                 m = re.search(".*<name>.*</name>", line)
@@ -177,14 +190,48 @@ class kmltool(object):
                     end = line.rfind("<")
                     folder = line[start:end]
                     name = False
-                    print("Processing KML Folder " + folder)
-                    kkk.open("/tmp/" + folder + ".kml")
-                    kkk.header(folder)
-                    kkk.write(str(header))
+                    logging.debug("Exporting KML Folder " + folder)
+                    kml.open("/tmp/" + folder + ".kml")
+                    kml.header(folder)
+                    kml.styles(self.config.get('root') + '/styles.kml')
+                    kml.write(header)
 
     def join(self):
-        # Join multiple KML files into one big KML file
+        """Join multiple KML files into a singe KML file """
         logging.debug("join")
+        out = kmlfile()
+        name = self.config.get('outfile')
+        out.open(name)
+        name = os.path.basename(name.replace(".kml", ""))
+        out.header(name.capitalize())
+        out.styles(self.config.get('root') + '/styles.kml')
+        logging.info("Opened %r for KML output" % self.config.get('outfile'))
+        # Each inpuot file becomes a KML Folder in the output file
+        for file in self.config.get('infiles').split(','):
+            name = os.path.basename(file.replace(".kml", ""))
+            out.folderStart(name)
+            try:
+                self.file = open(file, "r")
+                logging.info("Opened %r for KML input" % file)
+            except Exception as inst:
+                logging.error("Couldn't open %r: %r" % (file, inst))
+                return
+            start = False
+            lines = self.file.readlines()
+            for line in lines:
+                m = re.search(" *<Placemark>", line)
+                if m is not None:
+                    start = True
+                # End of the data we want
+                m = re.search(" *</Document>", line)
+                if m is not None:
+                    break
+                if start is True:
+                    out.write(line)
+
+            out.folderEnd()
+            self.file.close()
+        out.footer()
 
     def extract(self):
         # Extract one KML folder out of the KML file
