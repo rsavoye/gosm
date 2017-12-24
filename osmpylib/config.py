@@ -85,7 +85,7 @@ class config(object):
         for line in lines:
             try:
                 # Ignore blank lines or comments
-                if line == '' or line[1] == '#':
+                if line is '' or line[1] is '#':
                     continue
             except Exception as inst:
                 pass
