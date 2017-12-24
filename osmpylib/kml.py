@@ -20,9 +20,16 @@ import logging
 
 class kmlfile(object):
     """Output file in KML format."""
+    def __init__(self):
+        self.file = False
+
     def open(self, file):
         self.file = open(file, 'w')
-        
+
+    def styles(self, styles):
+        file = open(styles, 'r')
+        self.write(file.readlines())
+
     def header(self, title):
         self.title = title
         self.file.write('<?xml version="1.0" encoding="UTF-8"?>\n')
@@ -32,9 +39,17 @@ class kmlfile(object):
         self.file.write('            <visibility>1</visibility>\n')
         self.file.write('            <open>1</open>\n')
 
+    def write(self, lines):
+        if self.file is not False:
+            for i in lines:
+                self.file.write(i)
+
     def footer(self):
-        self.file.write('    /Document>\n')
-        self.file.write('/kml>\n')
+        if self.file is not False:
+            self.file.write('    </Document>\n')
+            self.file.write('</kml>\n')
+            self.file.close()
+            self.file = False
         
     def placemark(self, ):
         self.file.write('        <Placemark>\n')
@@ -74,8 +89,8 @@ class kmlfile(object):
     def folderStart(self, folder):
         self.folder = folder
         self.file.write('<Folder>')
-        self.file.write('<name>' + folder + '</name>')
+        self.file.write('<name>' + folder + '</name>\n')
         
     def folderEnd(self):
-        self.file.write('</Folder>')
+        self.file.write('</Folder>\n')
         
