@@ -17,30 +17,22 @@
 # Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 # 
 
+# This is a simple application to manipulate KML files, which is needed
+# for some mapping mobile apps or other data processing.
 import os
 import sys
 import epdb
 import logging
 import getopt
 import re
-from fastkml import kml
 from kml import kmlfile
 from sys import argv
 sys.path.append(os.path.dirname(argv[0]) + '/osmpylib')
 
 
-
 class config(object):
     """Config data for this program."""
     def __init__(self, argv=list()):
-        # Read the config file to get our OSM credentials, if we have any
-        file = os.getenv('HOME') + "/.gosmrc"
-        try:
-            gosmfile = open(file, 'r')
-        except Exception as inst:
-            logging.warning("Couldn't open %s for writing! not using OSM credentials" % file)
-            return
-
         # Default values for user options
         self.options = dict()
         self.options['logging'] = True
@@ -76,8 +68,7 @@ class config(object):
                 self.options['operation'] = "split"
             elif opt == "--verbose" or opt == '-v':
                 self.options['verbose'] = True
-                logging.basicConfig(filename='kmltool.log',level=logging.DEBUG)
-
+                logging.basicConfig(filename='kmltool.log', level=logging.DEBUG)
 
     def get(self, opt):
         try:
@@ -103,6 +94,7 @@ class config(object):
         for i, j in self.options.items():
             print("\t%s: %s" % (i, j))
 
+
 class kmltool(object):
     """KML Processing class."""
     def __init__(self, config):
@@ -110,12 +102,14 @@ class kmltool(object):
         self.file = False
         config.dump()
 
+    # Split a KML file into separate files, one for each Folder. Maps.ME
+    # doesn't support folders yet.
     def split(self):
         logging.debug("spit")
         try:
             files = self.config.get('infiles')
             self.file = open(files, "r")
-        except  Exception as inst:
+        except Exception as inst:
             logging.error("Couldn't open %r: %r" % (files, inst))
             return
 
@@ -126,6 +120,9 @@ class kmltool(object):
 
         lines = self.file.readlines()
         name = False
+        schema = False
+        style = False
+        header = list()
         kkk = kmlfile()
         for line in lines:
             stdout.write("   Processing KML file: %s\r" % rot[k])
@@ -135,21 +132,44 @@ class kmltool(object):
                 k = 0
             if line[0] == '#':
                 continue
+
+            if style is True:
+                header.append(line)
+            if schema is True:
+                header.append(line)
+                
+            m = re.search(".*</Schema>.*", line)
+            if m is not None:
+                schema = False
+                pass
+            m = re.search(".*<Schema>.*", line)
+            if m is not None:
+                header.append(line)
+                schema = True
+                pass
+            m = re.search(".*</Style>.*", line)
+            if m is not None:
+                style = False
+                pass
+            m = re.search(".*<Style>.*", line)
+            if m is not None:
+                header.append(line)
+                style = True
+                pass
+
             m = re.search(".*</Folder>.*", line)
             if m is not None:
                 kkk.footer()
                 continue
+
             m = re.search(".*<Folder>.*", line)
             if m is not None:
                 name = True
-                # kkk = kml.KML()
-                # ns = '{http://www.opengis.net/kml/2.2}'
-                # kkk = kml.Document(ns, 'docid', 'doc name', 'doc description')
                 continue
             else:
-                # epdb.set_trace()
                 if self.file is not False:
                     kkk.write(line)
+
             if name is True:
                 m = re.search(".*<name>.*</name>", line)
                 if m is not None:
@@ -157,13 +177,17 @@ class kmltool(object):
                     end = line.rfind("<")
                     folder = line[start:end]
                     name = False
+                    print("Processing KML Folder " + folder)
                     kkk.open("/tmp/" + folder + ".kml")
                     kkk.header(folder)
+                    kkk.write(str(header))
 
     def join(self):
+        # Join multiple KML files into one big KML file
         logging.debug("join")
 
     def extract(self):
+        # Extract one KML folder out of the KML file
         logging.debug("extract")
         
 dd = config(argv)
