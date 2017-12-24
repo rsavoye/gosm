@@ -88,7 +88,7 @@ class kmlfile(object):
     
     def folderStart(self, folder):
         self.folder = folder
-        self.file.write('<Folder>')
+        self.file.write('<Folder>\n')
         self.file.write('<name>' + folder + '</name>\n')
         
     def folderEnd(self):
