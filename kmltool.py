@@ -20,6 +20,12 @@
 # This is a simple application to manipulate KML files, which is needed
 # for some mapping mobile apps or other data processing. This doesn't use
 # fastkml, this is primarily a text processing application.
+
+# What this script can do is slice and dice KML file. Split one big file
+# into several using the <Folder> as the delimiter. Some mobile apps,
+# like Maps.ME can't hande Folders yet. It can also combine multiple KML
+# files into a single KML file. This can also extract <Placemark>s from
+# a KML file, useful when you only need a few data elements.
 import os
 import sys
 import epdb
@@ -97,7 +103,7 @@ class config(object):
         logging.debug("""\t--help(-h)   Help
 \t--split(-s)     Split KML folders into separate files
 \t--jpin(-j)      Join KML files together
-\t--extract(-e)   Extract a Folder from a KML file
+\t--extract(-e)   Extract a Placemarks from a KML file using regex
 \t--outfile(-o)   Output file name
 \t--infiles(-i)   Input file name(s)
 \t--verbose(-v)   Enable verbosity
