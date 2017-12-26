@@ -48,8 +48,8 @@ class config(object):
             self.usage(argv)
 
         try:
-            (opts, val) = getopt.getopt(argv[1:], "h,o:,i:,v,e:,j,s",
-                ["help", "outfile", "infiles", "verbose", "extract"])
+            (opts, val) = getopt.getopt(argv[1:], "h,o:,i:,v,e:,j,s,d:",
+                ["help", "outfile", "infiles", "verbose", "extract", "directory"])
         except getopt.GetoptError as e:
             logging.error('%r' % e)
             self.usage(argv)
@@ -64,10 +64,13 @@ class config(object):
                 self.options['infiles'] = val
             elif opt == "--extract" or opt == '-e':
                 self.options['operation'] = "extract"
+                self.options['extract'] = val
             elif opt == "--join" or opt == '-j':
                 self.options['operation'] = "join"
             elif opt == "--split" or opt == '-s':
                 self.options['operation'] = "split"
+            elif opt == "--directory" or opt == '-d':
+                self.options['outdir'] = val
             elif opt == "--verbose" or opt == '-v':
                 self.options['verbose'] = True
                 with open('kmltool.log', 'w'):
@@ -222,6 +225,9 @@ class kmltool(object):
                 m = re.search(" *<Placemark>", line)
                 if m is not None:
                     start = True
+                m = re.search(" *<Folder>", line)
+                if m is not None:
+                    start = True
                 # End of the data we want
                 m = re.search(" *</Document>", line)
                 if m is not None:
@@ -236,7 +242,63 @@ class kmltool(object):
     def extract(self):
         # Extract one KML folder out of the KML file
         logging.debug("extract")
-        
+        out = kmlfile()
+        name = self.config.get('outfile')
+        out.open(name)
+        name = os.path.basename(name.replace(".kml", ""))
+        out.header(name.capitalize())
+        out.styles(self.config.get('root') + '/styles.kml')
+        logging.info("Opened %r for KML output" % self.config.get('outfile'))
+        # Each inpuot file becomes a KML Folder in the output file
+        for file in self.config.get('extract').split(','):
+            pass
+            try:
+                self.file = open(self.config.get('infiles'), "r")
+                logging.info("Opened %r for KML input" % file)
+            except Exception as inst:
+                logging.error("Couldn't open %r: %r" % (file, inst))
+                return
+            cache = list()
+            match = False
+            start = False
+            folder = False
+            lines = self.file.readlines()
+            for line in lines:
+                m = re.search(".*Folder>.*", line)
+                if m is not None:
+                    folder = True
+                    # out.folderStart()
+                m = re.search(" *<Placemark>.*", line)
+                if m is not None:
+                    if folder is True:
+                        folder = False
+                        cache.append(line)
+                        start = True
+                        continue
+                    start = True
+                    folder = False
+                m = re.search(".*" + file + ".*", line)
+                if m is not None:
+                    match = True
+                m = re.search(" *</Placemark>.*", line)
+                if m is not None:
+                    start = False
+                    if match is True:
+                        cache.append(line)
+                        out.write(cache)
+                        cache = list()
+                        match = False
+                    else:
+                        cache = list()
+                        match = False
+
+                if start is True:
+                    cache.append(line)
+
+        # out.folderEnd()
+        self.file.close()
+        out.footer()
+
 dd = config(argv)
 
 kmltool = kmltool(dd)
