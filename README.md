@@ -1,15 +1,15 @@
-# osmtools
+# gosm
 
-A handful of bourne shell scripts to produce KML maps from an OSM
-database. I was tasked with producing some offline digital mapping
-solutions for my local rural volunteer fire department. Originally I
-was limited to downloading maps produced by other people. The problem
-with that is we needed to have our custom data added. We have a lot of
-institutional knowledge of our district, but it's huge. We cover many
-hundreds of square miles, most of it national forest or wilderness areas
-in this part of the Colorado Rockies. The data we're interested in isn't
-on any other maps, ie...  unofficial hiking and bike trails, ski area
-runs, dispersed camping.
+This started as a handful of bourne shell scripts to produce KML maps
+from an OSM  database. I was tasked with producing some offline
+digital mapping solutions for my local rural volunteer fire
+department. Originally I was limited to downloading maps produced by
+other people. The problem with that is we needed to have our custom
+data added. We have a lot of institutional knowledge of our district,
+but it's huge. We cover many hundreds of square miles, most of it
+national forest or wilderness areas in this part of the Colorado
+Rockies. The data we're interested in isn't on any other maps, ie...
+unofficial hiking and bike trails, ski area runs, dispersed camping.
 
 I eventually decided the way to go was using Open Street Map
 data. Initially I was parsing the text files, but that was way too slow
@@ -19,9 +19,8 @@ can produce complex maps in a few minutes.
 
 Starting with the existing data has already been useful, but now I'm
 uploading updates to Open Street Map. These scripts are pretty crude,
-but work for me, and should beeasily hackable. :-) Right now two types
-are supported, 'trails' and 'piste'. I'm working on 'roads'
-now. Because of the huge amount of data, I've been using polygons of
+but work for me, and should be easily hackable. :-) Because of the
+huge amount of data, I've been using polygons of 
 our local counties to extract subsets of data. Loading one big file of
 all the hiking trails in Colorado is too much for most phones or
 tablets. County sized files load and display faster.
@@ -42,15 +41,21 @@ Example:
 * read binary OSM data file and load the county data into a new database.
 ./setupdb.sh --infile mariposa /tmp/california-latest.osm.pbf --polyfile CA-polyfiles/Mariposa.poly 
 
-* Query the database we've just created for trails and ski runs.
-./osm2kml.sh --database Mariposa --subset trails,piste --output Mariposa.kml
+* Query the database we've just created for trails,ski runs, and
+landing ones.
+./osm2kml.sh --database Mariposa --subset trails,piste,helicopter --output Mariposa.kml
 
 * View the file.
 google-earth /tmp/Mariposa.kml
 
-* Manipulate KML files as some programs handle <Folder>, and some don't...
-./folder.sh -o split infile.kml
-./folder.sh -o kml *.kml > bigfile.kml
+* Extract specific Placemarks based on a regular expression.
+./kmltool.py -v -i firestuff.kml -e "name.*Eagle Rock","name.*Center"
+
+* Split a KML file into seperate files based on each KML Folder.
+./kmltool.py -v -i firestuff.kml -s
+
+* Join multiple KML files into a single file
+./kmltool.py -v -i firestuff.kml,hiking.kml,roads,kml -o bigmap.kml
 
 * Convert a KML file containing a polygon to an OSM .poly file.
 ./kml2poly.sh infile.kml
