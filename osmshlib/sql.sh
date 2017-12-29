@@ -105,14 +105,19 @@ EOF
 SELECT osm_id,name,ST_AsKML(way) FROM planet_osm_point WHERE "natural"='hot_spring' OR "leisure"='hot_spring' OR "amenity"='hot_spring';
 EOF
 	    ;;
-	emergency)
+	helicopter)
 	    cat <<EOF >> ${sqlout}
-SELECT osm_id,name,ST_AsKML(way),amenity,tags->'emergency',tags->'fire_hydrant:type',tags->'fire_hydrant:diameter' from planet_osm_point WHERE amenity='fire_station' OR amenity='hospital' OR building='hospital';
+SELECT osm_id,name,ST_AsKML(way),tags->'emergency',tags->'aeroway' from planet_osm_point WHERE aeroway='helipad' OR aeroway='heliport' OR tags->'emergency'='landing_site' ${polysql};
 EOF
 	    ;;
-	firewater)		# FIXME: incomplete query
+	firewater)
 	    cat <<EOF >> ${sqlout}
-SELECT osm_id,name,ST_AsKML(way),amenity,tags->'emergency',tags->'fire_hydrant:type',tags->'fire_hydrant:diameter' from planet_osm_point WHERE tags->'emergency'='fire_hydrant';
+SELECT osm_id,name,ST_AsKML(way),tags->'emergency',tags->'fire_hydrant:type',tags->'fire_hydrant:diameter',water,tags->'water_tank:volume',tags->'note',disused from planet_osm_point WHERE tags->'emergency'='fire_hydrant' OR tags->'emergency'='fire_water_pond' OR tags->'emergency'='suction_point' OR tags->'emergency'='water_tank';
+EOF
+	    ;;
+	emergency)
+	    cat <<EOF >> ${sqlout}
+SELECT osm_id,name,ST_AsKML(way),amenity,tags->'emergency' from planet_osm_point WHERE tags->'emergency'!='';
 EOF
 	    ;;
 	wifi)
@@ -133,11 +138,6 @@ EOF
 	hut*)
 	    cat <<EOF >> ${sqlout}
 SELECT osm_id,name,ST_AsKML(way),tourism,tags->'phone',tags->'email',tags->'website',tags->'addr:street',tags->'addr:housenumber' from planet_osm_point WHERE tourism='wilderness_hut' OR tourism='alpine_hut' ${polysql};
-EOF
-	    ;;
-	helicopter)
-	    cat <<EOF >> ${sqlout}
-SELECT osm_id,name,ST_AsKML(way),tourism,tags->'phone',tags->'email',tags->'website',tags->'addr:street',tags->'addr:housenumber' from planet_osm_point WHERE aeroway='helipad' OR aeroway='heliport' ${polysql};
 EOF
 	    ;;
 	lodging)
