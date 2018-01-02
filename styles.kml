@@ -10,6 +10,14 @@
     </Icon>
   </IconStyle>
 </Style>
+<Style id="MileMarker">
+  <IconStyle>
+    <scale>1.0</scale>
+    <Icon>
+      <href>icons/mm_highway_milestone.png</href>
+    </Icon>
+  </IconStyle>
+</Style>
 <Style id="BigPeak">
   <IconStyle>
     <scale>1.0</scale>
@@ -146,6 +154,14 @@
     </Icon>
   </IconStyle>
 </Style>
+<Style id="Cistern">
+  <IconStyle>
+    <scale>1.0</scale>
+    <Icon>
+      <href>icons/mx_storage_tank.png</href>
+    </Icon>
+  </IconStyle>
+</Style>
 <Style id="Hydrant">
   <IconStyle>
     <scale>1.0</scale>
@@ -187,6 +203,14 @@
   </IconStyle>
 </Style>
 <Style id="Heliport">
+  <IconStyle>
+    <scale>1.0</scale>
+    <Icon>
+      <href>icons/mx_aeroway_heliport.png</href>
+    </Icon>
+  </IconStyle>
+</Style>
+<Style id="Helipad">
   <IconStyle>
     <scale>1.0</scale>
     <Icon>
