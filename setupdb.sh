@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # 
-#   Copyright (C) 2016, 2017
+#   Copyright (C) 2016, 2017, 2018
 #   Free Software Foundation, Inc.
 # 
 # This program is free software; you can redistribute it and/or modify
@@ -92,22 +92,22 @@ while test $i -lt ${#polyfiles[@]} -o x"${polys}" = x; do
     # Note that the user running this script must have the right permissions.
     if test "${exists}" -eq 0; then
 	echo "Creating postgresql database ${dbname}"
-	createdb -EUTF8 ${dbname} ${dbname} ${dbpass} -T template0
+	createdb -EUTF8 ${dbname} ${dbname} -T template0
 	if test $? -gt 0; then
 	    echo "ERROR: createdb ${dbname} failed!"
 	    exit
 	fi
-	psql -d ${dbname} ${dbuser:--U ${dbuser}} ${dbpass} -c 'create extension hstore;'
+	psql -d ${dbname} ${dbpass} -c 'create extension hstore;'
 	if test $? -gt 0; then
 	    echo "ERROR: couldn't add hstore extension!"
 	    exit
 	fi
-	psql -d ${dbname} ${dbuser:--U ${dbuser}} ${dbpass} -c 'create extension postgis;'
+	psql -d ${dbname} -c 'create extension postgis;'
 	if test $? -gt 0; then	
 	    echo "ERROR: couldn't add postgis extension!"
 	    exit
 	fi
-	psql -d ${dbname} ${dbuser:--U ${dbuser}} ${dbpass} -c 'create extension dblink;'
+	psql -d ${dbname} -c 'create extension dblink;'
 	if test $? -gt 0; then	
 	    echo "ERROR: couldn't add dblink extension!"
 	    exit
@@ -129,7 +129,7 @@ while test $i -lt ${#polyfiles[@]} -o x"${polys}" = x; do
 		    exit
 		fi
 	    fi
-	    osm2pgsql -v --slim -C 1500 -d ${dbname} --number-processes 8 ${infile} --hstore --input-reader xml --drop
+	    osm2pgsql --slim -C 1500 -d ${dbname} --number-processes 8 ${infile} --hstore --input-reader xml --drop >& /dev/null
 	    if test $? -gt 0; then
 		exit
 	    fi
