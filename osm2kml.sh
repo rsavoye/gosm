@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # 
-#   Copyright (C) 2016, 2017   Free Software Foundation, Inc.
+#   Copyright (C) 2016, 2017, 2018   Free Software Foundation, Inc.
 # 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -33,16 +33,11 @@ topdir="`dirname ${osmbin}`"
 . "${topdir}/osmshlib/sql.sh" || exit 1
 . "${topdir}/osmshlib/kml.sh" || exit 1
 
-# Include the darabase access user and password
-if test -e ~/.mariadbrc; then
-    source ~/.mariadbrc
-fi
-
 #set -o nounset                              # Treat unset variables as an error
 
 # This is a list of supported subsets of data to extract.
 supportedlines="trails piste roads"
-supportedpoints="firewater helicopter emergency lodging huts wifi waterfall swimming historic camp trailhead peak hotspring"
+supportedpoints="emergency lodging huts wifi waterfall swimming historic camp trailhead peak hotspring firewater helicopter milestone"
 supported="${supportedlines} ${supportedpoints}"
 
 usage()
@@ -56,6 +51,7 @@ usage()
         --polygon(-p)  existing polygon1[:name],poly2[:name],poly3[:name]
         --format(-f)   kml|kmz|aqm
         --title(-t)    title
+        --extra(-e)    extra tags
         --output(-o)   output file name
 
     Multiple polygons or data subsets can be specified. The optionsl :name is used
@@ -77,7 +73,8 @@ polygon=""
 subset="trails"
 format="kml"
 title=""
-OPTS="`getopt -o d:h:t:f:s:o:p: -l database:,polygon:,subset:,format:,title:,output:,help`"
+extra_tags=""
+OPTS="`getopt -o d:h:t:f:s:o:p:e: -l database:,extra:,polygon:,subset:,format:,title:,output:,help`"
 while test $# -gt 0; do
     case $1 in
         -d|--database) database=$2 ;;
@@ -86,6 +83,7 @@ while test $# -gt 0; do
         -p|--polygon) polys=$2, ;;
         -t|--title) title=$2 ;;
         -o|--output) outfile=$2 ;;
+        -e|--extra) extra_tags=$2 ;;
         -h|--help) usage ;;
         --) break ;;
     esac
@@ -115,14 +113,15 @@ for sub in ${subs}; do
 	# Set some default folder names for less typing of the same stuff
 	# all the time.
 	case ${sub} in
-	    helicopter) subnames[$i]="Landing Zone" ;;
+	    helicopter) subnames[$i]="Landing Zones" ;;
 	    trails)     subnames[$i]="Hike/Bike Trails" ;;
 	    firewater)  subnames[$i]="Water Sources" ;;
 	    wifi)       subnames[$i]="Wifi Access" ;;
 	    emergency)  subnames[$i]="Emergency Buildings" ;;
 	    lodging)    subnames[$i]="Lodging" ;;
 	    huts)       subnames[$i]="Alpine Huts" ;;
-	    camp)       subnames[$i]="Campsites" ;;
+	    campsite)   subnames[$i]="Campsites" ;;
+	    campground) subnames[$i]="Campgrounds" ;;
 	    *)          subnames[$i]="${sub}" ;;
 	esac
     fi
@@ -130,7 +129,7 @@ for sub in ${subs}; do
     # rendered differently.
     case ${subsets[$i]} in
 	wifi|lodging|huts|waterfall|swimming) subtypes[$i]="waypoint" ;;
-	firewater|helicopter|emergency) subtypes[$i]="waypoint" ;;
+	firewater|helicopter|emergency|camp) subtypes[$i]="waypoint" ;;
 	*) subtypes[$i]="line" ;;
     esac
     i="`expr $i + 1`"
@@ -165,6 +164,7 @@ rm -f ${outdir}/debug.log
 # Our custom Icons for waypoints
 icondir=icons
 declare -A icons=()
+icons[MILESTONE]="#Milestone"
 icons[HISTYES]="#Histyes"
 icons[ARCHAE]="#Archae"
 icons[RUINS]="#Ruins"
@@ -176,7 +176,8 @@ icons[CASA]="#Casa"
 icons[UNKNOWN]="#town"
 icons[LODGING]="#Lodging"
 icons[WIFI]="#Wifi"
-icons[CAMPSITE]="#Campfire"
+icons[CAMPFIRE]="#Campfire"
+icons[CAMPSITE]="#Campsite"
 icons[CAMPGROUND]="#Campground"
 icons[PICNIC]="#Picnic"
 icons[MOUNTAINS]="#Mountains"
@@ -184,11 +185,14 @@ icons[HIKER]="#Hiker"
 icons[FIRESTATION]="#FireStation"
 icons[WATERTANK]="#WaterTowerOutline"
 icons[CISTERN]="#Cistern"
+icons[FIREPOND]="#FirePond"
 icons[HYDRANT]="#Hydrant"
 icons[WATER]="#Water"
 icons[WATERFALL]="#Waterfall"
 icons[SWIMMING]="#Swimming"
 icons[LANDINGSITE]="#Helicopter"
+icons[HELIPAD]="#Helipad"
+icons[HELIPORT]="#Heliport"
 icons[PARKING]="#ParkingLot"
 icons[TRAILHEAD]="#Trailhead"
 icons[PEAK]="#Peak"
@@ -240,7 +244,9 @@ for i in ${!subsets[@]}; do
     kmlout="`echo ${sqlcmd} | sed -e 's:\.sql:.kml:'`"
     name="`echo ${subnames[$i]} | tr '_' ' '`"
 
-    kml_folder_start ${kmlout} "${name}"
+    if test `echo ${subsets[@]} | wc -w` -gt 1 ; then
+	kml_folder_start ${kmlout} "${name}"
+    fi
 
     # execute the query
     psql --tuples-only --dbname=${database} --no-align --file=${sqlcmd} --output=${sqlout}
@@ -261,6 +267,12 @@ for i in ${!subsets[@]}; do
 	way="`echo ${line} | cut -d '|' -f 3`"
 	out="`${func} "${line}"`"
 	eval $out
+	# Some nodes are marked to be ignored, this is primarily used to mark depreciated
+	# water sources used for fire response.
+	if test x${data[DISUSED]} != x; then
+	    echo "WARNING: Dropping ${data[NAME]} as it's disused."
+	    continue
+	fi
 	kml_placemark ${kmlout} "`declare -p data`"
 	echo -n -e "\r\t${rot[$j]}"
 	if test $j -eq 3; then
@@ -269,7 +281,9 @@ for i in ${!subsets[@]}; do
 	    j=`expr $j + 1`
 	fi
     done < ${sqlout}
-    kml_folder_end ${kmlout}
+    if test `echo ${subsets[@]} | wc -w` -gt 1 ; then
+	kml_folder_end ${kmlout}
+    fi
 done
 
 cat ${outdir}/*.kml >> ${outfile}
@@ -280,8 +294,9 @@ echo "SQL file is ${sqlcmd}"
 # Make a KMZ file if specified
 if test x"${format}" = x"kmz"; then
     newout="`basename ${outfile} | sed -e 's:\.kml:.kmz:'`"
-    (cd ${topdir} && zip -rj ${newout} icons)
-    zip -j ${newout} ${outfile}
+    (cd ${topdir} && zip -qrj ${newout} icons)
+    echo "Making KMZ file ${newout}"
+    zip -q -j ${newout} ${outfile}
     echo "KMZ file is ${newout}"
 else
     echo "KML file is ${outfile}"
