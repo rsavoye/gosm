@@ -17,19 +17,17 @@
 # Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 # 
 
-# from sys import os
-# cwd = os.getcwd()
-# sys.path.append(cwd + '/../subdirA/')
-
+# To change the SRID to something more standard
+# ogr2ogr -f "ESRI Shapefile" RoadCenterlines-new.shp RoadCenterlines.shp -t_srs "EPSG:4326"
+ 
 import os
 import sys
-from sys import argv
-sys.path.append(os.path.dirname(argv[0]) + '/osmpylib')
-import getopt
 import logging
 import osm
 import shp
 import config
+from sys import argv
+sys.path.append(os.path.dirname(argv[0]) + '/osmpylib')
 
 
 dd = config.config(argv)
@@ -49,10 +47,13 @@ if dd.get('verbose') == 1:
     ch.setFormatter(formatter)
     root.addHandler(ch)
 
+# Enable to make it easy to set breakpoints in pdb when debugging
+# import pdb; pdb.set_trace()
+
 # Read Shape (ERSI) file
 shp = shp.shpfile(dd)
 if dd.get('infile') == "":
-#    infile = "/work/Mapping/Utah/Trails/Trails-new.shp"
+    # infile = "/work/Mapping/Utah/Trails/Trails-new.shp"
     infile = "/work/Mapping/MapData/Gilpin/RoadCenterlines/RoadCenterlines-new"
 else:
     infile = dd.get('infile')
@@ -63,14 +64,14 @@ if dd.get('dump') is True:
     quit()
 
 # Write KML file
-if dd.get('format') == 'kml':
-    if dd.get('outfile') == "":
-        kmlfile = '/tmp/tmp.kml'
-    else:
-        kmlfile = dd.get('outfile')
-    kml = kml.kmlfile()
-    kml.open(kmlfile)
-    shp.makeKML(osm)
+# if dd.get('format') == 'kml':
+#     if dd.get('outfile') == "":
+#         kmlfile = '/tmp/tmp.kml'
+#     else:
+#         kmlfile = dd.get('outfile')
+#     kml = kml.kmlfile()
+#     kml.open(kmlfile)
+#     shp.makeKML(osm)
 
 # Write OSM file
 elif dd.get('format') == "osm":
