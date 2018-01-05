@@ -75,7 +75,7 @@ roads_color()
     # For highway surface types
     case ${highway} in
 	tertiary|service|gravel) # (like Upper Moon)
-	    color="BLUE"
+	    color="LIGHTBLUE"
 	    ;;
 	unclassified) # (like Rollins Pass)
 	    color="BLACK"
@@ -116,9 +116,9 @@ roads_color()
 	bad) color="YELLOW" ;;
 	# Car with high clearance/ Mountain bike without crampons and all 
 	# below
-	very_bad) color="BLUE" ;;
+	very_bad) color="ORANGE" ;;
 	# 4wd and all below
-	horrible) color="BLUE" ;;
+	horrible) color="LIGHTBLUE" ;;
 	# tractor/ATV/tanks/trial/Mountain bike
 	very_horrible) color="RED" ;;
 	# no wheeled vehicles 
