@@ -16,6 +16,7 @@
 # 
 
 import logging
+import pdb
 # import re
 
 
@@ -75,26 +76,27 @@ class convfile(object):
                 except Exception as inst:
                     attr = ""
 
-                # print("datafile:read(name=%r, value=%r, attr=%r) is attribute" % (name, value, attr))
-                items[value] = attr
+                # logging.debug("datafile:read(name=%r, value=%r, attr=%r) is attribute" % (name, value, attr))
+                items[value] = str(attr)
                 self.attrtable[name] = items
             elif type == 'tag':
-                # print("datafile:read(name=%r, value=%r) is tag" % (name, value.replace("\n", "")))
+                # logging.debug("datafile:read(name=%r, value=%r) is tag" % (name, value.replace("\n", "")))
                 self.table[name] = value.replace("\n", "")
             elif type == 'column':
-                # print("datafile:read(name=%r, value=%r) i column" % (name, value.replace("\n", "")))
+                # logging.debug("datafile:read(name=%r, value=%r) i column" % (name, value.replace("\n", "")))
                 self.table[name] = value.replace("\n", "")
+            # print("ATTRTABLE: %r" % self.attrtable)
 
     def attribute(self, name, attr):
-        # logging.debug("datafile:attribute(%r) %r" % (name, attr))
+        # logging.debug("datafile:attribute(%r) = %r" % (name, attr))
         # m = re.search(pattern, match)
         # Drop any embedded commas
         try:
             value = self.attrtable[name][attr.replace(", ", " ")]
-            # print("Yes VAL: %r" % value)
+            # logging.debug("Yes VAL: %r" % value)
             return value
         except KeyError:
-            # print("No VAL for: %r" % name)
+            # logging.debug("No VAL for: %r" % name)
             return attr
 
     def match(self, instr):
