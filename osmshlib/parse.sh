@@ -64,7 +64,57 @@ parse_camp()
     data[OPERATOR]="`echo ${line} | cut -d '|' -f 7`"
     data[SITES]="`echo ${line} | cut -d '|' -f 8`"
     data[AMENITY]="`echo ${line} | cut -d '|' -f 9`"
-    data[ICON]='CAMPSITE'
+    data[LEISURE]="`echo ${line} | cut -d '|' -f 10`"
+    data[TOURISM]="`echo ${line} | cut -d '|' -f 11`"
+
+    if test x"${data[LEISURE]}" = x'firepit'; then
+	data[ICON]='CAMPFIRE'
+    fi
+    if test x"${data[TOURISM]}" = x'camp_site'; then
+	data[ICON]='CAMPSITE'
+    fi
+    if test x"${data[AMENITY]}" = x'campground'; then
+	data[ICON]='CAMPGROUND'
+    fi
+
+    echo `declare -p data`
+    return 0
+}
+
+# Parse a line that is the output of the SQL query
+# $1 - A line of text from the SQL query output
+parse_milestone()
+{
+#    echo "TRACE: $*"
+
+    local line="$1"
+    declare -A data=()
+
+    data[OSMID]="`echo ${line} | cut -d '|' -f 1`"
+    data[NAME]="`echo ${line} | cut -d '|' -f 2`"
+    data[WAY]="`echo ${line} | cut -d '|' -f 3`" 
+    data[ALTNAME]="`echo ${line} | cut -d '|' -f 4`"
+    data[ICON]='MILESTONE'
+
+    echo `declare -p data`
+    return 0
+}
+
+# Parse a line that is the output of the SQL query
+# $1 - A line of text from the SQL query output
+parse_helicopter()
+{
+#    echo "TRACE: $*"
+
+    local line="$1"
+    declare -A data=()
+
+    data[OSMID]="`echo ${line} | cut -d '|' -f 1`"
+    data[NAME]="`echo ${line} | cut -d '|' -f 2`"
+    data[WAY]="`echo ${line} | cut -d '|' -f 3`" 
+    data[EMERGENCY]="`echo ${line} | cut -d '|' -f 4`"
+    data[AEROWAY]="`echo ${line} | cut -d '|' -f 5`"
+    data[ICON]='LANDINGSITE'
 
     echo `declare -p data`
     return 0
@@ -139,6 +189,7 @@ parse_lodging()
 	hotel)          data[ICON]="HOTEL" ;;
 	hostel)         data[ICON]="HOSTEL" ;;
 	camp_site)      data[ICON]="CAMPSITE" ;;
+	campground)     data[ICON]="CAMPGROUND" ;;
 	hot_spring)     data[ICON]="HOTSPRING" ;;
 	*) idx="`echo ${subset} | tr '[:lower:]' '[:upper:]'`" ;;
     esac
@@ -286,7 +337,10 @@ parse_roads()
     data[ACCESS]="`echo ${line} | cut -d '|' -f 6`"
     data[SMOOTHNESS]="`echo ${line} | cut -d '|' -f 7`"
     data[TRACETYPE]="`echo ${line} | cut -d '|' -f 8`"
+    data[ALTNAME]="`echo ${line} | cut -d '|' -f 9`"
     data[COLOR]="`roads_color "${data[HIGHWAY]}" "${data[SURFACE]}" "${data[ACCESS]}" "${data[SMOOTHNESS]}" "${data[TRACKTYPE]}"`"
+
+    echo "FIXME: ${data[ALTNAME]}" >> /tmp/xxx
 
     width=4
     case $data[SMOOTHNESS] in
@@ -327,23 +381,21 @@ parse_emergency()
     data[OSMID]="`echo ${line} | cut -d '|' -f 1`"
     data[NAME]="`echo ${line} | cut -d '|' -f 2`"
     data[WAY]="`echo ${line} | cut -d '|' -f 3`"
-    local amenity="`echo ${line} | cut -d '|' -f 4`"
-    local emergency="`echo ${line} | cut -d '|' -f 5`"
-    local type"`echo ${line} | cut -d '|' -f 6`"
-    local diameter="`echo ${line} | cut -d '|' -f 7`"
+    data[AMENITY]="`echo ${line} | cut -d '|' -f 4`"
+    data[EMERGENCY]="`echo ${line} | cut -d '|' -f 5`"
 
-    case "${amenity}" in
+    case "${data[AMENITY]}" in
 	fire_station) data[ICON]="FIRESTATION" ;;
-	fire_hydrant)
-	    case "${type}" in
-		underground) data[ICON]="CISTERN" ;;
-		pond) data[ICON]="WATER" ;;
-#	        pillar) data[ICON]="PILLAR" ;;
-#	        wall) data[ICON]="WALL" ;;
-		*) data[ICON]="HYDRANT" ;;
-	    esac
-	    ;;
+	police) data[ICON]="POLICE" ;;
+	hospital) data[ICON]="HOSPITAL" ;;
+    esac
+
+    case "${data[EMERGENCY]}" in
+	fire_hydrant) data[ICON]="HYDRANT" ;;
+	landing_site) data[ICON]="LANDINGSITE" ;;
 	water_tank) data[ICON]="CISTERN" ;;
+	suction_point) data[ICON]="FIREPOND" ;;
+	fire_water_pond) data[ICON]="FIREPOND" ;;
 	*) ;;
     esac
 
@@ -351,3 +403,82 @@ parse_emergency()
     return 0
 }
 
+# Parse a line that is the output of the SQL query
+# $1 - A line of text from the SQL query output
+parse_firewater()
+{
+#    echo "TRACE: $*"
+
+    local line="$1"
+    declare -A data=()
+
+    data[OSMID]="`echo ${line} | cut -d '|' -f 1`"
+    data[NAME]="`echo ${line} | cut -d '|' -f 2`"
+    data[WAY]="`echo ${line} | cut -d '|' -f 3`"
+    data[EMERGENCY]="`echo ${line} | cut -d '|' -f 4`"
+    data[HYDRANTTYPE]="`echo ${line} | cut -d '|' -f 5`"
+    data[HYDRANTDIA]="`echo ${line} | cut -d '|' -f 6`"
+    data[WATER]="`echo ${line} | cut -d '|' -f 7`"
+    data[VOLUMNE]="`echo ${line} | cut -d '|' -f 8`"
+    data[NOTE]="`echo ${line} | cut -d '|' -f 9`"
+    data[DISUSED]="`echo ${line} | cut -d '|' -f 10`"
+
+    case "${data[HYDRANTTYPE]}" in
+	underground) data[ICON]="CISTERN" ;;
+	pond) data[ICON]="WATER" ;;
+	pillar) data[ICON]="PILLAR" ;;
+	wall) data[ICON]="WALL" ;;
+	*) data[ICON]="HYDRANT" ;;
+    esac
+
+    case "${data[WATER]}" in
+	landing_site) data[ICON]="WATER" ;;
+	*) ;;
+    esac
+
+    case "${data[EMERGENCY]}" in
+	fire_hydrant) data[ICON]="HYDRANT" ;;
+	landing_site) data[ICON]="LANDINGSITE" ;;
+	water_tank) data[ICON]="CISTERN" ;;
+	suction_point) data[ICON]="FIREPOND" ;;
+	fire_water_pond) data[ICON]="FIREPOND" ;;
+	*) ;;
+    esac
+
+    echo `declare -p data`
+    return 0
+}
+
+# Parse a line that is the output of the SQL query
+# $1 - A line of text from the SQL query output
+parse_helicopter()
+{
+#    echo "TRACE: $*"
+
+    local line="$1"
+    declare -A data=()
+
+    data[OSMID]="`echo ${line} | cut -d '|' -f 1`"
+    data[NAME]="`echo ${line} | cut -d '|' -f 2`"
+    data[WAY]="`echo ${line} | cut -d '|' -f 3`"
+    data[EMERGENCY]="`echo ${line} | cut -d '|' -f 4`"
+    data[AEROWAY]="`echo ${line} | cut -d '|' -f 5`"
+
+    case "${data[EMERGENCY]}" in
+	fire_hydrant) data[ICON]="HYDRANT" ;;
+	landing_site) data[ICON]="LANDINGSITE" ;;
+	water_tank) data[ICON]="CISTERN" ;;
+	suction_point) data[ICON]="FIREPOND" ;;
+	fire_water_pond) data[ICON]="FIREPOND" ;;
+	*) ;;
+    esac
+
+    case "${data[AEROWAY]}" in
+	heliport) data[ICON]="HELIPORT" ;;
+	helipad) data[ICON]="HELIPAD" ;;
+	*) ;;
+    esac
+
+    echo `declare -p data`
+    return 0
+}
