@@ -1,5 +1,5 @@
 # 
-#   Copyright (C) 2016, 2017   Free Software Foundation, Inc.
+#   Copyright (C) 2016, 2017, 2018   Free Software Foundation, Inc.
 # 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -104,7 +104,7 @@ kml_placemark ()
     local name="`echo ${data[NAME]} | sed -e 's:&: and :'`"
 
     if test x"${data[WAY]}" = x; then
-	echo "WARNING: Way has no coordinates!"
+	echo "WARNING: Way has no coordinates! ${name}"
 	return 1
     fi
 
@@ -145,7 +145,7 @@ EOF
 	for i in ${!data[@]}; do
 	    case $i in
 		# ignore these, they're not part of the descriptiom
-		WIDTH|FILL|NAME|WAY|ICON|TOURISM|AMENITY|WATERWAY|HIGHWAY|EMERGENCY|COLOR) ;;
+		WIDTH|FILL|NAME|WAY|ICON|TOURISM|AMENITY|WATERWAY|HIGHWAY|EMERGENCY|COLOR|MILESTONE) ;;
 		*)
 		    if test x"${data[$i]}" != x; then
 			local cap="${i:0:1}"
