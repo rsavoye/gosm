@@ -81,13 +81,18 @@ EOF
 	    ;;
 	trailhead)
 	    cat <<EOF >> ${sqlout}
-SELECT osm_id,name,ST_AsKML(way) from planet_osm_point WHERE (amenity='parking' OR amenity='trailhead' OR leisure='trailhead' OR amenity='trailhead') AND name LIKE '%Trailhead';
+SELECT osm_id,name,ST_AsKML(way) from planet_osm_point WHERE (highway='trailhead' OR leisure='trailhead' OR amenity='trailhead') AND name LIKE '%Trailhead';
 SELECT osm_id,name,ST_AsKML(way) from planet_osm_polygon WHERE amenity='parking' AND name LIKE '%Trailhead';
 EOF
 	    ;;
 	camp*)
 	    cat <<EOF >> ${sqlout}
-SELECT osm_id,name,ST_AsKML(way),tags->'fee',tags->'toilets',tags->'website',tags->'operator',tags->'sites',amenity from planet_osm_point WHERE tourism='camp_site' OR amenity='campground';
+SELECT osm_id,name,ST_AsKML(way),tags->'fee',tags->'toilets',tags->'website',tags->'operator',tags->'sites',amenity,leisure,tourism from planet_osm_point WHERE tourism='camp_site' OR amenity='campground' OR name LIKE '%Campground';
+EOF
+	    ;;
+	milestone*)
+	    cat <<EOF >> ${sqlout}
+SELECT osm_id,name,ST_AsKML(way),tags->'alt_name' from planet_osm_point WHERE highway='milestone';
 EOF
 	    ;;
 	historic)
@@ -147,7 +152,7 @@ EOF
 	    ;;
 	road*)
 	    cat <<EOF >> ${sqlout}
-SELECT line.osm_id,line.name,ST_AsKML(line.way),line.highway,line.surface,line.access,line.tags->'smoothness',line.tags->'tracktype' from planet_osm_line AS line WHERE (line.highway!='') AND (line.highway!='path' OR line.highway!='footway' OR line.highway!='cycleway');
+SELECT line.osm_id,line.name,ST_AsKML(line.way),line.highway,line.surface,line.access,line.tags->'smoothness',line.tags->'tracktype',tags->'alt_name' from planet_osm_line AS line WHERE (line.highway!='') AND (line.highway!='path' OR line.highway!='footway' OR line.highway!='cycleway');
 EOF
 	    ;;
 	*)
