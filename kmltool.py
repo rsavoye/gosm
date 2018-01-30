@@ -1,7 +1,7 @@
 #!/usr/bin/python3
 
 # 
-#   Copyright (C) 2017   Free Software Foundation, Inc.
+#   Copyright (C) 2017, 2018   Free Software Foundation, Inc.
 # 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -99,8 +99,8 @@ class config(object):
 
     # Basic help message
     def usage(self, argv):
-        logging.debug(argv[0] + ": options: ")
-        logging.debug("""\t--help(-h)   Help
+        print(argv[0] + ": options: ")
+        print("""\t--help(-h)   Help
 \t--split(-s)     Split KML folders into separate files
 \t--jpin(-j)      Join KML files together
 \t--extract(-e)   Extract a Placemarks from a KML file using regex
@@ -305,6 +305,7 @@ class kmltool(object):
         self.file.close()
         out.footer()
 
+#epdb.set_trace()
 dd = config(argv)
 
 kmltool = kmltool(dd)
