@@ -52,6 +52,11 @@ sql_file ()
 	# We only want trails that aren't ski trails, as piste routes get different
 	# colors. The only way we can tell the difference is if the piste:type tag
 	# exists.
+	road*)
+	    cat <<EOF >> ${sqlout}
+SELECT line.osm_id,line.name,ST_AsKML(line.way),line.highway,line.surface,line.access,line.tags->'smoothness',line.tags->'tracktype',tags->'alt_name',tags->'4wd_only' from planet_osm_line AS line WHERE (line.highway!='') AND (line.highway!='path' AND line.highway!='footway' AND line.highway!='cycleway');
+EOF
+	    ;;
 	trails)
 #		cat <<EOF >> ${sqlout}
 #SELECT line.osm_id,line.name,line.tags->'sac_scale',line.tags->'bicycle',line.tags->'mtb:scale:imba',line.access,ST_AsKML(line.way) FROM planet_osm_line AS line, dblink('dbname=polygons', 'select name,geom FROM boundary') AS poly(name name,geom geometry) WHERE poly.name='${polygon}' AND (ST_Crosses(line.way,poly.geom) OR ST_Contains(poly.geom,line.way)) AND (line.highway='footway' OR line.highway = 'path');
@@ -148,11 +153,6 @@ EOF
 	lodging)
 	    cat <<EOF >> ${sqlout}
 SELECT osm_id,name,ST_AsKML(way),tourism,tags->'phone',tags->'email',tags->'website',tags->'addr:street',tags->'addr:housenumber',tags->'name:en' from planet_osm_point WHERE tourism='hotel' OR tourism='hostel' OR tourism='guest_house' ${polysql};
-EOF
-	    ;;
-	road*)
-	    cat <<EOF >> ${sqlout}
-SELECT line.osm_id,line.name,ST_AsKML(line.way),line.highway,line.surface,line.access,line.tags->'smoothness',line.tags->'tracktype',tags->'alt_name' from planet_osm_line AS line WHERE (line.highway!='') AND (line.highway!='path' OR line.highway!='footway' OR line.highway!='cycleway');
 EOF
 	    ;;
 	*)
