@@ -46,6 +46,8 @@ colors[BLUE]="${opacity}ff0000"
 colors[LIGHTGREEN]="${opacity}90ee90"
 colors[GREEN]="${opacity}00ff00"
 colors[DARKGREEN]="${opacity}006400"
+# Browns
+colors[BROWN]="${opacity}ff0055aa"
 
 # smoothness=excellent roller blade/skate board and all below
 # smoothness=good racing bike and all below
@@ -72,6 +74,7 @@ roads_color()
     local access="$3"
     local smoothness="$4"
     local tracktype="$5"
+    local jeep="$6"
     local color="GRAY"
 
     # http://wiki.openstreetmap.org/wiki/Map_Features#Highway
@@ -92,7 +95,7 @@ roads_color()
 	    ;;
 	# Track colors usually get changed based on the surface type.
 	track)
-	    color="WHITE"
+	    color="BROWN"
 	    ;;
 	*)
 #	    echo "WARNING: unknown highway surface"
@@ -112,6 +115,12 @@ roads_color()
 	*) ;;
     esac
 
+    case ${jeep} in
+	yes) color=ORANGE ;;
+	no) ;;
+	*) ;;
+    esac
+
     case ${smoothness} in
 	# roller blade/skate board and all below
 	excellent) color="GREEN" ;;
@@ -121,7 +130,7 @@ roads_color()
 	intermediate) color="DARKGREEN" ;;
 	# trekking bike/normal cars/Rickshaw and all below
 	bad) color="DARKGREEN" ;;
-	# Car with high clearance vehicle or Mountain bike without crampons and all 
+	# Car with high clearance vehicle or Mountain bike
 	# below
 	very_bad) color="ORANGE" ;;
 	# 4wd and all below
@@ -252,7 +261,7 @@ trails_color()
     local mtb_scale_imba="$2"
     local access="$3"
 
-    local color="MAGENTA"	# default color
+    local color="BLUE"	# default color
 
     # http://wiki.openstreetmap.org/wiki/Key:sac_scale
     # hiking = Trail well cleared
@@ -264,8 +273,8 @@ trails_color()
 	case ${sac_scale} in
 	    hiking) color="YELLOW" ;;
 	    mountain_hiking|demanding_mountain_hiking) color="PINK" ;;
-	    alpine_hiking|difficult_alpine_hiking|demanding_alpine_hiking) color="DARKBLUE" ;;
-	    *) color="MAGENTA" ;;
+	    alpine_hiking|difficult_alpine_hiking|demanding_alpine_hiking) color="MAGENTA" ;;
+	    *) ;;
 	esac
     fi
 
