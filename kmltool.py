@@ -217,7 +217,6 @@ class kmltool(object):
         out.open(name)
         name = os.path.basename(name.replace(".kml", ""))
         title = self.config.get('title')
-        epdb.set_trace()
         if title is None:
             title = name.capitalize()
         out.header(title)
