@@ -52,14 +52,14 @@ if test -e ~/.gosmrc; then
     . ~/.gosmrc
 fi
 
-OPTS="`getopt -o p:d:hu:p: -l polyfile:database:,help,dvuser:,dbpasswd:`"
+OPTS="`getopt -o b:d:hu:p:r -l polyfile:database:,help,dbuser:,dbpasswd:,recreate`"
 while test $# -gt 0; do
     case $1 in
         -i|--infile) infile=$2 ;;
         -p|--polyfile) polys=$2 ;;
         -d|--database) dbname=$2 ;;
-	-du|--dbuser) dbuser=$2;;
-	-dp|--passwd) dbpass=$2 ;;
+	-u|--dbuser) dbuser=$2;;
+	-b|--passwd) dbpass=$2 ;;
 	-r|--recreate) dropdb="yes" ;;
         -h|--help) usage ;;
         --) break ;;
