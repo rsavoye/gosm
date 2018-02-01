@@ -32,6 +32,7 @@ usage()
 --database(-d)         - Database to use
 --user(-u)	       - Database user name
 --passwd(-p)	       - Database password
+--recreate(-r)         - Recreate database if it exists
 This program is a simple utility to setup a database properly for importing
 data from wither and OSM file or a Shapefile (ERSI).
 EOF
@@ -45,6 +46,7 @@ fi
 infile="$1"
 polys=""
 dbname=""
+dropdb="no"
 
 if test -e ~/.gosmrc; then
     . ~/.gosmrc
@@ -58,6 +60,7 @@ while test $# -gt 0; do
         -d|--database) dbname=$2 ;;
 	-du|--dbuser) dbuser=$2;;
 	-dp|--passwd) dbpass=$2 ;;
+	-r|--recreate) dropdb="yes" ;;
         -h|--help) usage ;;
         --) break ;;
     esac
@@ -86,18 +89,22 @@ fi
 i=0
 while test $i -lt ${#polyfiles[@]} -o x"${polys}" = x; do
     dbname="${dbname:-`basename ${polyfiles[$i]} | sed -e 's:\.poly::'`}"
-
+    dbname="`basename ${dbname}`"
     echo "Processing ${infile} into ${dbname}..."
-    exists="`psql -l | grep -c ${dbname}`"
+    #exists="`psql -l | grep -c ${dbname}`"
+    exists=0
     # Note that the user running this script must have the right permissions.
     if test "${exists}" -eq 0; then
 	echo "Creating postgresql database ${dbname}"
+	if test x"${dropdb}" = x"yes"; then
+	    dropdb ${dbname}
+	fi
 	createdb -EUTF8 ${dbname} ${dbname} -T template0
 	if test $? -gt 0; then
-	    echo "ERROR: createdb ${dbname} failed!"
+	    echo "WARNING: createdb ${dbname} failed!"
 	    exit
 	fi
-	psql -d ${dbname} ${dbpass} -c 'create extension hstore;'
+	psql -d ${dbname} -c 'create extension hstore;'
 	if test $? -gt 0; then
 	    echo "ERROR: couldn't add hstore extension!"
 	    exit
