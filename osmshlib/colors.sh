@@ -1,5 +1,5 @@
 # 
-#   Copyright (C) 2016, 2017   Free Software Foundation, Inc.
+#   Copyright (C) 2016, 2017, 2018   Free Software Foundation, Inc.
 # 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -26,19 +26,26 @@
 # KML Color chart from http://www.zonums.com/gmaps/kml_color
 declare -A colors=()
 opacity="ff"
+# Primary
 colors[WHITE]="${opacity}ffffff"
-colors[RED]="${opacity}0000ff"
+colors[GRAY]="${opacity}888888"
 colors[BLACK]="${opacity}000000"
-colors[CYAN]="${opacity}ffff00"
-colors[MAGENTA]="${opacity}ff00ff"
 colors[YELLOW]="${opacity}00ffff"
 colors[ORANGE]="${opacity}00a5ff"
+# Reds
+colors[RED]="${opacity}0000ff"
+colors[PINK]="${opacity}f00078"
+colors[MAGENTA]="${opacity}ff00ff"
 colors[PURPLE]="${opacity}800080"
-colors[GRAY]="${opacity}888888"
-colors[BLUE]="${opacity}ff0000"
+# Blues
+colors[CYAN]="${opacity}ffff00"
 colors[LIGHTBLUE]="${opacity}e6d8ad"
-colors[DARKGREEN]="${opacity}008000"
+colors[DARKBLUE]="${opacity}a00000"
+colors[BLUE]="${opacity}ff0000"
+# Greens
+colors[LIGHTGREEN]="${opacity}90ee90"
 colors[GREEN]="${opacity}00ff00"
+colors[DARKGREEN]="${opacity}006400"
 
 # smoothness=excellent roller blade/skate board and all below
 # smoothness=good racing bike and all below
@@ -78,14 +85,14 @@ roads_color()
 	    color="LIGHTBLUE"
 	    ;;
 	unclassified) # (like Rollins Pass)
-	    color="BLACK"
+	    color="PINK"
 	    ;;
 	road|residential|secondary|primary|trunk|motorway_link|trunk_link|secondary_link|teriary_link)
-	    color="GREEN"
+	    color="LIGHTGREEN"
 	    ;;
 	# Track colors usually get changed based on the surface type.
 	track)
-	    color="YELLOW"
+	    color="WHITE"
 	    ;;
 	*)
 #	    echo "WARNING: unknown highway surface"
@@ -100,7 +107,7 @@ roads_color()
     esac
 
     case ${access} in
-	private|no|forestry|discouraged) color="RED" ;;
+	private|no|forestry|discouraged) color="PINK" ;;
 #	public|yes|permissive) color="" ;;
 	*) ;;
     esac
@@ -111,16 +118,16 @@ roads_color()
 	# racing bike and all below
 	good) color="GREEN" ;;
 	# city bike/sport cars/wheel chair/Scooter and all below
-	intermediate) color="YELLOW" ;;
+	intermediate) color="DARKGREEN" ;;
 	# trekking bike/normal cars/Rickshaw and all below
-	bad) color="YELLOW" ;;
-	# Car with high clearance/ Mountain bike without crampons and all 
+	bad) color="DARKGREEN" ;;
+	# Car with high clearance vehicle or Mountain bike without crampons and all 
 	# below
 	very_bad) color="ORANGE" ;;
 	# 4wd and all below
-	horrible) color="LIGHTBLUE" ;;
+	horrible) color="ORANGE" ;;
 	# tractor/ATV/tanks/trial/Mountain bike
-	very_horrible) color="RED" ;;
+	very_horrible) color="PURPLE" ;;
 	# no wheeled vehicles 
 	impassable) color="BLACK" ;;
 	*) ;;
@@ -166,11 +173,11 @@ ski_color()
     # For chairlifts
     case ${aerialway} in
 	station)
-	    echo "GREEN"
+	    echo "DARKGREEN"
 	    return 0
 	    ;;
 	chair_lift)
-	    echo "RED"
+	    echo "MAGENTA"
 	    return 0
 	    ;;
 	unknown|duration|occupancy)
@@ -256,9 +263,9 @@ trails_color()
     if test x"${sac_scale}" != x; then
 	case ${sac_scale} in
 	    hiking) color="YELLOW" ;;
-	    mountain_hiking|demanding_mountain_hiking) color="RED" ;;
-	    alpine_hiking|difficult_alpine_hiking|demanding_alpine_hiking) color="BLUE" ;;
-	    *) color="PURPLE" ;;
+	    mountain_hiking|demanding_mountain_hiking) color="PINK" ;;
+	    alpine_hiking|difficult_alpine_hiking|demanding_alpine_hiking) color="DARKBLUE" ;;
+	    *) color="MAGENTA" ;;
 	esac
     fi
 
@@ -289,10 +296,10 @@ trails_color()
     if test x"${mtb_scale_imba}" != x -a x"${sac_scale}" = x; then
 	case ${mtb_scale_imba} in # 0-4
 	    0*) color="YELLOW" ;; # easiest
-	    1*) color="GREEN" ;;  # easy
-	    2*) color="BLUE" ;;   # intermediate
-	    3*) color="BLACK" ;;  # difficult
-	    4*) color="PURPLE" ;; # double black
+	    1*) color="LIGHTGREEN" ;;  # easy
+	    2*) color="LIGHTBLUE" ;;   # intermediate
+	    3*) color="GRAY" ;;  # difficult
+	    4*) color="BLACK" ;; # double black
 	    *)  ;;
 	esac
     fi
@@ -300,11 +307,11 @@ trails_color()
     if test x"${mtb_scale}" != x  -a x"${sac_scale}" = x; then
 	case ${mtb_scale} in # 0-6
 	    0*) color="YELLOW" ;;
-	    1*) color="GREEN" ;;
-	    2*) color="LIGHTBLUE" ;;
-	    3*) color="BLUE" ;;
-	    4*) color="DARKGREEN" ;;
-	    5*) color="PURPLE" ;;
+	    1*) color="LIGHTGREEN" ;;
+	    2*) color="LIGHTGREEN" ;;
+	    3*) color="LIGHTBLUE" ;;
+	    4*) color="LIGHTBLUE" ;;
+	    5*) color="MAGENTA" ;;
 	    6*) color="BLACK" ;;
 	    *)  ;;
 	esac
