@@ -291,6 +291,9 @@ parse_trails()
     data[ACCESS]="`echo ${line} | cut -d '|' -f 7`"
     data[COLOR]="`trails_color "${data[SAC_SCALE]}" "${data[MTB_SCALE]}" "${data[ACCESS]}"`"
 
+    local width="2"
+    data[WIDTH]="${width}"
+
     echo `declare -p data`
     return 0
 }
@@ -338,18 +341,17 @@ parse_roads()
     data[SMOOTHNESS]="`echo ${line} | cut -d '|' -f 7`"
     data[TRACETYPE]="`echo ${line} | cut -d '|' -f 8`"
     data[ALTNAME]="`echo ${line} | cut -d '|' -f 9`"
+    data[4WD]="`echo ${line} | cut -d '|' -f 10`"
     data[COLOR]="`roads_color "${data[HIGHWAY]}" "${data[SURFACE]}" "${data[ACCESS]}" "${data[SMOOTHNESS]}" "${data[TRACKTYPE]}"`"
 
-    echo "FIXME: ${data[ALTNAME]}" >> /tmp/xxx
-
-    width=4
+    local width=5
     case $data[SMOOTHNESS] in
 	excellent) ;; # roller blade/skate board and all below
 	good) ;; # racing bike and all below
 	intermediate) ;; # city bike/sport cars/wheel chair/Scooter and all below
-	bad) width=3 ;; # trekking bike/normal cars/Rickshaw and all below
+	bad) width=4 ;; # trekking bike/normal cars/Rickshaw and all below
 	very_bad) ;; # Car with high clearance/ Mountain bike without crampons and all below
-	horrible) width=2;; # 4wd and all below
+	horrible) width=3;; # 4wd and all below
 	very_horrible) ;; # tractor/ATV/tanks/trial/Mountain bike
 	impassable) ;; #no wheeled vehicles 
 	*) ;;
@@ -358,7 +360,7 @@ parse_roads()
     case $data[TRACKTYPE] in
 	grade1) ;; # Solid, paved or compacted
 	grade2) ;; # Mostly Solid, unpaved, mix of sand, silt, and clay
-	grade3) width=2 ;; # Mix of hard and soft materials
+	grade3) width=3 ;; # Mix of hard and soft materials
 	grade4) ;; # Unpaved, lacks hard material, might be grass
 	grade5) ;; # 
 	*) ;;
