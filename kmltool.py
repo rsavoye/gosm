@@ -48,14 +48,15 @@ class config(object):
         self.options['root'] = os.path.dirname(argv[0])
         self.options['infiles'] = os.path.dirname(argv[0])
         self.options['outdir'] = "/tmp/"
+        self.options['title'] = ""
         self.options['outfile'] = self.options['outdir'] + "tmp.kml"
 
         if len(argv) <= 2:
             self.usage(argv)
 
         try:
-            (opts, val) = getopt.getopt(argv[1:], "h,o:,i:,v,e:,j,s,d:",
-                ["help", "outfile", "infiles", "verbose", "extract", "directory"])
+            (opts, val) = getopt.getopt(argv[1:], "h,o:,i:,v,e:,j,s,d:,t:",
+                ["help", "outfile", "infiles", "verbose", "extract", "directory", "title"])
         except getopt.GetoptError as e:
             logging.error('%r' % e)
             self.usage(argv)
@@ -77,6 +78,8 @@ class config(object):
                 self.options['operation'] = "split"
             elif opt == "--directory" or opt == '-d':
                 self.options['outdir'] = val
+            elif opt == "--title" or opt == '-t':
+                self.options['title'] = val
             elif opt == "--verbose" or opt == '-v':
                 self.options['verbose'] = True
                 with open('kmltool.log', 'w'):
@@ -107,6 +110,7 @@ class config(object):
 \t--outfile(-o)   Output file name
 \t--infiles(-i)   Input file name(s)
 \t--verbose(-v)   Enable verbosity
+\t--title(-t)     Set output file title
         """)
         quit()
 
@@ -212,7 +216,11 @@ class kmltool(object):
         name = self.config.get('outfile')
         out.open(name)
         name = os.path.basename(name.replace(".kml", ""))
-        out.header(name.capitalize())
+        title = self.config.get('title')
+        epdb.set_trace()
+        if title is None:
+            title = name.capitalize()
+        out.header(title)
         out.styles(self.config.get('root') + '/styles.kml')
         logging.info("Opened %r for KML output" % self.config.get('outfile'))
         # Each inpuot file becomes a KML Folder in the output file
