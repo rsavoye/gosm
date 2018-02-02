@@ -282,79 +282,97 @@
     </Icon>
   </IconStyle>
 </Style>
-<Style id="line_red">
+<!--
+	Line colors
+-->
+<Style id="line_pink">
   <LineStyle>
-    <color>ff0000ff</color>
-    <width>3</width>
+    <color>ffff00ff</color>
   </LineStyle>
+</Style>
+<Style id="line_red">
   <LabelStyle>
     <color>ff0000ff</color>
   </LabelStyle>
 </Style>
-<Style id="line_green">
+<Style id="line_gray">
   <LineStyle>
-    <color>ff00ff00</color>
-    <width>3</width>
+    <color>ff808080</color>
   </LineStyle>
 </Style>
 <Style id="line_black">
   <LineStyle>
     <color>ff000000</color>
-    <width>3</width>
-  </LineStyle>
-</Style>
-<Style id="line_blue">
-  <LineStyle>
-    <color>ffff0000</color>
-    <width>3</width>
   </LineStyle>
 </Style>
 <Style id="line_orange">
   <LineStyle>
     <color>ff00a5ff</color>
-    <width>3</width>
   </LineStyle>
 </Style>
 <Style id="line_yellow">
   <LineStyle>
-    <color>ff00ffff</color>
-    <width>3</width>
-  </LineStyle>
-</Style>
-<Style id="line_cyan">
-  <LineStyle>
     <color>ffffff00</color>
-    <width>3</width>
   </LineStyle>
 </Style>
 <Style id="line_magenta">
   <LineStyle>
     <color>ffff00ff</color>
-    <width>3</width>
+  </LineStyle>
+</Style>
+<Style id="line_maroon">
+  <LineStyle>
+    <color>ff800000</color>
   </LineStyle>
 </Style>
 <Style id="line_purple">
   <LineStyle>
     <color>ff800080</color>
-    <width>3</width>
   </LineStyle>
 </Style>
-<Style id="line_gray">
+<Style id="line_cyan">
   <LineStyle>
-    <color>ff888888</color>
-    <width>3</width>
+    <color>ff00ffff</color>
   </LineStyle>
 </Style>
 <Style id="line_lightblue">
   <LineStyle>
-    <color>ffe6d8ad</color>
-    <width>3</width>
+    <color>ff00ffff</color>
+  </LineStyle>
+</Style>
+<Style id="line_blue">
+  <LineStyle>
+    <color>ffff0000</color>
+  </LineStyle>
+</Style>
+<Style id="line_darkblue">
+  <LineStyle>
+    <color>ff000080</color>
+  </LineStyle>
+</Style>
+<Style id="line_teal">
+  <LineStyle>
+    <color>ff008080</color>
+  </LineStyle>
+</Style>
+<Style id="line_olive">
+  <LineStyle>
+    <color>ff808000</color>
+  </LineStyle>
+</Style>
+<Style id="line_lightgreen">
+  <LineStyle>
+    <color>ff00ff00</color>
+  </LineStyle>
+</Style>
+<Style id="line_green">
+  <LineStyle>
+    <color>ff008000</color>
   </LineStyle>
 </Style>
 <Style id="line_darkgreen">
   <LineStyle>
     <color>ff008000</color>
-    <width>3</width>
   </LineStyle>
 </Style>
 <Style id="Polygon">
