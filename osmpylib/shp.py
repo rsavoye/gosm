@@ -20,6 +20,7 @@ import logging
 import shapefile
 import sys
 import re
+import epdb
 
 
 # This class holds a field from the Shapefile. It has 4 fields.
@@ -197,7 +198,7 @@ class shpfile(object):
                             hours = True
 
                         tagger = osm.makeTag(self.fields[i][0], s)
-                        # logging.debug("FIXME: tagger[%r] %r" % (self.fields[i][0], tagger))
+                        #print("FIXME: tagger[%r] %r" % (self.fields[i][0], tagger))
                         try:
                             if tagger['route'] is not '':
                                 # logging.debug("ROUTE: %r" % tagger)
@@ -234,35 +235,41 @@ class shpfile(object):
                             key = next(iter(tagger))
                             val = tagger[key]
                             # print("TAGGER1: %r = %r" % (key, val))
+                            #import epdb; epdb.set_trace()
                             if val == 'Ignore':
                                 # print("TAGGER2: YES!!! %r" % val)
-                                # import pdb; pdb.set_trace()
+                                # import epdb; epdb.set_trace()
                                 i = i + 1
                                 continue
                         except Exception as inst:
                             pass
 
+                        #epdb.set_trace()
                         try:
                             if tagger['Ignore'] == 'Ignore':
+                                #print("FIXME2: Ignore %r" % tagger)
                                 continue
                         except Exception as inst:
-                            # Some tags trigger other tags, which can't be
-                            # handled by the conversion file without getting
-                            # ugly
-                            try:
-                                if tagger['hiker'] == 'yes':
-                                    tagger['highway'] = "footway"
-                                    tagger['sac_scale'] = "mountain_hiking"
-                            except Exception as inst:
-                                pass
-                            try:
-                                if tagger['4wd_only'] == 'yes':
-                                    tagger['highway'] = "track"
-                                    # tagger['highway'] = "path"
-                                    # tagger['smoothness'] = "very_bad"
-                            except Exception as inst:
-                                pass
-                            alltags.append(tagger)
+                            #print("FIXME: Ignore exception  %r" % tagger)
+                        # Some tags trigger other tags, which can't be
+                        # handled by the conversion file without getting
+                        # ugly
+                            pass
+                        try:
+                            if tagger['hiker'] == 'yes':
+                                tagger['highway'] = "footway"
+                                tagger['sac_scale'] = "mountain_hiking"
+                        except Exception as inst:
+                            pass
+                        try:
+                            if tagger['4wd_only'] == 'yes':
+                                tagger['highway'] = "track"
+                                # tagger['highway'] = "path"
+                                # tagger['smoothness'] = "very_bad"
+                        except Exception as inst:
+                            pass
+                        # print("FIXME: %r" % tagger)
+                        alltags.append(tagger)
                 except Exception as inst:
                     # logging.debug("FLOAT %r" % (record))
                     i = i + 1
@@ -271,6 +278,7 @@ class shpfile(object):
                 # logging.debug a rotating character, so we know it's working
             rot = ("|", "/", "-", "\\", "*")
 
+            # epdb.set_trace()
             # Extra tags specified on the command line to add
             if self.options.get('extra') is not '':
                 extra = self.options.get('extra').split('=')
@@ -283,7 +291,7 @@ class shpfile(object):
                 # logging.debug("POINTS: %r: %r" % (entry.record[1:2], point))
                 lon = point[0]
                 lat = point[1]
-                node = osm.node(lat, lon, tags)
+                node = osm.node(lat, lon, alltags)
                 refs.append(node)
                 silly.write("   Processing OSM file: %s\r" % rot[k])
                 if k <= 3:
@@ -292,8 +300,8 @@ class shpfile(object):
                     k = 0
                     # logging.debug("OSM ID: %r %r %r" % (tags, lat, lon))
             # logging.debug("REFS %r" % refs)
-
-            osm.makeWay(refs, alltags)
+            if self.options.get('type') == "line":
+                osm.makeWay(refs, alltags)
 
         osm.footer()
 
