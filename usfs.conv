@@ -238,3 +238,21 @@ attribute,route,6,4wd_only=yes
 attribute,piste,1,piste:type=hike
 attribute,piste,2,piste:type=nordic
 attribute,piste,3,piste:type=snowmobile
+
+# For AR_Gates
+tag,STRUCTURE,barrier
+tag,SOURCE,Ignore
+tag,WIDTH,Ignore
+tag,DONE,Ignore
+tag,CLOSURE,seasonal
+tag,screen dig pbs,Ignore
+
+attribute,barrier,Barrier,ditch
+attribute,barrier,Berm,ditch
+attribute,barrier,gate,gate
+attribute,barrier,Gate,gate
+attribute,barrier,Tank Trap,tank_trap
+attribute,seasonal,permanent,seasonal=no
+attribute,seasonal,Permanent,seasonal=no
+attribute,seasonal,seasonal,seasonal=yes
+attribute,seasonal,Seasonal,seasonal=yes
