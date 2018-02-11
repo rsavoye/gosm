@@ -40,6 +40,7 @@ class config(object):
         self.options['extra'] = ""
         self.options['user'] = ""
         self.options['uid'] = 0
+        self.options['type'] = "line"
         self.options['dump'] = False
         self.options['verbose'] = False
         self.options['infile'] = os.path.dirname(argv[0])
@@ -51,8 +52,8 @@ class config(object):
             self.usage(argv)
 
         try:
-            (opts, val) = getopt.getopt(argv[1:], "h,o:,i:,f:,v,c:,d,e:",
-                ["help", "format=", "outfile", "infile", "verbose", "convfile", "dump", "extra"])
+            (opts, val) = getopt.getopt(argv[1:], "h,o:,i:,f:,v,c:,d,e:,t:",
+                ["help", "format=", "outfile", "infile", "verbose", "convfile", "dump", "extra", "type"])
         except getopt.GetoptError as e:
             logging.error('%r' % e)
             self.usage(argv)
@@ -69,6 +70,11 @@ class config(object):
                 self.options['infile'] = val
             elif opt == "--extra" or opt == '-e':
                 self.options['extra'] = val
+            elif opt == "--type" or opt == '-t':
+                if val == "way" or val == "line":
+                    self.options['type'] = val
+                else:
+                    self.usage(argv)
             elif opt == "--verbose" or opt == '-v':
                 self.options['verbose'] = True
                 logging.basicConfig(filename='shp2map.log',level=logging.DEBUG)
@@ -128,6 +134,7 @@ class config(object):
 \t--convfile(-c)  Conversion data file name
 \t--limit(-l)     Limit the output records
 \t--verbose(-v)   Enable verbosity
+\t--type(-t)      Type of data, (way,line)
         """)
         quit()
 
