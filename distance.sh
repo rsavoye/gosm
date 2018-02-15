@@ -1,5 +1,10 @@
 #!/bin/bash
 
+#
+# This is a truly ugly script, but it's single purpose. This calculates the
+# driving time and distance in miles from a water source or fire station to
+# an incident address. We need this for ISO certification for my fire department.
+#
 
 apikey="AIzaSyCmJWynjNtcpoAY8i_6nsEbmNiox8WlZDg"
 url="https://maps.googleapis.com/maps/api/distancematrix/json?units=imperial&origins=711 Eureka Street, Black Hawk, CO&destinations=New+York+City,NY&key=AIzaSyCmJWynjNtcpoAY8i_6nsEbmNiox8WlZDg"
