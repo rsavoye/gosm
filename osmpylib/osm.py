@@ -73,6 +73,8 @@ class osmfile(object):
         self.file.write(" lat='" + str(lat) + "\'" + " lon='" + str(lon) + "'>\n")
         for i in tags:
             for name, value in i.items():
+                if name == "Ignore" or value == '':
+                    continue
                 if str(value)[0] != 'b':
                     if value != 'None' or value != 'Ignore':
                         tag = self.makeTag(name, value)
