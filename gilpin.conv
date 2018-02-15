@@ -48,3 +48,26 @@ attribute,sac_scale,EASIER,hiking
 attribute,sac_scale,MODERATE,mountain_hiking
 attribute,sac_scale,DIFFICULT,demanding_mountain_hiking
 attribute,sac_scale,EXTREME,alpine_hiking
+
+# For Addresspoints
+tag,addrclass,Ignore
+tag,addrnum,addr:housenumber
+tag,capturemet,Ignore
+tag,created_da,Ignore
+tag,created_us,Ignore
+tag,fulladdr,alt_name
+tag,fulladdrnu,Ignore
+tag,fullname,addr:street
+tag,last_edi_1,Ignore
+tag,DDSWebUser,Ignore
+tag,lasteditor,Ignore
+tag,lastupdate,Ignore
+tag,latitude,Ignore
+tag,longitude,Ignore
+tag,msag,Ignore
+tag,pointtype,Ignore
+tag,siteaddid,Ignore
+tag,status,Ignore
+tag,usngcoord,Ignore
+tag,last_edite,Ignore
+tag,municipali,Ignore
