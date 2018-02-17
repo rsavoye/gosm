@@ -23,6 +23,27 @@
 # for highways. Different types and surfaces have tags signifying what type
 # it is.
 
+
+parse_addresses()
+{
+#    echo "TRACE: $*"
+
+    local line="$1"
+    declare -A data=()
+
+    data[OSMID]="`echo ${line} | cut -d '|' -f 1`"
+    data[WAY]="`echo ${line} | cut -d '|' -f 2`"
+    data[NUMBER]="`echo ${line} | cut -d '|' -f 3`"
+    data[STREET]="`echo ${line} | cut -d '|' -f 4`"
+    data[FULLNAME]="`echo ${line} | cut -d '|' -f 5`"
+    data[NAME]="${data[NUMBER]}"
+
+    data[ICON]='BUILDING'
+
+    echo `declare -p data`
+    return 0
+}
+
 # Parse a line that is the output of the SQL query
 # $1 - A line of text from the SQL query output
 parse_trailhead()
@@ -291,7 +312,7 @@ parse_trails()
     data[ACCESS]="`echo ${line} | cut -d '|' -f 7`"
     data[COLOR]="`trails_color "${data[SAC_SCALE]}" "${data[MTB_SCALE]}" "${data[ACCESS]}"`"
 
-    local width="2"
+    local width="1"
     data[WIDTH]="${width}"
 
     echo `declare -p data`
@@ -342,17 +363,18 @@ parse_roads()
     data[TRACETYPE]="`echo ${line} | cut -d '|' -f 8`"
     data[ALTNAME]="`echo ${line} | cut -d '|' -f 9`"
     data[4WD]="`echo ${line} | cut -d '|' -f 10`"
-    data[COLOR]="`roads_color "${data[HIGHWAY]}" "${data[SURFACE]}" "${data[ACCESS]}" "${data[SMOOTHNESS]}" "${data[TRACKTYPE]}"`"
+    data[SERVICE]="`echo ${line} | cut -d '|' -f 11`"
+    data[COLOR]="`roads_color "${data[HIGHWAY]}" "${data[SURFACE]}" "${data[ACCESS]}" "${data[SMOOTHNESS]}" "${data[TRACKTYPE]}" "${data[4WD]}" "${data[SERVICE]}"`"
 
-    local width=5
+    local width=3
     case $data[SMOOTHNESS] in
 	excellent) ;; # roller blade/skate board and all below
 	good) ;; # racing bike and all below
 	intermediate) ;; # city bike/sport cars/wheel chair/Scooter and all below
 	bad) width=4 ;; # trekking bike/normal cars/Rickshaw and all below
 	very_bad) ;; # Car with high clearance/ Mountain bike without crampons and all below
-	horrible) width=3;; # 4wd and all below
-	very_horrible) ;; # tractor/ATV/tanks/trial/Mountain bike
+	horrible) ;; # 4wd and all below
+	very_horrible) width=5;; # tractor/ATV/tanks/trial/Mountain bike
 	impassable) ;; #no wheeled vehicles 
 	*) ;;
     esac
@@ -360,7 +382,7 @@ parse_roads()
     case $data[TRACKTYPE] in
 	grade1) ;; # Solid, paved or compacted
 	grade2) ;; # Mostly Solid, unpaved, mix of sand, silt, and clay
-	grade3) width=3 ;; # Mix of hard and soft materials
+	grade3) width=4 ;; # Mix of hard and soft materials
 	grade4) ;; # Unpaved, lacks hard material, might be grass
 	grade5) ;; # 
 	*) ;;
