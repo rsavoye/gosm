@@ -28,13 +28,16 @@ declare -A colors=()
 opacity="ff"
 # Primary
 colors[WHITE]="${opacity}ffffff"
-colors[GRAY]="${opacity}888888"
+colors[SILVER]="${opacity}c0c0c0"
+colors[GRAY]="${opacity}808080"
+# colors[GRAY]="${opacity}888888"
 colors[BLACK]="${opacity}000000"
 colors[YELLOW]="${opacity}00ffff"
-colors[ORANGE]="${opacity}00a5ff"
+colors[ORANGE]="${opacity}0080ff"
+# colors[ORANGE]="${opacity}00a5ff"
 # Reds
 colors[RED]="${opacity}0000ff"
-colors[PINK]="${opacity}f00078"
+colors[PINK]="${opacity}ff00ff"
 colors[MAGENTA]="${opacity}ff00ff"
 colors[PURPLE]="${opacity}800080"
 # Blues
@@ -75,6 +78,7 @@ roads_color()
     local smoothness="$4"
     local tracktype="$5"
     local jeep="$6"
+    local service="$7"
     local color="GRAY"
 
     # http://wiki.openstreetmap.org/wiki/Map_Features#Highway
@@ -88,7 +92,7 @@ roads_color()
 	    color="LIGHTBLUE"
 	    ;;
 	unclassified) # (like Rollins Pass)
-	    color="PINK"
+	    color="YELLOW"
 	    ;;
 	road|residential|secondary|primary|trunk|motorway_link|trunk_link|secondary_link|teriary_link)
 	    color="LIGHTGREEN"
@@ -104,8 +108,9 @@ roads_color()
 
     # These road surfaces are potentially bad, flag them
     case ${surface} in
-	#unpaved|dirt|earth|grass|*gravel*|mud|ice|ground|unpaved) color="ORANGE" ;;
-#	unpaved|asphalt|concrete|dirt|earth|grass|gravel_turf|fine_gravel|gravel|mud|ice) color="ORANGE" ;;
+	compacted|unpaved|dirt|*gravel*) color="BROWN" ;;
+	#earth|grass|mud|ice|ground) color="ORANGE" ;;
+	asphalt|concrete|paved) color="TEAL" ;;
 	*) ;;
     esac
 
@@ -115,6 +120,13 @@ roads_color()
 	*) ;;
     esac
 
+    case ${service} in
+	yes) color="LIGHTBLUE" ;;
+	driveway) color="PINK" ;;
+	emergency_access) color="RED" ;;
+	*) ;;
+    esac
+    
     case ${jeep} in
 	yes) color=ORANGE ;;
 	no) ;;
@@ -143,10 +155,10 @@ roads_color()
     esac
 
     case ${tracktype} in
-	grade1) ;; # Solid, paved or compacted
-	grade2) ;; # Mostly Solid, unpaved, mix of sand, silt, and clay
-	grade3) ;; # Mix of hard and soft materials
-	grade4) ;; # Unpaved, lacks hard material, might be grass
+	grade1) color="GREEN" ;; # Solid, paved or compacted
+	grade2) color="DARKGREEN" ;; # Mostly Solid, unpaved, mix of sand, silt, and clay
+	grade3) color="ORANGE" ;; # Mix of hard and soft materials
+	grade4) color="PURPLE" ;; # Unpaved, lacks hard material, might be grass
 	grade5) ;; # 
 	*) ;;
     esac
