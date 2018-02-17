@@ -37,7 +37,7 @@ topdir="`dirname ${osmbin}`"
 
 # This is a list of supported subsets of data to extract.
 supportedlines="trails piste roads"
-supportedpoints="emergency lodging huts wifi waterfall swimming historic camp trailhead peak hotspring firewater helicopter milestone"
+supportedpoints="emergency lodging huts wifi waterfall swimming historic camp trailhead peak hotspring firewater helicopter milestone addresses"
 supported="${supportedlines} ${supportedpoints}"
 
 usage()
@@ -92,9 +92,9 @@ done
 
 title="${title:-${database} `echo ${subs} | sed -e 's/:[a-zA-Z0-9]*//'`}"
 # Always use a full path
-if test `dirname ${outfile}`; then
-    outfile="$PWD/${outfile}"
-fi
+#if test `dirname ${outfile}`; then
+#    outfile="$PWD/${outfile}"
+#fi
 
 # Process the list of data subsets
 declare -a subsets
@@ -122,6 +122,7 @@ for sub in ${subs}; do
 	    huts)       subnames[$i]="Alpine Huts" ;;
 	    campsite)   subnames[$i]="Campsites" ;;
 	    campground) subnames[$i]="Campgrounds" ;;
+	    addresses)  subnames[$i]="Addresses" ;;
 	    *)          subnames[$i]="${sub}" ;;
 	esac
     fi
@@ -129,7 +130,7 @@ for sub in ${subs}; do
     # rendered differently.
     case ${subsets[$i]} in
 	wifi|lodging|huts|waterfall|swimming) subtypes[$i]="waypoint" ;;
-	firewater|helicopter|emergency|camp) subtypes[$i]="waypoint" ;;
+	firewater|helicopter|emergency|camp|addresses) subtypes[$i]="waypoint" ;;
 	*) subtypes[$i]="line" ;;
     esac
     i="`expr $i + 1`"
@@ -164,6 +165,7 @@ rm -f ${outdir}/debug.log
 # Our custom Icons for waypoints
 icondir=icons
 declare -A icons=()
+icons[BUILDING]="#Building"
 icons[MILESTONE]="#Milestone"
 icons[HISTYES]="#Histyes"
 icons[ARCHAE]="#Archae"
