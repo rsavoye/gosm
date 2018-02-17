@@ -54,7 +54,7 @@ sql_file ()
 	# exists.
 	road*)
 	    cat <<EOF >> ${sqlout}
-SELECT line.osm_id,line.name,ST_AsKML(line.way),line.highway,line.surface,line.access,line.tags->'smoothness',line.tags->'tracktype',tags->'alt_name',tags->'4wd_only' from planet_osm_line AS line WHERE (line.highway!='') AND (line.highway!='path' AND line.highway!='footway' AND line.highway!='cycleway');
+SELECT line.osm_id,line.name,ST_AsKML(line.way),line.highway,line.surface,line.access,line.tags->'smoothness',line.tags->'tracktype',tags->'alt_name',tags->'4wd_only',service from planet_osm_line AS line WHERE (line.highway!='') AND (line.highway!='path' AND line.highway!='footway' AND line.highway!='cycleway');
 EOF
 	    ;;
 	trails)
@@ -96,6 +96,7 @@ SELECT osm_id,name,ST_AsKML(way),tags->'fee',tags->'toilets',tags->'website',tag
 EOF
 	    ;;
 	milestone*)
+	    # FIXME: Yes, this is a bad hack to hardcode the few roads we want mile markes for.
 	    cat <<EOF >> ${sqlout}
 SELECT osm_id,name,ST_AsKML(way),tags->'alt_name' from planet_osm_point WHERE highway='milestone';
 EOF
@@ -108,6 +109,11 @@ EOF
 	peak*)
 	    cat <<EOF >> ${sqlout}
 SELECT osm_id,name,ST_AsKML(way),ele FROM planet_osm_point WHERE "natural"='peak';
+EOF
+	    ;;
+	addr*)
+	    cat <<EOF >> ${sqlout}
+SELECT osm_id,ST_AsKML(way),"addr:housenumber",tags->'addr:street',tags->'addr:full' FROM planet_osm_point WHERE tags->'addr:street'!='' AND "addr:housenumber"!='';
 EOF
 	    ;;
 	hots*)
