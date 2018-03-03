@@ -103,7 +103,10 @@ class osmfile(object):
     # which for OSM often have defined ranges.
     def makeTag(self, field, value):
         newval = str(value)
-        newval = html.unescape(newval)
+        #newval = html.unescape(newval)
+        newval = newval.replace('&', 'and')
+        newval = newval.replace('"', '')
+        #newval = newval.replace('><', '')
         tag = dict()
         # logging.debug("OSM:makeTag(field=%r, value=%r)" % (field, newval))
 
@@ -168,7 +171,7 @@ class osmfile(object):
                     continue
                 if str(value)[0] != 'b':
                     self.file.write("    <tag k=\"" + name + "\" v=\"" +
-                                    str(value) + "' />\n")
+                                    str(value) + "\" />\n")
 
         self.file.write("  </way>\n")
 
@@ -182,12 +185,12 @@ class osmfile(object):
         # Each ref ID points to a node id. The coordinates is im the node.
         for mattr in members:
             for ref, value in mattr.items():
-                # print("FIXME: %r %r" % (ref, value))
+                #print("FIXME: %r %r" % (ref, value))
                 if ref == 'type':
                     self.file.write("    <member")
                 self.file.write(" " + ref + "=\"" + value + "\"")
                 if ref == 'role':
-                    self.file.write("\"/>\n")
+                    self.file.write("/>\n")
 
         value = ""
 
