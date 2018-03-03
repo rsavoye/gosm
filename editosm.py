@@ -29,13 +29,23 @@ import logging
 import getopt
 import epdb
 
-from config import config
 from sys import argv
 sys.path.append(os.path.dirname(argv[0]) + '/osmpylib')
 
+import osm
+from lxml import etree
+from lxml.etree import tostring
 
-class myconfig(config):
+
+class myconfig(object):
     def __init__(self, argv=list()):
+        # Read the config file to get our OSM credentials, if we have any
+        file = os.getenv('HOME') + "/.gosmrc"
+        try:
+            gosmfile = open(file, 'r')
+        except Exception as inst:
+            logging.warning("Couldn't open %s for writing! not using OSM credentials" % file)
+            return
         # Default values for user options
         self.options = dict()
         self.options['logging'] = True
@@ -43,6 +53,9 @@ class myconfig(config):
         self.options['verbose'] = False
         self.options['infile'] = os.path.dirname(argv[0])
         self.options['outfile'] = "./out.osm"
+        self.options['convfile'] = os.path.dirname(argv[0]) + "/default.conv"
+        self.options['uid'] = ''
+        self.options['user'] = ''
 
         try:
             (opts, val) = getopt.getopt(argv[1:], "h,o:,i:,v,",
@@ -55,26 +68,48 @@ class myconfig(config):
         for (opt, val) in opts:
             if opt == '--help' or opt == '-h':
                 self.usage(argv)
-            elif opt == '--filter' or opt == '-f':
-                self.options['filter'] = val
             elif opt == "--outfile" or opt == '-o':
                 self.options['outfile'] = val
             elif opt == "--infile" or opt == '-i':
                 self.options['infile'] = val
-            elif opt == "--extra" or opt == '-e':
-                self.options['extra'] = val
-            elif opt == "--type" or opt == '-t':
-                if val == "way" or val == "line":
-                    self.options['type'] = val
-                else:
-                    self.usage(argv)
             elif opt == "--verbose" or opt == '-v':
                 self.options['verbose'] = True
                 logging.basicConfig(filename='shp2map.log',level=logging.DEBUG)
-            elif opt == "--dump" or opt == '-d':
-                self.options['dump'] = True
-            elif opt == "convfile" or opt == '-c':
-                self.options['convfile'] = val
+
+        try:
+            lines = gosmfile.readlines()
+        except Exception as inst:
+            logging.error("Couldn't read lines from %s" % gosmfile.name)
+
+        for line in lines:
+            try:
+                # Ignore blank lines or comments
+                if line is '' or line[1] is '#':
+                    continue
+            except Exception as inst:
+                pass
+            # First field of the CSV file is the name
+            index = line.find('=')
+            name = line[:index]
+            # Second field of the CSV file is the value
+            value = line[index + 1:]
+            index = len(value)
+#            print ("FIXME: %s %s %d" % (name, value[:index - 1], index))
+            if name == "uid":
+                self.options['uid'] = value[:index - 1]
+            if name == "user":
+                self.options['user'] = value[:index - 1]
+
+    def get(self, opt):
+        try:
+            return self.options[opt]
+        except Exception as inst:
+            return False
+
+    def dump(self):
+        logging.info("Dumping config")
+        for i, j in self.options.items():
+            print("\t%s: %s" % (i, j))
 
     # Basic help message
     def usage(self, argv):
@@ -116,288 +151,141 @@ try:
 except Exception as inst:
     print("Couldn't open file %s" % filespec)
 
-filespec = dd.get('outfile')
-outfile = open(filespec, "w")
+infile = dd.get('infile')
+outfile = dd.get('outfile')
+mod = 'action="modifiy"'
 
-type = ""
-node = list()
-start = False
-modified =  False
-ignore = False
-handled = False
-user = 'rsavoye'
+#outfile = open(filespec, "w")
 
-# # Process the input file
-# lines = file.readlines()
-# lines = ""
-# for line in lines:
-#     # The header of all OSM files.
-#     m = re.search("^<\?xml|<osm|<bounds", line)
-#     if m is not None:
-#         outfile.write(line)
-#         continue
-    
-#     newline = line
+osmout = osm.osmfile(dd, outfile)
+osmout.header()
+abbrevs=(" Hwy", "Rd", "Ln", "Dr", "Cir", "Ave", "Pl", "Trl", "Ct")
+fullname=(" Highway", "Road", "Lane", "Drive", "Circle", "Avenue", "Place", "Trail", "Court")
 
-#     m = re.search("<way id=\".*\">", line, re.IGNORECASE)
-#     if m is not None:
-#         ignore = True
-
-#     m = re.search("</way>", line, re.IGNORECASE)
-#     if m is not None:
-#         ignore = False
-            
-#     m = re.search("<relation id=\".*\">", line, re.IGNORECASE)
-#     if m is not None:
-#         ignore = True
-
-#     m = re.search("</relation>", line, re.IGNORECASE)
-#     if m is not None:
-#         ignore = False
-            
-#     if ignore is True:
-#         outfile.write(line)
-#         continue
-
-#     m = re.search("<node id=", line, re.IGNORECASE)
-#     if m is not None:
-#         data = dict()
-#         for field in line.split(' '):
-#             item = field.split('=')
-#             if len(item) == 2:
-#                 data[item[0]] = item[1].rstrip("\n>/\"").strip("\"")
-      
-#     m = re.search("<node id=\".*\">", line, re.IGNORECASE)
-#     if m is not None:
-#         ignore = False
-#         #print("NODE START: " + line)
-#         start = True
-#         type = ""
-#         #node.append(line)
-
-#     m = re.search("<way id=\".*\">", line, re.IGNORECASE)
-#     if m is not None:
-#         #print("NODE START: " + line)
-#         start = True
-
-#     length = len(line)
-#     end = line.find(' v=')
-#     sub = line[0:end]
-#     tag = line[10:end - 1]
-#     value = line[end + 4:length - 4]
-
-#     if data['user'] == user:
-#         value = string.capwords(line[end + 4:length - 4])
-#         if value != line[end + 4:length - 4]:
-#             modified = True
-#             handled = False
-
-#     # This tag is obsolete as of 2012
-#     #m = re.search("tiger:name_type", line)
-
-#     # Look for abbreviations and expand them
-#     i = 0
-#     pattern = ""
-#     while i < len(abbrevs):
-#         pattern = " " + abbrevs[i] + "[\" ]+"
-#         m = re.search(pattern, line, re.IGNORECASE)
-#         if m is not None:
-#             newline = line[0:m.start()]
-#             rest = ' ' + line[m.start() + 4:len(line)]
-#             newline += ' ' + fullname[i] + rest
-#             type = fullname[i]
-#             modified = True
-#             handled = False
-#             break
-#         i = i +1
-
-#     # End of a multi-line node
-#     m = re.search("</node>", line, re.IGNORECASE)
-#     if m is not None:
-#         #print("NODE END: %r" % type)
-#         newline = "</node>"
-#         start = False
-        
-#     # A single-line node
-#     m = re.search("<node id=\".*\"/>$", line, re.IGNORECASE)
-#     if m is not None:
-#         outfile.write(line)
-#         node = list()
-#         continue
-
-#     # These are the fields that need to have the capitalization
-#     # adjusted. 
-#     #if tag == "addr:street" or tag == "addr:full" and data['user'] == 'rsavoye':
-#     try:
-#         print("DATA %r" % data['action'])
-#     except:
-#         pass
-    
-#     if modified is True:
-#         # Any modified node needs to have the action field set in the line.
-#         #print("ADDR: %r" % line)
-#         newline = sub + ' v="' + value + '\"/>\n'
-#         if handled is False and len(node) > 0:
-#             idx = node[0].rfind('>')
-#             begin = node[0][0:idx]
-#             node[0] = begin + " action=\"modify\">" + '\n'
-#             handled = True
-#             modified = False
-
-#     node.append(newline)
-
-#     # Write to the output file
-#     if start is False:
-#         modified = False
-#         # print("BAR: %r" % len(node))
-#         for i in node:
-#             outfile.write(i)
-#             handled = False
-#             node = list()
-
-# #except Exception as inst:
-# #    print("Couldn't read lines from %s" % filespec)
-
-
-# # http://docs.osmcode.org/pyosmium/latest/ref_osmium.html
-
-import osmium as osmium
-
-class AddressFilter(osmium.SimpleHandler):
-    def __init__(self):
-        osmium.SimpleHandler.__init__(self)
-        self.num_nodes = 0
-        self.modified = False
-        try:
-            os.remove("/tmp/foo.osm")
-        except:
-            pass
-        self.outfile = osmium.SimpleWriter("/tmp/foo.osm")
-
-    def fix_address(self, data):
-        # No tags
-        if not data.tags:
-            return data
-
-        # First fix capitalization problems for these tags
-        newtags = []
-        newval = ""
-        modified = False
-        for tag in data.tags:
-            newval = tag.v
-            try:
-                if tag.k == "addr:street" or tag.k == "addr:full":
-                    newval = string.capwords(tag.v)
-                    if newval != tag.v:
-                        modified = True
-                    # Look for abbreviations and expand them
-                    abbrevs=(" Hwy", "Rd", "Ln", "Dr", "Cir", "Ave", "Pl", "Trl", "Ct")
-                    fullname=(" Highway", "Road", "Lane", "Drive", "Circle", "Avenue", "Place", "Trail", "Court")
-                        
-                    i = 0
-                    pattern = ""
-                    while i < len(abbrevs):
-                        pattern = " " + abbrevs[i] + "[$ ]"
-                        m = re.search(pattern, newval, re.IGNORECASE)
-                        if m is not None:
-                            print("FIXME: %r" % newval)
-                            newline = newval[0:m.start()]
-                            rest = ' ' + newval[m.start() + 4:len(newval)]
-                            newval = newline + ' ' + fullname[i] + rest
-                            modified = True
-                            break
-                        i = i +1
-                        print("FIXME2: %r, %r" % (newval, modified))
-            except:
-                pass
-                    
-            newtags.append((tag.k, newval))
-
-        if modified is True:
-            return data.replace(tags=newtags)
-        else:
-            return data
- 
-    def node(self, node): 
-        #print(n)
-        foo = self.fix_address(node)
-        self.outfile.add_node(foo)
-
-    def way(self, way):
-        foo = self.fix_address(way)
-        self.outfile.add_way(foo)
-
-    def relation(self, rel):
-        foo = self.fix_address(rel)
-        self.outfile.add_relation(foo)
-
-    def done(self):
-        #self.outfile.apply_file("/tmp/fooby.osm")
-        self.outfile.close()
-
-#writer = osm.SimpleWriter('test.osm')
-i = AddressFilter()
-i.apply_file("/work/Mapping/gosm.git/test.osm", locations=True)
-
-print("Number of nodes: %d" % i.num_nodes)
-i.done()
-
-
-# class MyNode(osm.Node):
-#     """The mutable version of ``osmium.osm.Node``. It inherits all attributes
-#        from osmium.osm.mutable.OSMObject and adds a `location` attribute. This
-#        may either be an `osmium.osm.Location` or a tuple of lon/lat coordinates.
-#     """
-
-#     def __init__(self, base=None, location=None, **attrs):
-#         OSMObject.__init__(self, base=base, **attrs)
-#         if base is None:
-#             self.location = location
-#         else:
-#             self.location = location if location is not None else base.location
-
-
-# x = MyNode()
-
-import osm
-import config
-from lxml import etree
-from lxml.etree import tostring
-
-outfile = "/tmp/foo.osm"
-dd = config.config(argv)
-dd.dump()
-osm = osm.osmfile(dd, outfile)
-
-osm.header()
 tag = dict()
 attrs = dict()
-doc = etree.parse("/work/Mapping/gosm.git/test.osm")
+doc = etree.parse(infile)
+members = list()
 for docit in doc.getiterator():
+    #print("TAG: %r" % docit.tag)
     if docit.tag == 'node':
         tags = list()
         for elit in docit.getiterator():
+            modified = False
             for ref,value in elit.items():
                 if ref == 'k':
                     k = value
                 elif ref == 'v':
-                    v = value
-                    tag = osm.makeTag(k, v)
-                    print("<tag k=\"%r\" v=\"%r\"/>" % (k, v))
+                    if k == 'addr:street' or k == 'addr:full'               :
+                        v = string.capwords(value)
+                        if v != value:
+                            modified = True
+                        pattern = ""
+                        i = 0
+                        while i < len(abbrevs):
+                            pattern = " " + abbrevs[i] + "$"
+                            m = re.search(pattern, v, re.IGNORECASE)
+                            if m is not None:
+                                pattern = " " + abbrevs[i] + " "
+                                newline = v[0:m.start()]
+                                rest = ' ' + v[m.start() + len(abbrevs[i])+1:len(v)]
+                                v = newline + ' ' + fullname[i] + rest
+                                modified = True
+                                break
+                            pattern = " " + abbrevs[i] + " "
+                            m = re.search(pattern, v, re.IGNORECASE)
+                            if m is not None:
+                                newline = v[0:m.start()]
+                                rest = ' ' + v[m.start() + len(abbrevs[i]):len(v)]
+                                v = newline + ' ' + fullname[i] + rest
+                                modified = True
+                                break
+                            i = i +1
+                    else:
+                        v = value
+
+                    tag = osmout.makeTag(k, v)
+                    #print("<tag k=\"%r\" v=\"%r\"/>" % (k, v))
                     tags.append(tag)
                 else:
                     attrs[ref] = value
-                    print("<NODE %r %r" % (ref, value))
-            osm.node(attrs['lat'], attrs['lon'], tags)
-                
-    elif docit.tag == 'tag':
+                    #rint("ATTR %r %r" % (ref, value))
+                    # osmid = attrs['id']
+                    # try:
+                    #     user = attrs['user']
+                    # except:
+                    #     user = None
+                    # try:
+                    #     uid = attrs['uid']
+                    # except:
+                    #     uid = None
+                    # try:
+                    #     version = attrs['version']
+                    # except:
+                    #     version = None
+        # omout.node(attrs['lat'], attrs['lon'], tags, modified, osmid, user, uid, version)
+        osmout.node(tags, attrs)
+    elif docit.tag == 'way':
+        refs = list()
+        tags = list()
+        attrs = dict()
         for elit in docit.getiterator():
+            modified = False
             for ref,value in elit.items():
-                if ref == 'k':
+                if ref == 'ref':
+                    refs.append(value)
+                elif ref == 'k':
                     k = value
+                    continue
                 elif ref == 'v':
                     v = value
-                    print("<tag k=\"%r\" v=\"%r\"/>" % (k, v))
+                    tag = osmout.makeTag(k, v)
+                    tags.append(tag)
+                else:
+                    attrs[ref] = value
+        osmout.makeWay(refs, tags, attrs)
+
+    elif docit.tag == 'bounds':
+        pass
+    elif docit.tag == 'member':
+        # members = list()
+        # for elit in docit.getiterator():
+        #     for ref,value in elit.items():
+        #         member = dict()
+        #         print("MEMBER:  %r, %r" % (ref, value))
+        #         member[ref] = value
+        #         members.append(member)
+        pass
+    elif docit.tag == 'nd':
+        # Don't need to do anything, handled by osm.py
+        pass
+    elif docit.tag == 'osm':
+        pass
+    elif docit.tag == 'relation':
+        tags = list()
+        attrs = dict()
+        members = list()
+        for elit in docit.getiterator():
+            modified = False
+            for ref,value in elit.items():
+               # print("RELATION: %r %r" % (ref, value))                    
+                if ref == 'type' or ref == 'ref' or ref == 'role':
+                    member = dict()
+                    member[ref] = value
+                    members.append(member)
+                    continue
+                elif ref == 'k':
+                    k = value
+                    continue
+                elif ref == 'v':
+                    v = value
+                    tag = osmout.makeTag(k, v)
+                    tags.append(tag)
+                else:
+                    attrs[ref] = value
+        osmout.makeRelation(members, tags, attrs)
 
 
-osm.footer()
+
+
+osmout.footer()
