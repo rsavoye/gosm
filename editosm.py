@@ -17,10 +17,11 @@
 # Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 # 
 
-# This script is where you wat to import data, but all the names are all in
+# This script is where you want to import data, but all the names are all in
 # upper cases, which isn't appropriaye for OSM. This fixes addresses
 # specifically and nothing else by just capitalizing he first letter of
-# every word in the value..
+# every word in the value, and expanding abbreviations for road types tp
+# their full name.
 import os
 import sys
 import re
@@ -46,7 +47,7 @@ class myconfig(object):
         except Exception as inst:
             logging.warning("Couldn't open %s for writing! not using OSM credentials" % file)
             return
-        # Default values for user options
+         # Default values for user options
         self.options = dict()
         self.options['logging'] = True
         self.options['dump'] = False
@@ -166,20 +167,18 @@ tag = dict()
 attrs = dict()
 doc = etree.parse(infile)
 members = list()
+modified = False
 for docit in doc.getiterator():
     #print("TAG: %r" % docit.tag)
     if docit.tag == 'node':
         tags = list()
         for elit in docit.getiterator():
-            modified = False
             for ref,value in elit.items():
                 if ref == 'k':
                     k = value
                 elif ref == 'v':
-                    if k == 'addr:street' or k == 'addr:full'               :
+                    if k == 'addr:street' or k == 'addr:full':
                         v = string.capwords(value)
-                        if v != value:
-                            modified = True
                         pattern = ""
                         i = 0
                         while i < len(abbrevs):
@@ -189,14 +188,14 @@ for docit in doc.getiterator():
                                 pattern = " " + abbrevs[i] + " "
                                 newline = v[0:m.start()]
                                 rest = ' ' + v[m.start() + len(abbrevs[i])+1:len(v)]
-                                v = newline + ' ' + fullname[i] + rest
+                                v = newline + ' ' + fullname[i] + rest.rstrip(' ')
                                 modified = True
                                 break
                             pattern = " " + abbrevs[i] + " "
                             m = re.search(pattern, v, re.IGNORECASE)
                             if m is not None:
                                 newline = v[0:m.start()]
-                                rest = ' ' + v[m.start() + len(abbrevs[i]):len(v)]
+                                rest = ' ' + v[m.start() + len(abbrevs[i])+1:len(v)]
                                 v = newline + ' ' + fullname[i] + rest
                                 modified = True
                                 break
@@ -207,24 +206,14 @@ for docit in doc.getiterator():
                     tag = osmout.makeTag(k, v)
                     #print("<tag k=\"%r\" v=\"%r\"/>" % (k, v))
                     tags.append(tag)
+                    #print("MODIFIED: %r, %r, %r" % (v != value, v, value))
+                    if v != value:
+                        modified = True
+                        attrs['action'] = 'modify'
                 else:
                     attrs[ref] = value
-                    #rint("ATTR %r %r" % (ref, value))
-                    # osmid = attrs['id']
-                    # try:
-                    #     user = attrs['user']
-                    # except:
-                    #     user = None
-                    # try:
-                    #     uid = attrs['uid']
-                    # except:
-                    #     uid = None
-                    # try:
-                    #     version = attrs['version']
-                    # except:
-                    #     version = None
-        # omout.node(attrs['lat'], attrs['lon'], tags, modified, osmid, user, uid, version)
         osmout.node(tags, attrs)
+        attrs = dict()
     elif docit.tag == 'way':
         refs = list()
         tags = list()
