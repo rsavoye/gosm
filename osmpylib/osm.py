@@ -21,6 +21,7 @@ import time
 import logging
 from datafile import convfile
 import config
+import html
 
 class osmfile(object):
     """OSM File output"""
@@ -54,7 +55,8 @@ class osmfile(object):
     def header(self):
         if self.file != False:
             self.file.write('<?xml version=\'1.0\' encoding=\'UTF-8\'?>\n')
-            self.file.write('<osm version="0.6" generator="gosm 0.1" timestamp="2017-03-13T21:43:02Z">\n')
+            #self.file.write('<osm version="0.6" generator="gosm 0.1" timestamp="2017-03-13T21:43:02Z">\n')
+            self.file.write('<osm version="0.6" generator="gosm 0.1">\n')
 
     def footer(self):
         #logging.debug("FIXME: %r" % self.file)
@@ -62,15 +64,23 @@ class osmfile(object):
         if self.file != False:
             self.file.close()
 
-    def node(self, lat="", lon="", tags=list()):
+    def makeNode(self, attr=dict()):
+        node(attr['osmid'], attrs['lat'], attrs['lon'], attr['osmid'], attr['user'])
+
+        #    def node(self, lat="", lon="", tags=list(), modified=False, osmid=None, user=None, uid=None, version=None):
+    def node(self, tags=list(), attrs=dict(), modified=False):
         #        timestamp = ""  # LastUpdate
         timestamp = time.strftime("%Y-%m-%dT%TZ")
-        self.file.write("    <node id='" + str(self.osmid) + "\' visible='true'")
-        self.file.write(" version='1'")
-        self.file.write(" timestamp='" + timestamp + "\'")
-        self.file.write(" uid='" + str(self.options.get('uid')) + "'")
-        self.file.write(" user='" + self.options.get('user') + "'")
-        self.file.write(" lat='" + str(lat) + "\'" + " lon='" + str(lon) + "'>\n")
+        # self.file.write("       <node id='" + str(self.osmid) + "\' visible='true'")
+        if len(attrs) > 0:
+            self.file.write("    <node")
+            for ref,value in attrs.items():
+                self.file.write(" " + ref + "=\"" + value + "\"")
+            if len(tags) > 0:
+                self.file.write(">\n")
+            else:
+                self.file.write("/>\n")
+
         for i in tags:
             for name, value in i.items():
                 if name == "Ignore" or value == '':
@@ -79,9 +89,10 @@ class osmfile(object):
                     if value != 'None' or value != 'Ignore':
                         tag = self.makeTag(name, value)
                         for newname, newvalue in tag.items():
-                            self.file.write("        <tag k='" + newname + "' v='" + str(newvalue) + "' />\n")
+                            self.file.write("     <tag k=\"" + newname + "\" v=\"" + str(newvalue) + "\" />\n")
 
-        self.file.write("    </node>\n")
+        if len(tags) > 0:
+            self.file.write("    </node>\n")
         self.osmid = self.osmid - 1
 
         return self.osmid - 1
@@ -91,11 +102,8 @@ class osmfile(object):
     # random field names to standard OSM tag names. Same for the values,
     # which for OSM often have defined ranges.
     def makeTag(self, field, value):
-        # FIXME: remove embedded ', and &
         newval = str(value)
-        newval = newval.replace("&", "&amp;")
-        newval = newval.replace("'", "")
-        # newval = cgi.escape(newval)
+        newval = html.unescape(newval)
         tag = dict()
         # logging.debug("OSM:makeTag(field=%r, value=%r)" % (field, newval))
 
@@ -114,27 +122,35 @@ class osmfile(object):
             newtag = change[0]
             newval = change[1]
             # logging.debug("ATTRS2: %r %r" % (newtag, newval))
-        if newtag == 'name':
-            tag[newtag] = newval.capitalize()
-            # logging.debug("CAPITALIZE %r %r" % (newtag, newval))
+        #if newtag == 'name':
+            #tag[newtag] = BeautifulSoup(newval, "lxml")
+            #tag[newtag] = newval.replace('&#39;', "XXXs")
+        #     # logging.debug("CAPITALIZE %r %r" % (newtag, newval))
         else:
             tag[newtag] = newval
 
         return tag
 
-    def makeWay(self, refs, tags=list()):
+    def makeWay(self, refs, tags=list(), attrs=dict()):
         if len(refs) is 0:
             logging.debug("ERROR: No refs! %r" % tags)
             return
-        # logging.debug("osmfile::way(refs=%r, tags=%r)" % (refs, tags))
-        #logging.debug("osmfile::way(tags=%r)" % (tags))
-        self.file.write("    <way id='" + str(self.osmid) +
-                        "\' visible='true'")
-        timestamp = time.strftime("%Y-%m-%dT%TZ")
-        self.file.write(" version='1'")
-        self.file.write(" timestamp='" + timestamp + "\'")
-        self.file.write(" user='" + self.options.get('user') + "' uid='" +
-                        str(self.options.get('uid')) + "'>'\n")
+
+        if len(attrs) > 0:
+            self.file.write("  <way")
+            for ref,value in attrs.items():
+                self.file.write("    " + ref + "=\"" + value + "\"")
+            self.file.write(">\n")
+        else:
+            # logging.debug("osmfile::way(refs=%r, tags=%r)" % (refs, tags))
+            #logging.debug("osmfile::way(tags=%r)" % (tags))
+            self.file.write("    <way")
+            #timestamp = time.strftime("%Y-%m-%dT%TZ")
+
+            self.file.write(" version='1'")
+            self.file.write(" timestamp='" + timestamp + "\'")
+            self.file.write(" user='" + self.options.get('user') + "' uid='" +
+                            str(self.options.get('uid')) + "'>'\n")
 
         # Each ref ID points to a node id. The coordinates is im the node.
         for ref in refs:
@@ -142,7 +158,7 @@ class osmfile(object):
             # any, so this is likely a bug elsewhere when parsing the geom.
             if ref == self.osmid:
                 break
-            self.file.write("        <nd ref='" + str(ref) + "' />\n")
+            self.file.write("    <nd ref=\"" + str(ref) + "\" />\n")
 
         value = ""
 
@@ -151,8 +167,36 @@ class osmfile(object):
                 if name == "Ignore" or value == '':
                     continue
                 if str(value)[0] != 'b':
-                    self.file.write("        <tag k='" + name + "' v='" +
+                    self.file.write("    <tag k=\"" + name + "\" v=\"" +
+                                    str(value) + "' />\n")
+
+        self.file.write("  </way>\n")
+
+    def makeRelation(self, members, tags=list(), attrs=dict()):
+        if len(attrs) > 0:
+            self.file.write("  <relation")
+            for ref,value in attrs.items():
+                self.file.write(" " + ref + "=\"" + value + "\"")
+            self.file.write(">\n")
+
+        # Each ref ID points to a node id. The coordinates is im the node.
+        for mattr in members:
+            for ref, value in mattr.items():
+                # print("FIXME: %r %r" % (ref, value))
+                if ref == 'type':
+                    self.file.write("    <member")
+                self.file.write(" " + ref + "=\"" + value + "\"")
+                if ref == 'role':
+                    self.file.write("\"/>\n")
+
+        value = ""
+
+        for i in tags:
+            for name, value in i.items():
+                if name == "Ignore" or value == '':
+                    continue
+                if str(value)[0] != 'b':
+                    self.file.write("    <tag k='" + name + "' v='" +
                                     str(value) + "' />\n")
             
-        self.file.write("    </way>\n")
-        
+        self.file.write("  </relation>\n")
