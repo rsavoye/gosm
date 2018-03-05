@@ -122,6 +122,9 @@ EOF
     fi
     if test x"${data[COLOR]}" != x; then
 	style="`echo ${data[COLOR]} | tr '[:upper:]' '[:lower:]'`"
+# 	cat <<EOF >> ${outfile}
+#             <color>${colors[${data[COLOR]}]}</color>
+# EOF
 	cat <<EOF >> ${outfile}
             <styleUrl>#line_${style}</styleUrl>
 EOF
@@ -139,13 +142,20 @@ EOF
 EOF
     fi
 
+    # echo "FIXME: $outfile"
     # Create the description popup box
     if test ${#data[@]} -gt 3; then
  	echo "<description>"  >> ${outfile} 	
 	for i in ${!data[@]}; do
 	    case $i in
 		# ignore these, they're not part of the descriptiom
-		WIDTH|FILL|NAME|WAY|ICON|TOURISM|AMENITY|WATERWAY|HIGHWAY|EMERGENCY|COLOR|MILESTONE) ;;
+		WIDTH|FILL|NAME|WAY|ICON|TOURISM|AMENITY|WATERWAY|HIGHWAY|EMERGENCY|COLOR|MILESTONE|STREET|NUMBER)
+		;;
+		OSMID)
+		    if test x$"{data[NUMBER]" = x; then
+			echo "Osmid: ${data[OSMID]}" >> ${outfile}
+		    fi
+		;;
 		*)
 		    if test x"${data[$i]}" != x; then
 			local cap="${i:0:1}"
