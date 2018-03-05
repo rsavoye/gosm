@@ -61,7 +61,7 @@ colors[BROWN]="${opacity}ff0055aa"
 # smoothness=very_horrible tractor/ATV/tanks/trial/Mountain bike
 # smoothness=impassable no wheeled vehicles 
 
-# Road styles are complicacted, as the final result is a mix of the highway type,
+# Road styles are complicated, as the final result is a mix of the highway type,
 # the smoothness, the surface, and the tracktype. Since our goal is oriented
 # towards emergency response, our main criteria is what type f apparatus to
 # respond in, ie... fire truck, pickup, or UTV. As not all tags exist for all
@@ -139,9 +139,9 @@ roads_color()
 	# racing bike and all below
 	good) color="GREEN" ;;
 	# city bike/sport cars/wheel chair/Scooter and all below
-	intermediate) color="DARKGREEN" ;;
+	intermediate) color="LIGHTREEN" ;;
 	# trekking bike/normal cars/Rickshaw and all below
-	bad) color="DARKGREEN" ;;
+	bad) color="LIGHTGREEN" ;;
 	# Car with high clearance vehicle or Mountain bike
 	# below
 	very_bad) color="ORANGE" ;;
@@ -156,7 +156,7 @@ roads_color()
 
     case ${tracktype} in
 	grade1) color="GREEN" ;; # Solid, paved or compacted
-	grade2) color="DARKGREEN" ;; # Mostly Solid, unpaved, mix of sand, silt, and clay
+	grade2) color="LIGHTGREEN" ;; # Mostly Solid, unpaved, mix of sand, silt, and clay
 	grade3) color="ORANGE" ;; # Mix of hard and soft materials
 	grade4) color="PURPLE" ;; # Unpaved, lacks hard material, might be grass
 	grade5) ;; # 
@@ -194,7 +194,7 @@ ski_color()
     # For chairlifts
     case ${aerialway} in
 	station)
-	    echo "DARKGREEN"
+	    echo "RED"
 	    return 0
 	    ;;
 	chair_lift)
