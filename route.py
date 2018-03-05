@@ -42,14 +42,11 @@ for k,v in data.items():
     if  distance < best:
         best = distance
 
-
 closest = data[str(best)]
-print("FOO: " + closest)
 
 print("Closest station is: %r, %r miles away" % (closest, best))
-quit()
 
-origin = addrs[sss[0]]
+origin = addrs[str(best)]
 
 # Look up an address with reverse geocoding
 geocode_result = gmaps.geocode('Boulder, CO')
