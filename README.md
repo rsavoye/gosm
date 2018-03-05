@@ -37,7 +37,18 @@ hopefully over time this data will get filled in. The ratings usually
 have to come from another source, like park maps, hiking or biking
 organizations, or local knowledge.
 
-Example:
+# Stable scripts
+setupdb.sh - Iport an OSM file into a PostgreSQL database with extensions.
+kmltool.py - Split a KML file ito sepeerate files, or join them together.
+shp2map.py - Convert a ERSI Shapefile into an OSM file while translating tags.
+osm2kml.sh - Query a PostgreSQL database and make a KML file for display apps.
+
+# Seriously ugly "one-off" scripts, might be useful as code examples.
+distance.sh - Used to calculate the driving distance between an address and a water source.
+editosm.py - Used to expand abbreviated road names and fix capitalization.
+route.py - Displays Google Maps directions to an address from the nearest fire station.
+
+Examples:
 * read binary OSM data file and load the county data into a new database.
 ./setupdb.sh --infile mariposa /tmp/california-latest.osm.pbf --polyfile CA-polyfiles/Mariposa.poly 
 
@@ -69,3 +80,4 @@ google-earth /tmp/Mariposa.kml
 *  Often a shapefile is in a different coordinate system, so it it
    looks weird, convert it to 4326, which is standard.
 ogr2ogr -t_srs EPSG:4326 fixed.shp orig.shp
+
