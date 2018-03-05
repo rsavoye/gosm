@@ -160,8 +160,11 @@ mod = 'action="modifiy"'
 
 osmout = osm.osmfile(dd, outfile)
 osmout.header()
-abbrevs=(" Hwy", "Rd", "Ln", "Dr", "Cir", "Ave", "Pl", "Trl", "Ct")
-fullname=(" Highway", "Road", "Lane", "Drive", "Circle", "Avenue", "Place", "Trail", "Court")
+abbrevs = ("Hwy", "Rd", "Ln", "Dr", "Cir", "Ave", "Pl", "Trl", "Ct")
+fullname = ("Highway", "Road", "Lane", "Drive", "Circle", "Avenue", "Place", "Trail", "Court")
+
+dirshort = ("S", "E", "N", "W")
+dirlong = ("South", "East", "North", "West")
 
 tag = dict()
 attrs = dict()
@@ -181,6 +184,7 @@ for docit in doc.getiterator():
                         v = string.capwords(value)
                         pattern = ""
                         i = 0
+                        # Fix abbreviations for road type
                         while i < len(abbrevs):
                             pattern = " " + abbrevs[i] + "$"
                             m = re.search(pattern, v, re.IGNORECASE)
@@ -200,9 +204,29 @@ for docit in doc.getiterator():
                                 modified = True
                                 break
                             i = i +1
+                        i = 0
+                        # Fix compass direction names
+                        if v[0] == 'S' or v[0] == 'E' or v[0] == 'N' or v[0] == 'W':
+                            print("Nope: " + v)
+                            while i < len(dirshort):
+                                pattern = "^" + dirshort[i] + ' '
+                                m = re.search(pattern, v, re.IGNORECASE)
+                                if m is not None:
+                                    newline = dirlong[i] + ' '
+                                    newline += v[2:]
+                                    v = newline
+                                    print("YES: " + v)
+                                i = i +1
+                        # Fix Hwy when it's the road name
+                        pattern = "^Hwy "
+                        m = re.search(pattern, v, re.IGNORECASE)
+                        if m is not None:
+                            newline = v[3:]
+                            v = "Highway" + newline
                     else:
                         v = value
 
+                    #v = re.sub("\s+", " ", v)
                     tag = osmout.makeTag(k, v)
                     #print("<tag k=\"%r\" v=\"%r\"/>" % (k, v))
                     tags.append(tag)
@@ -244,6 +268,10 @@ for docit in doc.getiterator():
         #         print("MEMBER:  %r, %r" % (ref, value))
         #         member[ref] = value
         #         members.append(member)
+        pass
+    elif docit.tag == 'route':
+        pass
+    elif docit.tag == 'type':
         pass
     elif docit.tag == 'nd':
         # Don't need to do anything, handled by osm.py
