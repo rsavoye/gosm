@@ -89,7 +89,7 @@ class osmfile(object):
                     if value != 'None' or value != 'Ignore':
                         tag = self.makeTag(name, value)
                         for newname, newvalue in tag.items():
-                            self.file.write("     <tag k=\"" + newname + "\" v=\"" + str(newvalue) + "\" />\n")
+                            self.file.write("     <tag k=\"" + newname + "\" v=\"" + str(newvalue) + "\"/>\n")
 
         if len(tags) > 0:
             self.file.write("    </node>\n")
@@ -161,7 +161,7 @@ class osmfile(object):
             # any, so this is likely a bug elsewhere when parsing the geom.
             if ref == self.osmid:
                 break
-            self.file.write("    <nd ref=\"" + str(ref) + "\" />\n")
+            self.file.write("    <nd ref=\"" + str(ref) + "\"/>\n")
 
         value = ""
 
@@ -171,7 +171,7 @@ class osmfile(object):
                     continue
                 if str(value)[0] != 'b':
                     self.file.write("    <tag k=\"" + name + "\" v=\"" +
-                                    str(value) + "\" />\n")
+                                    str(value) + "\"/>\n")
 
         self.file.write("  </way>\n")
 
@@ -199,7 +199,6 @@ class osmfile(object):
                 if name == "Ignore" or value == '':
                     continue
                 if str(value)[0] != 'b':
-                    self.file.write("    <tag k='" + name + "' v='" +
-                                    str(value) + "' />\n")
+                    self.file.write("    <tag k=\"" + name + "\" v=\"" + str(value) + "\"/>\n")
             
         self.file.write("  </relation>\n")
