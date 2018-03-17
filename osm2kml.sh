@@ -157,7 +157,7 @@ tmpdir="/tmp"
 outdir="${tmpdir}/osmtmp-$$"
 mkdir -p ${outdir}
 if test x"${outfile}" = x; then
-    outfile="${outdir}/${database}-${subs}.kml"
+    outfile="./${database}-${subs}.kml"
 fi
 
 rm -f ${outdir}/debug.log
@@ -238,9 +238,31 @@ fi
 # Create the final KML file
 kml_file_header ${outfile} "${title}"
 
+tmpout="${outdir}/campgrounds.out"
+rm -f ${tmpout}
+cat <<EOF >> ${tmpout}
+SELECT DISTINCT tags->'is_in' FROM planet_osm_point WHERE tags->'is_in'!='' AND tourism='camp_site';
+EOF
+
 # Execute the query
+declare -p subsets
 for i in ${!subsets[@]}; do
     # Create the SQL command file
+    if test ${subsets[$i]} == 'camp'; then
+	campgrounds="`psql --tuples-only --dbname=${database} --file=${tmpout} --no-align | tr ' ' '_'`"
+	rm -f ${tmpout}
+	cat <<EOF >> ${tmpout}
+SELECT DISTINCT name,tags->'is_in' FROM planet_osm_point WHERE tags->'is_in'!='' AND tourism='camp_site';
+EOF
+	sites="`psql --tuples-only --dbname=${database} --file=${tmpout} --no-align | sort`"
+	sqlcmd="`sql_file ${subsets[$i]} ${outdir}/${database}-${subsets[$i]}`"
+	for j in ${campgrounds}; do
+	    echo "FIXME: `echo $j | tr '_' ' '` `cat ${sqlcmd}`"
+	done
+	psql --tuples-only --dbname=${database} --no-align --file=${sqlcmd} --output=${sqlout}
+	index=0
+	func="parse_camp"
+    fi
     sqlcmd="`sql_file ${subsets[$i]} ${outdir}/${database}-${subsets[$i]}`"
     sqlout="`echo ${sqlcmd} | sed -e 's:\.sql:.tmp:'`"
     kmlout="`echo ${sqlcmd} | sed -e 's:\.sql:.kml:'`"
@@ -262,7 +284,25 @@ for i in ${!subsets[@]}; do
     rot[3]="\\"
     j=0
     echo ""
+
+    oldcamp=""
+    newcamp=""
     while read line; do
+	newcamp="${data[ISIN]}"
+	#if test x"${subsets[$i]}" = x"camp" -a x"${oldcamp}" != x"${newcamp}"; then  
+	if test x"${oldcamp}" != x"${newcamp}"; then
+	    if test x"${data[ISIN]}" != x''; then
+		ended="no"
+		oldcamp="${data[ISIN]}"
+	    fi
+	fi
+	#echo "FOOBY: ${newcamp}: ${oldcamp} : ${ended}"
+	if test x"${oldname}" = x -a x"${ended}" != x"yes" -a x"${subsets[$i]}" != "camp"; then
+	    #echo "FOO: ${data[ISIN]}: ${subsets[$i]} ${ended}"
+	    kml_folder_end ${kmlout}
+	    kml_folder_start ${kmlout} "${data[ISIN]}"
+	    ended=yes
+	fi
 	id="`echo ${line} | cut -d '|' -f 1`"
 	# Bleech, ugly hack to fix errors in strings that screw up parsing.
 	name="`echo ${line} | sed -e 's:Rent|::' | cut -d '|' -f 2 | sed -e 's:\&:and:'`"
@@ -283,7 +323,7 @@ for i in ${!subsets[@]}; do
 	    j=`expr $j + 1`
 	fi
     done < ${sqlout}
-    if test `echo ${subsets[@]} | wc -w` -gt 1 ; then
+    if test ${#subsets[@]} -gt 1; then
 	kml_folder_end ${kmlout}
     fi
 done
