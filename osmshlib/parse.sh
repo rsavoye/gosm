@@ -87,6 +87,7 @@ parse_camp()
     data[AMENITY]="`echo ${line} | cut -d '|' -f 9`"
     data[LEISURE]="`echo ${line} | cut -d '|' -f 10`"
     data[TOURISM]="`echo ${line} | cut -d '|' -f 11`"
+    data[ISIN]="`echo ${line} | cut -d '|' -f 12`"
 
     if test x"${data[LEISURE]}" = x'firepit'; then
 	data[ICON]='CAMPFIRE'
@@ -446,6 +447,7 @@ parse_firewater()
     data[VOLUMNE]="`echo ${line} | cut -d '|' -f 8`"
     data[NOTE]="`echo ${line} | cut -d '|' -f 9`"
     data[DISUSED]="`echo ${line} | cut -d '|' -f 10`"
+    data[ISIN]="`echo ${line} | cut -d '|' -f 11`"
 
     case "${data[HYDRANTTYPE]}" in
 	underground) data[ICON]="CISTERN" ;;
