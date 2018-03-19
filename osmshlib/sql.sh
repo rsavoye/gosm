@@ -91,8 +91,9 @@ SELECT osm_id,name,ST_AsKML(way) from planet_osm_polygon WHERE amenity='parking'
 EOF
 	    ;;
 	camp*)
+#	    SELECT name FROM planet_osm_polygon WHERE tags->'is_in'!='' AND tourism='camp_site';
 	    cat <<EOF >> ${sqlout}
-SELECT osm_id,name,ST_AsKML(way),tags->'fee',tags->'toilets',tags->'website',tags->'operator',tags->'sites',amenity,leisure,tourism from planet_osm_point WHERE tourism='camp_site' OR amenity='campground' OR name LIKE '%Campground';
+SELECT osm_id,name,ST_AsKML(way),tags->'fee',tags->'toilets',tags->'website',tags->'operator',tags->'sites',amenity,leisure,tourism,tags->'is_in' from planet_osm_point WHERE tourism='camp_site' OR amenity='campground' ORDER BY tags->'is_in';
 EOF
 	    ;;
 	milestone*)
@@ -128,8 +129,11 @@ EOF
 	    ;;
 	firewater)
 	    cat <<EOF >> ${sqlout}
-SELECT osm_id,name,ST_AsKML(way),tags->'emergency',tags->'fire_hydrant:type',tags->'fire_hydrant:diameter',water,tags->'water_tank:volume',tags->'note',disused from planet_osm_point WHERE tags->'emergency'='fire_hydrant' OR tags->'emergency'='fire_water_pond' OR tags->'emergency'='suction_point' OR tags->'emergency'='water_tank';
+SELECT osm_id,name,ST_AsKML(way),tags->'emergency',tags->'fire_hydrant:type',tags->'fire_hydrant:diameter',water,tags->'water_tank:volume',tags->'note',disused,tags->'is_in' from planet_osm_point WHERE tags->'emergency'='fire_hydrant' OR tags->'emergency'='water_tank' ORDER BY tags->'is_in';
 EOF
+# 	    cat <<EOF >> ${sqlout}
+# SELECT osm_id,name,ST_AsKML(way),tags->'emergency',tags->'fire_hydrant:type',tags->'fire_hydrant:diameter',water,tags->'water_tank:volume',tags->'note',disused,tags->'is_in' from planet_osm_point WHERE tags->'emergency'='fire_hydrant' OR tags->'emergency'='fire_water_pond' OR tags->'emergency'='suction_point' OR tags->'emergency'='water_tank';
+# EOF
 	    ;;
 	emergency)
 	    cat <<EOF >> ${sqlout}
