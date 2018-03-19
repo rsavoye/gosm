@@ -98,43 +98,40 @@ title="${title:-${database} `echo ${subs} | sed -e 's/:[a-zA-Z0-9]*//'`}"
 
 # Process the list of data subsets
 declare -a subsets
-declare -a subnames
+declare -A subnames
 declare -a subtypes
 i=1				# array indexes can't start with 0
 subs="`echo ${subs} | tr ' ' '_' | tr ',' ' '`"
 for sub in ${subs}; do
+    subnames[${sub}]="${sub}"
     subsets[$i]="`echo ${sub} | cut -d ':' -f 1`"
     if test "`echo ${supported} | grep -c ${subsets[$i]}`" -eq 0; then
 	echo "ERROR: ${sub} not supported!"
 	continue
-    fi
-    subnames[$i]="`echo ${sub} | cut -d ':' -f 2-10 | tr '_' ' '`"
-    if test x"${subnames[$i]}" = x; then
-	# Set some default folder names for less typing of the same stuff
-	# all the time.
-	case ${sub} in
-	    helicopter) subnames[$i]="Landing Zones" ;;
-	    trails)     subnames[$i]="Hike/Bike Trails" ;;
-	    firewater)  subnames[$i]="Water Sources" ;;
-	    wifi)       subnames[$i]="Wifi Access" ;;
-	    emergency)  subnames[$i]="Emergency Buildings" ;;
-	    lodging)    subnames[$i]="Lodging" ;;
-	    huts)       subnames[$i]="Alpine Huts" ;;
-	    campsite)   subnames[$i]="Campsites" ;;
-	    campground) subnames[$i]="Campgrounds" ;;
-	    addresses)  subnames[$i]="Addresses" ;;
-	    *)          subnames[$i]="${sub}" ;;
-	esac
     fi
     # There are two classes of data, waypoints and lines, which are
     # rendered differently.
     case ${subsets[$i]} in
 	wifi|lodging|huts|waterfall|swimming) subtypes[$i]="waypoint" ;;
 	firewater|helicopter|emergency|camp|addresses) subtypes[$i]="waypoint" ;;
-	*) subtypes[$i]="line" ;;
+	*) subtypes[${subsets[$i]}]="line" ;;
     esac
     i="`expr $i + 1`"
 done
+
+subnames[helicopter]="Landing Zones"
+subnames[hike]="Hike/Bike Trails"
+subnames[firewater]="Water Sources"
+subnames[wifi]="Wifi Access"
+subnames[emergency]="Emergency Buildings"
+subnames[lodging]="Lodging"
+subnames[hut]="Alpine Huts"
+subnames[camp]="Campgrounds"
+#subnames[camp]="Campsites"
+subnames[addresses]="Addresses"
+subnames[roads]="Roads"
+subnames[trails]="Hiking Trails"
+subnames[milestone]="Mile Markers"
 
 debug=yes
 
@@ -222,18 +219,18 @@ EOF
     return 0
 }
 
-# Make sure the specified polygon is in the database
-if test ${#polygons[@]} -gt 0; then
-    for i in ${!#polygons[@]}; do
-	echo "Processing ${polynames[$i]}..."
-	poly_exists ${polygons[$i]}
-	if test $? -gt 0; then
-	    echo "ERROR: ${polynames[$i]} doesn't exist in planet_osm_polygon!"
-	else
-	    echo "${polynames[$i]} exists in planet_osm_polygon!"
-	fi
-    done
-fi
+# # Make sure the specified polygon is in the database
+# if test ${#polygons[@]} -gt 0; then
+#     for i in ${!#polygons[@]}; do
+# 	echo "Processing ${polynames[$i]}..."
+# 	poly_exists ${polygons[$i]}
+# 	if test $? -gt 0; then
+# 	    echo "ERROR: ${polynames[$i]} doesn't exist in planet_osm_polygon!"
+# 	else
+# 	    echo "${polynames[$i]} exists in planet_osm_polygon!"
+# 	fi
+#     done
+# fi
 
 # Create the final KML file
 kml_file_header ${outfile} "${title}"
@@ -244,38 +241,28 @@ cat <<EOF >> ${tmpout}
 SELECT DISTINCT tags->'is_in' FROM planet_osm_point WHERE tags->'is_in'!='' AND tourism='camp_site';
 EOF
 
-# Execute the query
-declare -p subsets
-for i in ${!subsets[@]}; do
+kmlstatus="header"
+flevel=0
+# Execute the query. The index is an integer, whuc can be used in ${subnames} to
+# get the full name.
+for subset in ${subsets[@]}; do
     # Create the SQL command file
-    if test ${subsets[$i]} == 'camp'; then
-	campgrounds="`psql --tuples-only --dbname=${database} --file=${tmpout} --no-align | tr ' ' '_'`"
-	rm -f ${tmpout}
-	cat <<EOF >> ${tmpout}
-SELECT DISTINCT name,tags->'is_in' FROM planet_osm_point WHERE tags->'is_in'!='' AND tourism='camp_site';
-EOF
-	sites="`psql --tuples-only --dbname=${database} --file=${tmpout} --no-align | sort`"
-	sqlcmd="`sql_file ${subsets[$i]} ${outdir}/${database}-${subsets[$i]}`"
-	for j in ${campgrounds}; do
-	    echo "FIXME: `echo $j | tr '_' ' '` `cat ${sqlcmd}`"
-	done
-	psql --tuples-only --dbname=${database} --no-align --file=${sqlcmd} --output=${sqlout}
-	index=0
-	func="parse_camp"
-    fi
-    sqlcmd="`sql_file ${subsets[$i]} ${outdir}/${database}-${subsets[$i]}`"
+    sqlcmd="`sql_file ${subset} ${outdir}/${database}-${subset}`"
     sqlout="`echo ${sqlcmd} | sed -e 's:\.sql:.tmp:'`"
     kmlout="`echo ${sqlcmd} | sed -e 's:\.sql:.kml:'`"
-    name="`echo ${subnames[$i]} | tr '_' ' '`"
+    fullname="${subnames[${subset}]}"
 
-    if test `echo ${subsets[@]} | wc -w` -gt 1 ; then
-	kml_folder_start ${kmlout} "${name}"
+    # Start the Folder if there is more than one
+    if test ${#subsets[@]} -gt 0; then
+       kml_folder_start ${kmlout} "${fullname}"
+       kmlstatus="start"
+       flevel="`expr ${flevel} + 1`"
     fi
 
     # execute the query
     psql --tuples-only --dbname=${database} --no-align --file=${sqlcmd} --output=${sqlout}
     index=0
-    func="parse_${subsets[$i]}"
+    func="parse_${subset}"
 
     # print a rotating character, so we know it's working
     rot[0]="|"
@@ -285,23 +272,28 @@ EOF
     j=0
     echo ""
 
-    oldcamp=""
-    newcamp=""
+    oldname=""
+    newname=""
     while read line; do
-	newcamp="${data[ISIN]}"
-	#if test x"${subsets[$i]}" = x"camp" -a x"${oldcamp}" != x"${newcamp}"; then  
-	if test x"${oldcamp}" != x"${newcamp}"; then
-	    if test x"${data[ISIN]}" != x''; then
-		ended="no"
-		oldcamp="${data[ISIN]}"
-	    fi
-	fi
-	#echo "FOOBY: ${newcamp}: ${oldcamp} : ${ended}"
-	if test x"${oldname}" = x -a x"${ended}" != x"yes" -a x"${subsets[$i]}" != "camp"; then
-	    #echo "FOO: ${data[ISIN]}: ${subsets[$i]} ${ended}"
+	# the ISIN field is only set for nodes using the 'is_in' tag to group things
+	# like camsites in a campground, or fire hydrants in a city.
+	newname="${data[ISIN]}"
+	match=`expr "${oldname}" != "${newname}"`
+	echo "FOOBY: ${match} : ${kmlstatus} ${flevel}"
+	if test x"${kmlstatus}" = x"start" -a ${match} -eq 1; then
 	    kml_folder_end ${kmlout}
-	    kml_folder_start ${kmlout} "${data[ISIN]}"
-	    ended=yes
+	    kmlstatus="end"
+	    flevel="`expr ${flevel} - 1`"
+	fi
+	if test x"${newname}" != x; then
+	    if test x"${kmlstatus}" = x"end" -a ${match} -eq 1; then
+	       kml_folder_start ${kmlout} "${newname}"
+	       kmlstatus="start"
+	       flevel="`expr ${flevel} + 1`"
+	    fi
+	    oldname="${newname}"
+	else
+	    oldname=""
 	fi
 	id="`echo ${line} | cut -d '|' -f 1`"
 	# Bleech, ugly hack to fix errors in strings that screw up parsing.
@@ -323,13 +315,17 @@ EOF
 	    j=`expr $j + 1`
 	fi
     done < ${sqlout}
-    if test ${#subsets[@]} -gt 1; then
+
+    echo "BARBY: ${match} : ${kmlstatus} ${flevel}"
+    if test ${flevel} -gt 0 -a x"${kmlstatus}" = x"start"; then
 	kml_folder_end ${kmlout}
+	flevel="`expr ${flevel} - 1`"
     fi
 done
 
 cat ${outdir}/*.kml >> ${outfile}
 kml_file_footer ${outfile}
+kmlstatus="footer"
 
 echo "SQL file is ${sqlcmd}"
 
