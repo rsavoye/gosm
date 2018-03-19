@@ -255,7 +255,7 @@ for subset in ${subsets[@]}; do
     # Start the Folder if there is more than one
     if test ${#subsets[@]} -gt 0; then
        kml_folder_start ${kmlout} "${fullname}"
-       kmlstatus="start"
+#       kmlstatus="start"
        flevel="`expr ${flevel} + 1`"
     fi
 
@@ -279,21 +279,21 @@ for subset in ${subsets[@]}; do
 	# like camsites in a campground, or fire hydrants in a city.
 	newname="${data[ISIN]}"
 	match=`expr "${oldname}" != "${newname}"`
-	echo "FOOBY: ${match} : ${kmlstatus} ${flevel}"
-	if test x"${kmlstatus}" = x"start" -a ${match} -eq 1; then
+	#echo "FOOBY: ${match} : ${kmlstatus} ${flevel}"
+	if test "${flevel}" -gt 1 -a ${match} -eq 1; then
 	    kml_folder_end ${kmlout}
-	    kmlstatus="end"
+#	    kmlstatus="end"
 	    flevel="`expr ${flevel} - 1`"
 	fi
 	if test x"${newname}" != x; then
-	    if test x"${kmlstatus}" = x"end" -a ${match} -eq 1; then
+	    if test ${match} -eq 1; then
 	       kml_folder_start ${kmlout} "${newname}"
-	       kmlstatus="start"
+#	       kmlstatus="start"
 	       flevel="`expr ${flevel} + 1`"
 	    fi
-	    oldname="${newname}"
+	    oldname="${newname}" # cache name change
 	else
-	    oldname=""
+	    oldname=""		# no is_in tag in node
 	fi
 	id="`echo ${line} | cut -d '|' -f 1`"
 	# Bleech, ugly hack to fix errors in strings that screw up parsing.
@@ -316,11 +316,10 @@ for subset in ${subsets[@]}; do
 	fi
     done < ${sqlout}
 
-    echo "BARBY: ${match} : ${kmlstatus} ${flevel}"
-    if test ${flevel} -gt 0 -a x"${kmlstatus}" = x"start"; then
+    while test ${flevel} -gt 0; do
 	kml_folder_end ${kmlout}
 	flevel="`expr ${flevel} - 1`"
-    fi
+    done
 done
 
 cat ${outdir}/*.kml >> ${outfile}
