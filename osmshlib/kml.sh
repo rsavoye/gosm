@@ -28,6 +28,8 @@
 # $2 - Title in the file
 kml_file_header ()
 {
+#    echo "TRACE: kml_folder_header()"
+
     local outfile="$1"
     local title="$2"
     
@@ -49,6 +51,8 @@ EOF
 # $1 - name of the output file
 kml_file_footer ()
 {
+#    echo "TRACE: $*"
+
     local outfile="$1"
     
     cat <<EOF >> ${outfile}
@@ -64,16 +68,19 @@ EOF
 # $2 - name of the Folder
 kml_folder_start ()
 {
+#    echo "TRACE: kml_folder_start($2)"
+
     local outfile="$1"
     local folder="$2"
 
+    echo ""
     echo -n -e "\rStarting folder: ${folder}"
     
-    cat <<EOF > ${outfile}
+    cat <<EOF >> ${outfile}
     <Folder>
         <name>${folder}</name>
 EOF
-    
+
     return 0
 }
 
@@ -81,6 +88,8 @@ EOF
 # $1 - name of the output file
 kml_folder_end ()
 {
+#    echo "TRACE: kml_folder_end()"
+
     local outfile="$1"
 
     #    echo ""
@@ -97,7 +106,7 @@ EOF
 # $2 - description array
 kml_placemark ()
 {
-#    echo "TRACE: $*"
+#    echo "	TRACE: kml_placemark(${data[NAME]})"
     
     local outfile="$1"
     eval "$2"
@@ -150,6 +159,9 @@ EOF
 	    case $i in
 		# ignore these, they're not part of the descriptiom
 		WIDTH|FILL|NAME|WAY|ICON|TOURISM|AMENITY|WATERWAY|HIGHWAY|EMERGENCY|COLOR|MILESTONE|STREET|NUMBER)
+		;;
+		ISIN)
+		    echo "Is In: ${data[ISIN]}" >> ${outfile}
 		;;
 		OSMID)
 		    if test x$"{data[NUMBER]" = x; then
