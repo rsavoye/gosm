@@ -1,9 +1,9 @@
-<h:html xmlns="http://www.w3.org/2002/xforms" xmlns:h="http://www.w3.org/1999/xhtml" xmlns:ev="http://www.w3.org/2001/xml-events" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:jr="http://openrosa.org/javarosa">
-  <h:head><!-- ODK Aggregate upload time: 2017-04-08T15:45:28.462+0000 on http://tcwgrob:8080/ODKAggregate -->
+<h:html xmlns="http://www.w3.org/2002/xforms" xmlns:h="http://www.w3.org/1999/xhtml" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:jr="http://openrosa.org/javarosa">
+  <h:head>
     <h:title>Tourism</h:title>
     <model>
       <instance>
-        <data id="build_Tourism_1491666311">
+        <data id="build_Tourism_1522265586">
           <meta>
             <instanceID/>
           </meta>
@@ -11,10 +11,11 @@
           <location/>
           <tourism/>
           <amenity/>
+          <note/>
         </data>
       </instance>
       <itext>
-        <translation lang="eng">
+        <translation lang="English">
           <text id="/data/name:label">
             <value>Name</value>
           </text>
@@ -43,7 +44,7 @@
             <value>Hostel</value>
           </text>
           <text id="/data/tourism:option4">
-            <value>Cam Site</value>
+            <value>Camp Site</value>
           </text>
           <text id="/data/tourism:option5">
             <value>Wilderness Hut</value>
@@ -72,13 +73,20 @@
           <text id="/data/amenity:option6">
             <value>Drinking Water</value>
           </text>
+          <text id="/data/note:label">
+            <value>Description</value>
+          </text>
+          <text id="/data/note:hint">
+            <value>Anything I forgot</value>
+          </text>
         </translation>
       </itext>
       <bind nodeset="/data/meta/instanceID" type="string" readonly="true()" calculate="concat('uuid:', uuid())"/>
       <bind nodeset="/data/name" type="string"/>
-      <bind nodeset="/data/location" type="geopoint"/>
+      <bind nodeset="/data/location" type="geopoint" required="true()"/>
       <bind nodeset="/data/tourism" type="select1"/>
       <bind nodeset="/data/amenity" type="select1"/>
+      <bind nodeset="/data/note" type="string"/>
     </model>
   </h:head>
   <h:body>
@@ -148,5 +156,9 @@
         <value>drinking_water</value>
       </item>
     </select1>
+    <input ref="/data/note">
+      <label ref="jr:itext('/data/note:label')"/>
+      <hint ref="jr:itext('/data/note:hint')"/>
+    </input>
   </h:body>
 </h:html>

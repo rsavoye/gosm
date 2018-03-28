@@ -1,19 +1,20 @@
-<h:html xmlns="http://www.w3.org/2002/xforms" xmlns:h="http://www.w3.org/1999/xhtml" xmlns:ev="http://www.w3.org/2001/xml-events" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:jr="http://openrosa.org/javarosa">
-  <h:head><!-- ODK Aggregate upload time: 2017-04-08T13:34:49.429+0000 on http://tcwgrob:8080/ODKAggregate -->
+<h:html xmlns="http://www.w3.org/2002/xforms" xmlns:h="http://www.w3.org/1999/xhtml" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:jr="http://openrosa.org/javarosa">
+  <h:head>
     <h:title>Amenity</h:title>
     <model>
       <instance>
-        <data id="build_Amenity_1491658465">
+        <data id="build_Amenity_1522265738">
           <meta>
             <instanceID/>
           </meta>
           <name/>
           <location/>
           <amenity/>
+          <description/>
         </data>
       </instance>
       <itext>
-        <translation lang="eng">
+        <translation lang="English">
           <text id="/data/name:label">
             <value>Name</value>
           </text>
@@ -42,7 +43,7 @@
             <value>Pub</value>
           </text>
           <text id="/data/amenity:option6">
-            <value>Restaursnt</value>
+            <value>Restaurant</value>
           </text>
           <text id="/data/amenity:option7">
             <value>School</value>
@@ -59,12 +60,31 @@
           <text id="/data/amenity:option11">
             <value>Internet Cafe</value>
           </text>
+          <text id="/data/amenity:option12">
+            <value>Campground</value>
+          </text>
+          <text id="/data/amenity:option13">
+            <value>Toilet</value>
+          </text>
+          <text id="/data/amenity:option14">
+            <value>Monastary</value>
+          </text>
+          <text id="/data/amenity:option15">
+            <value>Fort</value>
+          </text>
+          <text id="/data/description:label">
+            <value>Notes</value>
+          </text>
+          <text id="/data/description:hint">
+            <value>anything I forgot</value>
+          </text>
         </translation>
       </itext>
       <bind nodeset="/data/meta/instanceID" type="string" readonly="true()" calculate="concat('uuid:', uuid())"/>
       <bind nodeset="/data/name" type="string"/>
       <bind nodeset="/data/location" type="geopoint"/>
       <bind nodeset="/data/amenity" type="select1"/>
+      <bind nodeset="/data/description" type="string"/>
     </model>
   </h:head>
   <h:body>
@@ -124,6 +144,26 @@
         <label ref="jr:itext('/data/amenity:option11')"/>
         <value>internet_cafe</value>
       </item>
+      <item>
+        <label ref="jr:itext('/data/amenity:option12')"/>
+        <value>campground</value>
+      </item>
+      <item>
+        <label ref="jr:itext('/data/amenity:option13')"/>
+        <value>toilets</value>
+      </item>
+      <item>
+        <label ref="jr:itext('/data/amenity:option14')"/>
+        <value>monastary</value>
+      </item>
+      <item>
+        <label ref="jr:itext('/data/amenity:option15')"/>
+        <value>untitled</value>
+      </item>
     </select1>
+    <input ref="/data/description">
+      <label ref="jr:itext('/data/description:label')"/>
+      <hint ref="jr:itext('/data/description:hint')"/>
+    </input>
   </h:body>
 </h:html>

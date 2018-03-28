@@ -1,0 +1,95 @@
+<h:html xmlns="http://www.w3.org/2002/xforms" xmlns:h="http://www.w3.org/1999/xhtml" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:jr="http://openrosa.org/javarosa">
+  <h:head>
+    <h:title>Campsite</h:title>
+    <model>
+      <instance>
+        <data id="build_Campsite_1522265409">
+          <meta>
+            <instanceID/>
+          </meta>
+          <name/>
+          <location/>
+          <features/>
+          <description/>
+        </data>
+      </instance>
+      <itext>
+        <translation lang="English">
+          <text id="/data/name:label">
+            <value>Name</value>
+          </text>
+          <text id="/data/location:label">
+            <value>Location</value>
+          </text>
+          <text id="/data/features:label">
+            <value>Features</value>
+          </text>
+          <text id="/data/features:option0">
+            <value>Fire pit</value>
+          </text>
+          <text id="/data/features:option1">
+            <value>Picnic Table</value>
+          </text>
+          <text id="/data/features:option2">
+            <value>Parking</value>
+          </text>
+          <text id="/data/features:option3">
+            <value>Shelter</value>
+          </text>
+          <text id="/data/features:option4">
+            <value>outhouse</value>
+          </text>
+          <text id="/data/features:option5">
+            <value>Water</value>
+          </text>
+          <text id="/data/description:label">
+            <value>Notes</value>
+          </text>
+        </translation>
+      </itext>
+      <bind nodeset="/data/meta/instanceID" type="string" readonly="true()" calculate="concat('uuid:', uuid())"/>
+      <bind nodeset="/data/name" type="string"/>
+      <bind nodeset="/data/location" type="geopoint"/>
+      <bind nodeset="/data/features" type="select"/>
+      <bind nodeset="/data/description" type="string"/>
+    </model>
+  </h:head>
+  <h:body>
+    <input ref="/data/name">
+      <label ref="jr:itext('/data/name:label')"/>
+    </input>
+    <input ref="/data/location">
+      <label ref="jr:itext('/data/location:label')"/>
+    </input>
+    <select ref="/data/features">
+      <label ref="jr:itext('/data/features:label')"/>
+      <item>
+        <label ref="jr:itext('/data/features:option0')"/>
+        <value>camp_fire</value>
+      </item>
+      <item>
+        <label ref="jr:itext('/data/features:option1')"/>
+        <value>picnic_table</value>
+      </item>
+      <item>
+        <label ref="jr:itext('/data/features:option2')"/>
+        <value>parking</value>
+      </item>
+      <item>
+        <label ref="jr:itext('/data/features:option3')"/>
+        <value>shelter</value>
+      </item>
+      <item>
+        <label ref="jr:itext('/data/features:option4')"/>
+        <value>outhouse</value>
+      </item>
+      <item>
+        <label ref="jr:itext('/data/features:option5')"/>
+        <value>water</value>
+      </item>
+    </select>
+    <input ref="/data/description">
+      <label ref="jr:itext('/data/description:label')"/>
+    </input>
+  </h:body>
+</h:html>
