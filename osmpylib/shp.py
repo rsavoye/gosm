@@ -21,6 +21,7 @@ import shapefile
 import sys
 import re
 import epdb
+import time
 
 
 # This class holds a field from the Shapefile. It has 4 fields.
@@ -143,6 +144,7 @@ class shpfile(object):
             alltags = list()
             end = (len(entry.record))
             tags = dict()
+            attrs = dict()
 
             i = 1
             matched = False
@@ -290,8 +292,13 @@ class shpfile(object):
             for point in entry.shape.points:
                 # logging.debug("POINTS: %r: %r" % (entry.record[1:2], point))
                 lon = point[0]
+                attrs['lon'] = str(lon)
                 lat = point[1]
-                node = osm.node(lat, lon, alltags)
+                attrs['lat'] = str(lat)
+                # timestamp = time.strftime("%Y-%m-%dT%TZ")
+                # tagger['timestamp'] = timestamp
+                # alltags.append(tagger)
+                node = osm.node(alltags, attrs)
                 refs.append(node)
                 silly.write("   Processing OSM file: %s\r" % rot[k])
                 if k <= 3:
