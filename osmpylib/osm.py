@@ -72,6 +72,19 @@ class osmfile(object):
         #        timestamp = ""  # LastUpdate
         timestamp = time.strftime("%Y-%m-%dT%TZ")
         # self.file.write("       <node id='" + str(self.osmid) + "\' visible='true'")
+        try:
+            x = attrs['osmid']
+        except:
+            attrs['id'] = str(self.osmid)
+        try:
+            x = attrs['user']
+        except:
+            attrs['user'] = self.options.get('user')
+        try:
+            x = attrs['uid']
+        except:
+            attrs['uid'] = self.options.get('uid')
+
         if len(attrs) > 0:
             self.file.write("    <node")
             for ref,value in attrs.items():
@@ -125,10 +138,6 @@ class osmfile(object):
             newtag = change[0]
             newval = change[1]
             # logging.debug("ATTRS2: %r %r" % (newtag, newval))
-        #if newtag == 'name':
-            #tag[newtag] = BeautifulSoup(newval, "lxml")
-            #tag[newtag] = newval.replace('&#39;', "XXXs")
-        #     # logging.debug("CAPITALIZE %r %r" % (newtag, newval))
         else:
             tag[newtag] = newval
 
@@ -145,12 +154,18 @@ class osmfile(object):
                 self.file.write("    " + ref + "=\"" + value + "\"")
             self.file.write(">\n")
         else:
+            #try:
+            #    x = attrs['osmid']
+            #except:
+            #    attrs['id'] = str(self.osmid)
+
             # logging.debug("osmfile::way(refs=%r, tags=%r)" % (refs, tags))
             #logging.debug("osmfile::way(tags=%r)" % (tags))
             self.file.write("    <way")
-            #timestamp = time.strftime("%Y-%m-%dT%TZ")
+            timestamp = time.strftime("%Y-%m-%dT%TZ")
 
             self.file.write(" version='1'")
+            self.file.write(" id=\'" + str(self.osmid) + "\'")
             self.file.write(" timestamp='" + timestamp + "\'")
             self.file.write(" user='" + self.options.get('user') + "' uid='" +
                             str(self.options.get('uid')) + "'>'\n")
@@ -174,6 +189,7 @@ class osmfile(object):
                                     str(value) + "\"/>\n")
 
         self.file.write("  </way>\n")
+        self.osmid = self.osmid - 1
 
     def makeRelation(self, members, tags=list(), attrs=dict()):
         if len(attrs) > 0:
