@@ -47,6 +47,13 @@ class config(object):
 #        if len(argv) <= 1:
 #            self.usage(argv)
             
+        file = os.getenv('HOME') + "/.gosmrc"
+        try:
+            gosmfile = open(file, 'r')
+        except Exception as inst:
+            logging.warning("Couldn't open %s for writing! not using OSM credentials" % file)
+            return
+
         # Default values for user options
         self.options = dict()
         self.options['format'] = "osm"
@@ -54,6 +61,37 @@ class config(object):
         self.options['outdir'] = os.getcwd()
         self.options['logging'] = 0
         self.options['convfile'] = "default.conv"
+        try:
+            lines = gosmfile.readlines()
+        except Exception as inst:
+            logging.error("Couldn't read lines from %s" % gosmfile.name)
+
+        for line in lines:
+            try:
+                # Ignore blank lines or comments
+                if line is '' or line[1] is '#':
+                    continue
+            except Exception as inst:
+                pass
+            # First field of the CSV file is the name
+            index = line.find('=')
+            name = line[:index]
+            # Second field of the CSV file is the value
+            value = line[index + 1:]
+            index = len(value)
+#            print ("FIXME: %s %s %d" % (name, value[:index - 1], index))
+            if name == "uid":
+                self.options['uid'] = value[:index - 1]
+            if name == "user":
+                self.options['user'] = value[:index - 1]
+            if name == "infile":
+                self.options['infile'] = value[:index - 1]
+            if name == "outfile":
+                self.options['outfile'] = value[:index - 1]
+            if name == "filter":
+                self.options['filter'] = value[:index - 1]
+            if name == "convfile":
+                self.options['convfile'] = value[:index - 1]
 
         # Process the command line arguments
         # default values
@@ -105,6 +143,10 @@ file containing all the waypoints entered using that form.
         """)
         quit()
 
+    def dump(self):
+        logging.info("Dumping config")
+        for i, j in self.options.items():
+            print("\t%s: %s" % (i, j))
 
 # Process the command line arguments
 args = config(argv)
