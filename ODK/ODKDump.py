@@ -144,9 +144,10 @@ def parse(instance, form):
         for field in doc['data']:
             if field == 'meta' or field == '@id':
                 continue
-            #print("FIELD = %r" % field)
+            print("FIELD = %r" % field)
             nodesets = form[1]['nodesets']
             # Get the type of this nodeset
+            ftype = ""
             try:
                 ftype = nodesets[field]
             except:
@@ -334,7 +335,16 @@ for form in forms.items():
                 #import pdb; pdb.set_trace()
                 data = parse(xmlfile, form)
                 if data != False:
-                    osm.node(data['GPS'][0], data['GPS'][1], data['TAGS'])
+                    attrs = dict()
+                    try:
+                        attrs['lat'] = data['GPS'][0]
+                        attrs['lon'] = data['GPS'][1]
+                        attrs['ele'] = data['GPS'][2]
+                        #osm.node(data['GPS'][0], data['GPS'][1], data['TAGS'])
+                        osm.node(data['TAGS'], attrs)
+                        #osm.node(data['TAGS'], attrs)
+                    except Exception as inst:
+                        print("FIXME: %r %r" % (data, inst))
 
     if format == 'osm':
         osm.footer()
