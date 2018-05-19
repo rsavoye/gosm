@@ -114,6 +114,12 @@ class config(object):
         """)
         quit()
 
+    def get(self, opt):
+        try:
+            return self.options[opt]
+        except Exception as inst:
+            return False
+
     def dump(self):
         logging.info("Dumping config")
         for i, j in self.options.items():
