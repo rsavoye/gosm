@@ -118,7 +118,7 @@ class myconfig(object):
         print("""\t--help(-h)   Help
 \t--user          OSM User name (optional)
 \t--uid           OSM User ID (optional)
-\t--dump{-d)      Dump the Shape fields
+\t--dump{-d)      Dump the data
 \t--outfile(-o)   Output file name
 \t--infile(-i)    Input file name
 \t--verbose(-v)   Enable verbosity
@@ -128,6 +128,8 @@ class myconfig(object):
 
 dd = myconfig(argv)
 dd.dump()
+if len(argv) <= 2:
+    dd.usage(argv)
 
 # The logfile contains multiple runs, so add a useful delimiter
 try:
@@ -180,7 +182,7 @@ for docit in doc.getiterator():
                 if ref == 'k':
                     k = value
                 elif ref == 'v':
-                    if k == 'addr:street' or k == 'addr:full':
+                    if k == 'addr:street' or k == 'addr:full' or k == 'name' or k == 'alt_name':
                         v = string.capwords(value)
                         pattern = ""
                         i = 0
@@ -207,7 +209,6 @@ for docit in doc.getiterator():
                         i = 0
                         # Fix compass direction names
                         if v[0] == 'S' or v[0] == 'E' or v[0] == 'N' or v[0] == 'W':
-                            print("Nope: " + v)
                             while i < len(dirshort):
                                 pattern = "^" + dirshort[i] + ' '
                                 m = re.search(pattern, v, re.IGNORECASE)
@@ -215,7 +216,6 @@ for docit in doc.getiterator():
                                     newline = dirlong[i] + ' '
                                     newline += v[2:]
                                     v = newline
-                                    print("YES: " + v)
                                 i = i +1
                         # Fix Hwy when it's the road name
                         pattern = "^Hwy "
@@ -226,12 +226,11 @@ for docit in doc.getiterator():
                     else:
                         v = value
 
-                    #v = re.sub("\s+", " ", v)
                     tag = osmout.makeTag(k, v)
                     #print("<tag k=\"%r\" v=\"%r\"/>" % (k, v))
                     tags.append(tag)
-                    #print("MODIFIED: %r, %r, %r" % (v != value, v, value))
                     if v != value:
+                        print("MODIFIED: %r to %r" % (value, v))
                         modified = True
                         attrs['action'] = 'modify'
                 else:
