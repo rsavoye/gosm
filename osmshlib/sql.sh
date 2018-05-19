@@ -115,6 +115,7 @@ EOF
 	addr*)
 	    cat <<EOF >> ${sqlout}
 SELECT osm_id,ST_AsKML(way),"addr:housenumber",tags->'addr:street',tags->'addr:full' FROM planet_osm_point WHERE tags->'addr:street'!='' AND "addr:housenumber"!='';
+SELECT osm_id,ST_AsKML(ST_Centroid(way)),"addr:housenumber",tags->'addr:street',tags->'addr:full' FROM planet_osm_polygon WHERE tags->'addr:street'!='' AND "addr:housenumber"!='' AND building='yes';
 EOF
 	    ;;
 	hots*)
