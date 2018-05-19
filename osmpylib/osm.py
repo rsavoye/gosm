@@ -22,6 +22,8 @@ import logging
 from datafile import convfile
 import config
 import html
+import string
+import epdb
 
 class osmfile(object):
     """OSM File output"""
@@ -38,11 +40,12 @@ class osmfile(object):
         if outfile == False:
             self.outfile = self.options.get('outdir') + "foobar.osm"
         try:
+            outfile += ".osm"
             if os.path.isfile(outfile):
                 self.file = open(outfile, 'w')
             else:
                 self.file = open(outfile, 'x')
-            logging.info("Opened output file: " + outfile)
+            logging.info("Opened output file: " + outfile )
         except Exception as inst:
             logging.error("Couldn't open %s for writing!" % outfile)
 
@@ -77,14 +80,15 @@ class osmfile(object):
         except:
             attrs['id'] = str(self.osmid)
         try:
-            x = attrs['user']
+            x = str(attrs['user'])
         except:
-            attrs['user'] = self.options.get('user')
+            attrs['user'] = str(self.options.get('user'))
         try:
-            x = attrs['uid']
+            x = str(attrs['uid'])
         except:
-            attrs['uid'] = self.options.get('uid')
+            attrs['uid'] = str(self.options.get('uid'))
 
+        # epdb.set_trace()
         if len(attrs) > 0:
             self.file.write("    <node")
             for ref,value in attrs.items():
@@ -102,6 +106,9 @@ class osmfile(object):
                     if value != 'None' or value != 'Ignore':
                         tag = self.makeTag(name, value)
                         for newname, newvalue in tag.items():
+                            if newname == 'addr:street' or newname == 'addr:full' or newname == 'name' or newname == 'alt_name':
+                                newvalue = string.capwords(newvalue)
+
                             self.file.write("     <tag k=\"" + newname + "\" v=\"" + str(newvalue) + "\"/>\n")
 
         if len(tags) > 0:
