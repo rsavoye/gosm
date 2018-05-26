@@ -48,6 +48,18 @@ x = obj.compass(instr)
 dj.matches(x, 'West 126', "correct.compass(West)")
 
 # Test expanding road name abbreviations
+instr = "unnamed Dr"
+x = obj.abbreviation(instr)
+dj.matches(x, "unnamed Drive", "correct.abbreviation(Drive)")
+
+instr = "unnamed Ct"
+x = obj.abbreviation(instr)
+dj.matches(x, "unnamed Court", "correct.abbreviation(Court)")
+
+instr = "unnamed Ave"
+x = obj.abbreviation(instr)
+dj.matches(x, "unnamed Avenue", "correct.abbreviation(Avenue)")
+
 instr = "unnamed rd"
 x = obj.abbreviation(instr)
 dj.matches(x, "unnamed Road", "correct.abbreviation(Road)")
@@ -68,6 +80,16 @@ instr = "unnamed Cir"
 x = obj.abbreviation(instr)
 dj.matches(x, "unnamed Circle", "correct.abbreviation(Circle)")
 
+#pdb.set_trace()
+instr = "CR unnamed"
+x = obj.abbreviation(instr)
+dj.matches(x, "County Road unnamed", "correct.abbreviation(CR)")
+
+#pdb.set_trace()
+instr = "Hwy unnamed"
+x = obj.abbreviation(instr)
+dj.matches(x, "Highway unnamed", "correct.abbreviation(Hwy)")
+
 #
 instr = "CR 126N"
 x = obj.alphaNumeric(instr)
@@ -81,7 +103,7 @@ instr = "CR 126S"
 x = obj.alphaNumeric(instr)
 dj.matches(x, "CR 126S", "correct.alphaNumeric(S))")
 
-instr = "CR 126Ss"
+instr = "CR 126s"
 x = obj.alphaNumeric(instr)
 dj.matches(x, "CR 126S", "correct.alphaNumeric(s))")
 
