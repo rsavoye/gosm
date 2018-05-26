@@ -49,6 +49,7 @@ class correct(object):
 
     def abbreviation(self, value=""):
         self.orig = value
+        self.value = value
         # Fix abbreviations for road type
         i = 0
         while i < len(self.abbrevs):
@@ -65,6 +66,7 @@ class correct(object):
                 self.value = newvalue + ' ' + self.fullname[i] + rest.rstrip(' ')
                 modified = True
                 break
+
             pattern = " " + self.abbrevs[i] + " "
             m = re.search(pattern, value, re.IGNORECASE)
             if m is not None:
@@ -73,7 +75,15 @@ class correct(object):
                 self.value = newvalue + ' ' + self.fullname[i] + rest
                 modified = True
                 break
+            # This seems to be a special case
+            pattern = " spur"
+            m = re.search(pattern, value)
+            if m is not None:
+                self.value = string.capwords(self.value)
+                modified = True
+                break
             i = i +1
+
         return self.value.lstrip()
     
     def compass(self, value=""):
