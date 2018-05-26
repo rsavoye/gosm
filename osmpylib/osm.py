@@ -23,7 +23,7 @@ from datafile import convfile
 import config
 import html
 import string
-import epdb
+import pdb
 
 class osmfile(object):
     """OSM File output"""
@@ -78,7 +78,10 @@ class osmfile(object):
         try:
             x = attrs['osmid']
         except:
-            attrs['id'] = str(self.osmid)
+            try:
+                x = attrs['id']
+            except:
+                attrs['id'] = str(self.osmid)
         try:
             x = str(attrs['user'])
         except:
