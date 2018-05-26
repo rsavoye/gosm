@@ -22,33 +22,57 @@ class dejagnu(object):
     def __init__(self):
         self.passed = 0
         self.failed = 0
-        self.xfail = 0
-        self.xpass = 0
+        self.xfailed = 0
+        self.xpassed = 0
         self.untested = 0
         self.unresolved = 0
+        self.verbosity = 0
+
+    def verbose_level(self, level=0):
+        self.verbosity = level
+
+    def verbose(self, msg="", level=0):
+        if self.verbosity > level:
+            print(msg)
 
     def fails(self, msg=""):
         self.failed += 1
-        print("FAIL: " + msg)
+        self.verbose("FAIL: " + msg, 1)
+
+    def xfails(self, msg=""):
+        self.xfailed += 1
+        self.verbose("XFAIL: " + msg, 1)
 
     def untested(self, msg=""):
         self.untested += 1
-        print("UNTESTED: " + msg)
+        self.verbose("UNTESTED: " + msg, 1)
+
+    def xpasses(self, msg=""):
+        self.xpassed += 1
+        self.verbose("XPASS: " + msg, 1)
 
     def passes(self, msg=""):
-        self.failed += 1
-        print("FAIL: " + msg)
+        self.passed += 1
+        self.verbose("PASS: " + msg, 1)
 
-    def matches(self, instr, expected, msg=""):
-        pdb.set_trace()
-        if instr is expected:
-            self.passes(msg)
+    def matches(self, instr, expected, msg="", yes=True):
+        if instr == expected:
+            if yes == True:
+                self.passes(msg)
+            else:
+                self.xpasses(msg)
             return True
         else:
-            self.fails(msg)
+            if yes == True:
+                self.fails(msg)
+            else:
+                self.xfails(msg)
+            self.verbose("Got \'" + instr + "\', expected \'" + expected + "\'")
             return False
         
     def totals(self):
+        print("\nTotals")
+        print("-------")
         if self.passed > 0:
             print("Total passed: %r " % self.passed)
         if self.failed > 0:
