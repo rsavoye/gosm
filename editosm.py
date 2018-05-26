@@ -28,7 +28,8 @@ import re
 import string
 import logging
 import getopt
-import epdb
+import pdb
+import correct
 
 from sys import argv
 sys.path.append(os.path.dirname(argv[0]) + '/osmpylib')
@@ -169,7 +170,6 @@ dirshort = ("S", "E", "N", "W")
 dirlong = ("South", "East", "North", "West")
 
 tag = dict()
-attrs = dict()
 doc = etree.parse(infile)
 members = list()
 modified = False
@@ -177,70 +177,40 @@ for docit in doc.getiterator():
     #print("TAG: %r" % docit.tag)
     if docit.tag == 'node':
         tags = list()
+        attrs = dict()
         for elit in docit.getiterator():
+            newvalue = ""
             for ref,value in elit.items():
+                fix = correct.correct()
                 if ref == 'k':
                     k = value
                 elif ref == 'v':
-                    if k == 'addr:street' or k == 'addr:full' or k == 'name' or k == 'alt_name':
-                        v = string.capwords(value)
-                        pattern = ""
-                        i = 0
-                        # Fix abbreviations for road type
-                        while i < len(abbrevs):
-                            pattern = " " + abbrevs[i] + "$"
-                            m = re.search(pattern, v, re.IGNORECASE)
-                            if m is not None:
-                                pattern = " " + abbrevs[i] + " "
-                                newline = v[0:m.start()]
-                                rest = ' ' + v[m.start() + len(abbrevs[i])+1:len(v)]
-                                v = newline + ' ' + fullname[i] + rest.rstrip(' ')
-                                modified = True
-                                break
-                            pattern = " " + abbrevs[i] + " "
-                            m = re.search(pattern, v, re.IGNORECASE)
-                            if m is not None:
-                                newline = v[0:m.start()]
-                                rest = ' ' + v[m.start() + len(abbrevs[i])+1:len(v)]
-                                v = newline + ' ' + fullname[i] + rest
-                                modified = True
-                                break
-                            i = i +1
-                        i = 0
-                        # Fix compass direction names
-                        if v[0] == 'S' or v[0] == 'E' or v[0] == 'N' or v[0] == 'W':
-                            while i < len(dirshort):
-                                pattern = "^" + dirshort[i] + ' '
-                                m = re.search(pattern, v, re.IGNORECASE)
-                                if m is not None:
-                                    newline = dirlong[i] + ' '
-                                    newline += v[2:]
-                                    v = newline
-                                i = i +1
-                        # Fix Hwy when it's the road name
-                        pattern = "^Hwy "
-                        m = re.search(pattern, v, re.IGNORECASE)
-                        if m is not None:
-                            newline = v[3:]
-                            v = "Highway" + newline
+                    if k == 'addr:street' or k == 'name' or k == 'alt_name':
+                        newvalue = fix.alphaNumeric(value)
+                        newvalue = fix.abbreviation(newvalue)
+                        newvalue = fix.compass(newvalue)
                     else:
-                        v = value
+                        newvalue = value
 
-                    tag = osmout.makeTag(k, v)
+                    #print("FIXME: %r %r" % (fix.ismodified(), value))
+                    tag = osmout.makeTag(k, newvalue)
                     #print("<tag k=\"%r\" v=\"%r\"/>" % (k, v))
                     tags.append(tag)
-                    if v != value:
-                        print("MODIFIED: %r to %r" % (value, v))
-                        modified = True
+                    #print("NO CHANGE %r: %r" % (k, v))
+                    if fix.ismodified() is True:
                         attrs['action'] = 'modify'
                 else:
                     attrs[ref] = value
+
         osmout.node(tags, attrs)
-        attrs = dict()
+        #pdb.set_trace()
+        #attrs = dict()
     elif docit.tag == 'way':
         refs = list()
         tags = list()
         attrs = dict()
+        # if k == 'addr:street' or k == 'name' or k == 'alt_name':
+        #     pass
         for elit in docit.getiterator():
             modified = False
             for ref,value in elit.items():
@@ -300,8 +270,5 @@ for docit in doc.getiterator():
                 else:
                     attrs[ref] = value
         osmout.makeRelation(members, tags, attrs)
-
-
-
 
 osmout.footer()
