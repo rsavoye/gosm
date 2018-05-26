@@ -16,7 +16,7 @@
 # Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 #
 import logging
-
+import pdb
 
 class dejagnu(object):
     def __init__(self):
@@ -40,6 +40,7 @@ class dejagnu(object):
         print("FAIL: " + msg)
 
     def matches(self, instr, expected, msg=""):
+        pdb.set_trace()
         if instr is expected:
             self.passes(msg)
             return True
