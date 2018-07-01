@@ -1,0 +1,169 @@
+<h:html xmlns="http://www.w3.org/2002/xforms" xmlns:h="http://www.w3.org/1999/xhtml" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:jr="http://openrosa.org/javarosa">
+  <h:head>
+    <h:title>HotSpring</h:title>
+    <model>
+      <instance>
+        <data id="build_HotSpring_1530471230">
+          <meta>
+            <instanceID/>
+          </meta>
+          <name/>
+          <location/>
+          <features/>
+          <amenity/>
+          <temperture/>
+          <temptype/>
+          <note/>
+        </data>
+      </instance>
+      <itext>
+        <translation lang="English">
+          <text id="/data/name:label">
+            <value>Name</value>
+          </text>
+          <text id="/data/location:label">
+            <value>Location</value>
+          </text>
+          <text id="/data/features:label">
+            <value>Features</value>
+          </text>
+          <text id="/data/features:option0">
+            <value>Shelter</value>
+          </text>
+          <text id="/data/features:option1">
+            <value>Toilet</value>
+          </text>
+          <text id="/data/features:option2">
+            <value>Outhouse</value>
+          </text>
+          <text id="/data/features:option3">
+            <value>Food Available</value>
+          </text>
+          <text id="/data/amenity:label">
+            <value>Food Availability</value>
+          </text>
+          <text id="/data/amenity:hint">
+            <value></value>
+          </text>
+          <text id="/data/amenity:option0">
+            <value>Restaurant</value>
+          </text>
+          <text id="/data/amenity:option1">
+            <value>Bar</value>
+          </text>
+          <text id="/data/amenity:option2">
+            <value>Stall</value>
+          </text>
+          <text id="/data/temperture:label">
+            <value>Temperature</value>
+          </text>
+          <text id="/data/temperture:option0">
+            <value>90-100</value>
+          </text>
+          <text id="/data/temperture:option1">
+            <value>100-106</value>
+          </text>
+          <text id="/data/temperture:option2">
+            <value>106-113</value>
+          </text>
+          <text id="/data/temptype:label">
+            <value>Fahrenheit or Celcius</value>
+          </text>
+          <text id="/data/temptype:option0">
+            <value>Farenheit</value>
+          </text>
+          <text id="/data/temptype:option1">
+            <value>Celcius</value>
+          </text>
+          <text id="/data/note:label">
+            <value>Notes</value>
+          </text>
+          <text id="/data/note:hint">
+            <value>anything that doesn't fit any choices.</value>
+          </text>
+        </translation>
+      </itext>
+      <bind nodeset="/data/meta/instanceID" type="string" readonly="true()" calculate="concat('uuid:', uuid())"/>
+      <bind nodeset="/data/name" type="string"/>
+      <bind nodeset="/data/location" type="geopoint" required="true()"/>
+      <bind nodeset="/data/features" type="select"/>
+      <bind nodeset="/data/amenity" type="select"/>
+      <bind nodeset="/data/temperture" type="select1"/>
+      <bind nodeset="/data/temptype" type="select1" relevant="(selected(/data/temperture, 'comfortable'))"/>
+      <bind nodeset="/data/note" type="string"/>
+    </model>
+  </h:head>
+  <h:body>
+    <input ref="/data/name">
+      <label ref="jr:itext('/data/name:label')"/>
+    </input>
+    <input ref="/data/location">
+      <label ref="jr:itext('/data/location:label')"/>
+    </input>
+    <select ref="/data/features">
+      <label ref="jr:itext('/data/features:label')"/>
+      <item>
+        <label ref="jr:itext('/data/features:option0')"/>
+        <value>shelter</value>
+      </item>
+      <item>
+        <label ref="jr:itext('/data/features:option1')"/>
+        <value>toilet</value>
+      </item>
+      <item>
+        <label ref="jr:itext('/data/features:option2')"/>
+        <value>outhouse</value>
+      </item>
+      <item>
+        <label ref="jr:itext('/data/features:option3')"/>
+        <value>food</value>
+      </item>
+    </select>
+    <select ref="/data/amenity">
+      <label ref="jr:itext('/data/amenity:label')"/>
+      <hint ref="jr:itext('/data/amenity:hint')"/>
+      <item>
+        <label ref="jr:itext('/data/amenity:option0')"/>
+        <value>restaurant</value>
+      </item>
+      <item>
+        <label ref="jr:itext('/data/amenity:option1')"/>
+        <value>bar</value>
+      </item>
+      <item>
+        <label ref="jr:itext('/data/amenity:option2')"/>
+        <value>stall</value>
+      </item>
+    </select>
+    <select1 ref="/data/temperture">
+      <label ref="jr:itext('/data/temperture:label')"/>
+      <item>
+        <label ref="jr:itext('/data/temperture:option0')"/>
+        <value>warm</value>
+      </item>
+      <item>
+        <label ref="jr:itext('/data/temperture:option1')"/>
+        <value>comfortable</value>
+      </item>
+      <item>
+        <label ref="jr:itext('/data/temperture:option2')"/>
+        <value>untitled</value>
+      </item>
+    </select1>
+    <select1 ref="/data/temptype">
+      <label ref="jr:itext('/data/temptype:label')"/>
+      <item>
+        <label ref="jr:itext('/data/temptype:option0')"/>
+        <value>farenheit</value>
+      </item>
+      <item>
+        <label ref="jr:itext('/data/temptype:option1')"/>
+        <value>celcius</value>
+      </item>
+    </select1>
+    <input ref="/data/note">
+      <label ref="jr:itext('/data/note:label')"/>
+      <hint ref="jr:itext('/data/note:hint')"/>
+    </input>
+  </h:body>
+</h:html>

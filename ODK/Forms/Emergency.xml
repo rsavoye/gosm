@@ -1,0 +1,166 @@
+<h:html xmlns="http://www.w3.org/2002/xforms" xmlns:h="http://www.w3.org/1999/xhtml" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:jr="http://openrosa.org/javarosa">
+  <h:head>
+    <h:title>Emergency</h:title>
+    <model>
+      <instance>
+        <data id="build_Emergency_1530470434">
+          <meta>
+            <instanceID/>
+          </meta>
+          <name/>
+          <coordinates/>
+          <emergency/>
+          <volume/>
+          <options/>
+          <description/>
+          <notes/>
+        </data>
+      </instance>
+      <itext>
+        <translation lang="English">
+          <text id="/data/name:label">
+            <value>Name</value>
+          </text>
+          <text id="/data/coordinates:label">
+            <value>Location</value>
+          </text>
+          <text id="/data/emergency:label">
+            <value>Emergency</value>
+          </text>
+          <text id="/data/emergency:option0">
+            <value>Water Tank</value>
+          </text>
+          <text id="/data/emergency:option1">
+            <value>Fire Hydrant</value>
+          </text>
+          <text id="/data/emergency:option2">
+            <value>Landing Zone</value>
+          </text>
+          <text id="/data/emergency:option3">
+            <value>Drafting Spot</value>
+          </text>
+          <text id="/data/emergency:option4">
+            <value>Fire Station</value>
+          </text>
+          <text id="/data/emergency:option5">
+            <value>Hospital</value>
+          </text>
+          <text id="/data/emergency:option6">
+            <value>Medical Clinic</value>
+          </text>
+          <text id="/data/emergency:option7">
+            <value>Helicopter Landing Zone</value>
+          </text>
+          <text id="/data/volume:label">
+            <value>Tank Volume</value>
+          </text>
+          <text id="/data/volume:hint">
+            <value>How many gallons in the cistern ?</value>
+          </text>
+          <text id="/data/options:label">
+            <value>Accessibility</value>
+          </text>
+          <text id="/data/options:option0">
+            <value>Tender Parking Room</value>
+          </text>
+          <text id="/data/options:option1">
+            <value>Dry Hydrant</value>
+          </text>
+          <text id="/data/options:option2">
+            <value>Lighting</value>
+          </text>
+          <text id="/data/description:label">
+            <value>Notes</value>
+          </text>
+          <text id="/data/description:hint">
+            <value>Anything I forgot.</value>
+          </text>
+          <text id="/data/notes:label">
+            <value>Notes</value>
+          </text>
+          <text id="/data/notes:hint">
+            <value>anything that doesn't fit any choices.</value>
+          </text>
+        </translation>
+      </itext>
+      <bind nodeset="/data/meta/instanceID" type="string" readonly="true()" calculate="concat('uuid:', uuid())"/>
+      <bind nodeset="/data/name" type="string"/>
+      <bind nodeset="/data/coordinates" type="geopoint"/>
+      <bind nodeset="/data/emergency" type="select1"/>
+      <bind nodeset="/data/volume" type="int" relevant="(selected(/data/emergency, 'water_tank'))"/>
+      <bind nodeset="/data/options" type="select"/>
+      <bind nodeset="/data/description" type="string"/>
+      <bind nodeset="/data/notes" type="string"/>
+    </model>
+  </h:head>
+  <h:body>
+    <input ref="/data/name">
+      <label ref="jr:itext('/data/name:label')"/>
+    </input>
+    <input ref="/data/coordinates">
+      <label ref="jr:itext('/data/coordinates:label')"/>
+    </input>
+    <select1 ref="/data/emergency">
+      <label ref="jr:itext('/data/emergency:label')"/>
+      <item>
+        <label ref="jr:itext('/data/emergency:option0')"/>
+        <value>water_tank</value>
+      </item>
+      <item>
+        <label ref="jr:itext('/data/emergency:option1')"/>
+        <value>fire_hydrant</value>
+      </item>
+      <item>
+        <label ref="jr:itext('/data/emergency:option2')"/>
+        <value>landing_zone</value>
+      </item>
+      <item>
+        <label ref="jr:itext('/data/emergency:option3')"/>
+        <value>suction_point</value>
+      </item>
+      <item>
+        <label ref="jr:itext('/data/emergency:option4')"/>
+        <value>fire_station</value>
+      </item>
+      <item>
+        <label ref="jr:itext('/data/emergency:option5')"/>
+        <value>hospital</value>
+      </item>
+      <item>
+        <label ref="jr:itext('/data/emergency:option6')"/>
+        <value>clinic</value>
+      </item>
+      <item>
+        <label ref="jr:itext('/data/emergency:option7')"/>
+        <value>landing_site</value>
+      </item>
+    </select1>
+    <input ref="/data/volume">
+      <label ref="jr:itext('/data/volume:label')"/>
+      <hint ref="jr:itext('/data/volume:hint')"/>
+    </input>
+    <select ref="/data/options">
+      <label ref="jr:itext('/data/options:label')"/>
+      <item>
+        <label ref="jr:itext('/data/options:option0')"/>
+        <value>parking</value>
+      </item>
+      <item>
+        <label ref="jr:itext('/data/options:option1')"/>
+        <value>hydrant</value>
+      </item>
+      <item>
+        <label ref="jr:itext('/data/options:option2')"/>
+        <value>lights</value>
+      </item>
+    </select>
+    <input ref="/data/description">
+      <label ref="jr:itext('/data/description:label')"/>
+      <hint ref="jr:itext('/data/description:hint')"/>
+    </input>
+    <input ref="/data/notes">
+      <label ref="jr:itext('/data/notes:label')"/>
+      <hint ref="jr:itext('/data/notes:hint')"/>
+    </input>
+  </h:body>
+</h:html>

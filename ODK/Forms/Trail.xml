@@ -1,0 +1,138 @@
+<h:html xmlns="http://www.w3.org/2002/xforms" xmlns:h="http://www.w3.org/1999/xhtml" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:jr="http://openrosa.org/javarosa">
+  <h:head>
+    <h:title>Trail</h:title>
+    <model>
+      <instance>
+        <data id="build_Trail_1530471271">
+          <meta>
+            <instanceID/>
+          </meta>
+          <name/>
+          <sac_scale/>
+          <trailhead/>
+          <note/>
+        </data>
+      </instance>
+      <itext>
+        <translation lang="English">
+          <text id="/data/name:label">
+            <value>Name</value>
+          </text>
+          <text id="/data/sac_scale:label">
+            <value>Hiking Difficulty</value>
+          </text>
+          <text id="/data/sac_scale:option0">
+            <value>Hiking</value>
+          </text>
+          <text id="/data/sac_scale:option1">
+            <value>Mountain Hking</value>
+          </text>
+          <text id="/data/sac_scale:option2">
+            <value>Demanding Mountain Hiking</value>
+          </text>
+          <text id="/data/sac_scale:option3">
+            <value>Alpine Hiking</value>
+          </text>
+          <text id="/data/sac_scale:option4">
+            <value>Difficult Alpine Hiking</value>
+          </text>
+          <text id="/data/sac_scale:option5">
+            <value>Difficult Alpine Hiking</value>
+          </text>
+          <text id="/data/trailhead:label">
+            <value>Trailhead</value>
+          </text>
+          <text id="/data/trailhead:hint">
+            <value>Stuff at the trailhead</value>
+          </text>
+          <text id="/data/trailhead:option0">
+            <value>Parking</value>
+          </text>
+          <text id="/data/trailhead:option1">
+            <value>Outhouse</value>
+          </text>
+          <text id="/data/trailhead:option2">
+            <value>Toliet</value>
+          </text>
+          <text id="/data/trailhead:option3">
+            <value>Camping</value>
+          </text>
+          <text id="/data/trailhead:option4">
+            <value>Water Available</value>
+          </text>
+          <text id="/data/note:label">
+            <value>Notes</value>
+          </text>
+          <text id="/data/note:hint">
+            <value>anything that doesn't fit any choices.</value>
+          </text>
+        </translation>
+      </itext>
+      <bind nodeset="/data/meta/instanceID" type="string" readonly="true()" calculate="concat('uuid:', uuid())"/>
+      <bind nodeset="/data/name" type="string"/>
+      <bind nodeset="/data/sac_scale" type="select1"/>
+      <bind nodeset="/data/trailhead" type="select"/>
+      <bind nodeset="/data/note" type="string"/>
+    </model>
+  </h:head>
+  <h:body>
+    <input ref="/data/name">
+      <label ref="jr:itext('/data/name:label')"/>
+    </input>
+    <select1 ref="/data/sac_scale">
+      <label ref="jr:itext('/data/sac_scale:label')"/>
+      <item>
+        <label ref="jr:itext('/data/sac_scale:option0')"/>
+        <value>hiking</value>
+      </item>
+      <item>
+        <label ref="jr:itext('/data/sac_scale:option1')"/>
+        <value>mountain_hiking</value>
+      </item>
+      <item>
+        <label ref="jr:itext('/data/sac_scale:option2')"/>
+        <value>demanding_mountain_hiking</value>
+      </item>
+      <item>
+        <label ref="jr:itext('/data/sac_scale:option3')"/>
+        <value>alpine_hiking</value>
+      </item>
+      <item>
+        <label ref="jr:itext('/data/sac_scale:option4')"/>
+        <value>difficult_alpine_hiking</value>
+      </item>
+      <item>
+        <label ref="jr:itext('/data/sac_scale:option5')"/>
+        <value>difficult_alpine_hiking</value>
+      </item>
+    </select1>
+    <select ref="/data/trailhead">
+      <label ref="jr:itext('/data/trailhead:label')"/>
+      <hint ref="jr:itext('/data/trailhead:hint')"/>
+      <item>
+        <label ref="jr:itext('/data/trailhead:option0')"/>
+        <value>parking</value>
+      </item>
+      <item>
+        <label ref="jr:itext('/data/trailhead:option1')"/>
+        <value>outhouse</value>
+      </item>
+      <item>
+        <label ref="jr:itext('/data/trailhead:option2')"/>
+        <value>toilet</value>
+      </item>
+      <item>
+        <label ref="jr:itext('/data/trailhead:option3')"/>
+        <value>camp_site</value>
+      </item>
+      <item>
+        <label ref="jr:itext('/data/trailhead:option4')"/>
+        <value>water</value>
+      </item>
+    </select>
+    <input ref="/data/note">
+      <label ref="jr:itext('/data/note:label')"/>
+      <hint ref="jr:itext('/data/note:hint')"/>
+    </input>
+  </h:body>
+</h:html>

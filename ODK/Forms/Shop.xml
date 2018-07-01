@@ -1,0 +1,164 @@
+<h:html xmlns="http://www.w3.org/2002/xforms" xmlns:h="http://www.w3.org/1999/xhtml" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:jr="http://openrosa.org/javarosa">
+  <h:head>
+    <h:title>Shop</h:title>
+    <model>
+      <instance>
+        <data id="build_Shop_1530471021">
+          <meta>
+            <instanceID/>
+          </meta>
+          <name/>
+          <location/>
+          <shop/>
+          <phone/>
+          <website/>
+          <note/>
+        </data>
+      </instance>
+      <itext>
+        <translation lang="English">
+          <text id="/data/name:label">
+            <value>Name</value>
+          </text>
+          <text id="/data/location:label">
+            <value>location</value>
+          </text>
+          <text id="/data/shop:label">
+            <value>Shop Type</value>
+          </text>
+          <text id="/data/shop:option0">
+            <value>Bakery</value>
+          </text>
+          <text id="/data/shop:option1">
+            <value>Coffee</value>
+          </text>
+          <text id="/data/shop:option2">
+            <value>Convnience</value>
+          </text>
+          <text id="/data/shop:option3">
+            <value>Tea</value>
+          </text>
+          <text id="/data/shop:option4">
+            <value>Clothes</value>
+          </text>
+          <text id="/data/shop:option5">
+            <value>Carpet</value>
+          </text>
+          <text id="/data/shop:option6">
+            <value>Outdoor</value>
+          </text>
+          <text id="/data/shop:option7">
+            <value>Books</value>
+          </text>
+          <text id="/data/shop:option8">
+            <value>Laundry</value>
+          </text>
+          <text id="/data/shop:option9">
+            <value>Jewelry</value>
+          </text>
+          <text id="/data/shop:option10">
+            <value>Khukuri</value>
+          </text>
+          <text id="/data/shop:option11">
+            <value>Singing Bowls</value>
+          </text>
+          <text id="/data/shop:option12">
+            <value>Liquor Store</value>
+          </text>
+          <text id="/data/phone:label">
+            <value>Phone Number</value>
+          </text>
+          <text id="/data/website:label">
+            <value>Website</value>
+          </text>
+          <text id="/data/note:label">
+            <value>Notes</value>
+          </text>
+          <text id="/data/note:hint">
+            <value>anything I forgot</value>
+          </text>
+        </translation>
+      </itext>
+      <bind nodeset="/data/meta/instanceID" type="string" readonly="true()" calculate="concat('uuid:', uuid())"/>
+      <bind nodeset="/data/name" type="string"/>
+      <bind nodeset="/data/location" type="geopoint" required="true()"/>
+      <bind nodeset="/data/shop" type="select"/>
+      <bind nodeset="/data/phone" type="int"/>
+      <bind nodeset="/data/website" type="string"/>
+      <bind nodeset="/data/note" type="string"/>
+    </model>
+  </h:head>
+  <h:body>
+    <input ref="/data/name">
+      <label ref="jr:itext('/data/name:label')"/>
+    </input>
+    <input ref="/data/location">
+      <label ref="jr:itext('/data/location:label')"/>
+    </input>
+    <select ref="/data/shop">
+      <label ref="jr:itext('/data/shop:label')"/>
+      <item>
+        <label ref="jr:itext('/data/shop:option0')"/>
+        <value>bakery</value>
+      </item>
+      <item>
+        <label ref="jr:itext('/data/shop:option1')"/>
+        <value>coffee</value>
+      </item>
+      <item>
+        <label ref="jr:itext('/data/shop:option2')"/>
+        <value>convenience</value>
+      </item>
+      <item>
+        <label ref="jr:itext('/data/shop:option3')"/>
+        <value>tea</value>
+      </item>
+      <item>
+        <label ref="jr:itext('/data/shop:option4')"/>
+        <value>clothes</value>
+      </item>
+      <item>
+        <label ref="jr:itext('/data/shop:option5')"/>
+        <value>carpet</value>
+      </item>
+      <item>
+        <label ref="jr:itext('/data/shop:option6')"/>
+        <value>outdoor</value>
+      </item>
+      <item>
+        <label ref="jr:itext('/data/shop:option7')"/>
+        <value>books</value>
+      </item>
+      <item>
+        <label ref="jr:itext('/data/shop:option8')"/>
+        <value>laundry</value>
+      </item>
+      <item>
+        <label ref="jr:itext('/data/shop:option9')"/>
+        <value>jewerly</value>
+      </item>
+      <item>
+        <label ref="jr:itext('/data/shop:option10')"/>
+        <value>weapons</value>
+      </item>
+      <item>
+        <label ref="jr:itext('/data/shop:option11')"/>
+        <value>untitled</value>
+      </item>
+      <item>
+        <label ref="jr:itext('/data/shop:option12')"/>
+        <value>alcohol</value>
+      </item>
+    </select>
+    <input ref="/data/phone">
+      <label ref="jr:itext('/data/phone:label')"/>
+    </input>
+    <input ref="/data/website">
+      <label ref="jr:itext('/data/website:label')"/>
+    </input>
+    <input ref="/data/note">
+      <label ref="jr:itext('/data/note:label')"/>
+      <hint ref="jr:itext('/data/note:hint')"/>
+    </input>
+  </h:body>
+</h:html>

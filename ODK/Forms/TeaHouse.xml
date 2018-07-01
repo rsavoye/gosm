@@ -1,0 +1,126 @@
+<h:html xmlns="http://www.w3.org/2002/xforms" xmlns:h="http://www.w3.org/1999/xhtml" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:jr="http://openrosa.org/javarosa">
+  <h:head>
+    <h:title>TeaHouse</h:title>
+    <model>
+      <instance>
+        <data id="build_TeaHouse_1530470891">
+          <meta>
+            <instanceID/>
+          </meta>
+          <name/>
+          <location/>
+          <features/>
+          <roomcount/>
+          <note/>
+        </data>
+      </instance>
+      <itext>
+        <translation lang="English">
+          <text id="/data/name:label">
+            <value>Name</value>
+          </text>
+          <text id="/data/name:hint">
+            <value>Name of the Tea House</value>
+          </text>
+          <text id="/data/location:label">
+            <value>Location</value>
+          </text>
+          <text id="/data/location:hint">
+            <value>Where we are</value>
+          </text>
+          <text id="/data/features:label">
+            <value>Features</value>
+          </text>
+          <text id="/data/features:hint">
+            <value>what is here we might want</value>
+          </text>
+          <text id="/data/features:option0">
+            <value>Toilet</value>
+          </text>
+          <text id="/data/features:option1">
+            <value>Outhouse</value>
+          </text>
+          <text id="/data/features:option2">
+            <value>Restaurant</value>
+          </text>
+          <text id="/data/features:option3">
+            <value>Grid Power</value>
+          </text>
+          <text id="/data/features:option4">
+            <value>Solar Power</value>
+          </text>
+          <text id="/data/features:option5">
+            <value>Wifi</value>
+          </text>
+          <text id="/data/features:option6">
+            <value>Cellular Access</value>
+          </text>
+          <text id="/data/roomcount:label">
+            <value>Room Count</value>
+          </text>
+          <text id="/data/note:label">
+            <value>Notes</value>
+          </text>
+          <text id="/data/note:hint">
+            <value>anything I forgot</value>
+          </text>
+        </translation>
+      </itext>
+      <bind nodeset="/data/meta/instanceID" type="string" readonly="true()" calculate="concat('uuid:', uuid())"/>
+      <bind nodeset="/data/name" type="string"/>
+      <bind nodeset="/data/location" type="geopoint"/>
+      <bind nodeset="/data/features" type="select"/>
+      <bind nodeset="/data/roomcount" type="string"/>
+      <bind nodeset="/data/note" type="string"/>
+    </model>
+  </h:head>
+  <h:body>
+    <input ref="/data/name">
+      <label ref="jr:itext('/data/name:label')"/>
+      <hint ref="jr:itext('/data/name:hint')"/>
+    </input>
+    <input ref="/data/location">
+      <label ref="jr:itext('/data/location:label')"/>
+      <hint ref="jr:itext('/data/location:hint')"/>
+    </input>
+    <select ref="/data/features">
+      <label ref="jr:itext('/data/features:label')"/>
+      <hint ref="jr:itext('/data/features:hint')"/>
+      <item>
+        <label ref="jr:itext('/data/features:option0')"/>
+        <value>toilet</value>
+      </item>
+      <item>
+        <label ref="jr:itext('/data/features:option1')"/>
+        <value>outhouse</value>
+      </item>
+      <item>
+        <label ref="jr:itext('/data/features:option2')"/>
+        <value>restaurant</value>
+      </item>
+      <item>
+        <label ref="jr:itext('/data/features:option3')"/>
+        <value>grid</value>
+      </item>
+      <item>
+        <label ref="jr:itext('/data/features:option4')"/>
+        <value>solar</value>
+      </item>
+      <item>
+        <label ref="jr:itext('/data/features:option5')"/>
+        <value>wlan</value>
+      </item>
+      <item>
+        <label ref="jr:itext('/data/features:option6')"/>
+        <value>cell</value>
+      </item>
+    </select>
+    <input ref="/data/roomcount">
+      <label ref="jr:itext('/data/roomcount:label')"/>
+    </input>
+    <input ref="/data/note">
+      <label ref="jr:itext('/data/note:label')"/>
+      <hint ref="jr:itext('/data/note:hint')"/>
+    </input>
+  </h:body>
+</h:html>
