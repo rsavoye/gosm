@@ -1,0 +1,164 @@
+<h:html xmlns="http://www.w3.org/2002/xforms" xmlns:h="http://www.w3.org/1999/xhtml" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:jr="http://openrosa.org/javarosa">
+  <h:head>
+    <h:title>Tourism</h:title>
+    <model>
+      <instance>
+        <data id="build_Tourism_1530470456">
+          <meta>
+            <instanceID/>
+          </meta>
+          <name/>
+          <location/>
+          <tourism/>
+          <amenity/>
+          <note/>
+        </data>
+      </instance>
+      <itext>
+        <translation lang="English">
+          <text id="/data/name:label">
+            <value>Name</value>
+          </text>
+          <text id="/data/name:hint">
+            <value>Name of this landmark</value>
+          </text>
+          <text id="/data/location:label">
+            <value>Location</value>
+          </text>
+          <text id="/data/location:hint">
+            <value>Where is this ?</value>
+          </text>
+          <text id="/data/tourism:label">
+            <value>Accomodation</value>
+          </text>
+          <text id="/data/tourism:option0">
+            <value>Guest House</value>
+          </text>
+          <text id="/data/tourism:option1">
+            <value>Alpine Hut</value>
+          </text>
+          <text id="/data/tourism:option2">
+            <value>Hotel</value>
+          </text>
+          <text id="/data/tourism:option3">
+            <value>Hostel</value>
+          </text>
+          <text id="/data/tourism:option4">
+            <value>Camp Site</value>
+          </text>
+          <text id="/data/tourism:option5">
+            <value>Wilderness Hut</value>
+          </text>
+          <text id="/data/amenity:label">
+            <value>Food &amp; Water</value>
+          </text>
+          <text id="/data/amenity:option0">
+            <value>Cafe</value>
+          </text>
+          <text id="/data/amenity:option1">
+            <value>Restaurant</value>
+          </text>
+          <text id="/data/amenity:option2">
+            <value>Pub</value>
+          </text>
+          <text id="/data/amenity:option3">
+            <value>Bar</value>
+          </text>
+          <text id="/data/amenity:option4">
+            <value>Nightclub</value>
+          </text>
+          <text id="/data/amenity:option5">
+            <value>Ice Cream</value>
+          </text>
+          <text id="/data/amenity:option6">
+            <value>Drinking Water</value>
+          </text>
+          <text id="/data/note:label">
+            <value>Description</value>
+          </text>
+          <text id="/data/note:hint">
+            <value>Anything I forgot</value>
+          </text>
+        </translation>
+      </itext>
+      <bind nodeset="/data/meta/instanceID" type="string" readonly="true()" calculate="concat('uuid:', uuid())"/>
+      <bind nodeset="/data/name" type="string"/>
+      <bind nodeset="/data/location" type="geopoint" required="true()"/>
+      <bind nodeset="/data/tourism" type="select1"/>
+      <bind nodeset="/data/amenity" type="select1"/>
+      <bind nodeset="/data/note" type="string"/>
+    </model>
+  </h:head>
+  <h:body>
+    <input ref="/data/name">
+      <label ref="jr:itext('/data/name:label')"/>
+      <hint ref="jr:itext('/data/name:hint')"/>
+    </input>
+    <input ref="/data/location">
+      <label ref="jr:itext('/data/location:label')"/>
+      <hint ref="jr:itext('/data/location:hint')"/>
+    </input>
+    <select1 ref="/data/tourism">
+      <label ref="jr:itext('/data/tourism:label')"/>
+      <item>
+        <label ref="jr:itext('/data/tourism:option0')"/>
+        <value>guest_house</value>
+      </item>
+      <item>
+        <label ref="jr:itext('/data/tourism:option1')"/>
+        <value>alpine_hut</value>
+      </item>
+      <item>
+        <label ref="jr:itext('/data/tourism:option2')"/>
+        <value>hotel</value>
+      </item>
+      <item>
+        <label ref="jr:itext('/data/tourism:option3')"/>
+        <value>hostel</value>
+      </item>
+      <item>
+        <label ref="jr:itext('/data/tourism:option4')"/>
+        <value>camp_site</value>
+      </item>
+      <item>
+        <label ref="jr:itext('/data/tourism:option5')"/>
+        <value>wilderness_hut</value>
+      </item>
+    </select1>
+    <select1 ref="/data/amenity">
+      <label ref="jr:itext('/data/amenity:label')"/>
+      <item>
+        <label ref="jr:itext('/data/amenity:option0')"/>
+        <value>cafe</value>
+      </item>
+      <item>
+        <label ref="jr:itext('/data/amenity:option1')"/>
+        <value>restaurant</value>
+      </item>
+      <item>
+        <label ref="jr:itext('/data/amenity:option2')"/>
+        <value>pub</value>
+      </item>
+      <item>
+        <label ref="jr:itext('/data/amenity:option3')"/>
+        <value>bar</value>
+      </item>
+      <item>
+        <label ref="jr:itext('/data/amenity:option4')"/>
+        <value>nightclub</value>
+      </item>
+      <item>
+        <label ref="jr:itext('/data/amenity:option5')"/>
+        <value>ice_cream</value>
+      </item>
+      <item>
+        <label ref="jr:itext('/data/amenity:option6')"/>
+        <value>drinking_water</value>
+      </item>
+    </select1>
+    <input ref="/data/note">
+      <label ref="jr:itext('/data/note:label')"/>
+      <hint ref="jr:itext('/data/note:hint')"/>
+    </input>
+  </h:body>
+</h:html>

@@ -1,0 +1,138 @@
+<h:html xmlns="http://www.w3.org/2002/xforms" xmlns:h="http://www.w3.org/1999/xhtml" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:jr="http://openrosa.org/javarosa">
+  <h:head>
+    <h:title>Roads</h:title>
+    <model>
+      <instance>
+        <data id="build_Roads_1530470527">
+          <meta>
+            <instanceID/>
+          </meta>
+          <name/>
+          <surface/>
+          <highway/>
+          <note/>
+        </data>
+      </instance>
+      <itext>
+        <translation lang="English">
+          <text id="/data/name:label">
+            <value>Name (if any)</value>
+          </text>
+          <text id="/data/name:hint">
+            <value></value>
+          </text>
+          <text id="/data/surface:label">
+            <value>Surface</value>
+          </text>
+          <text id="/data/surface:option0">
+            <value>Dirt</value>
+          </text>
+          <text id="/data/surface:option1">
+            <value>Paved</value>
+          </text>
+          <text id="/data/surface:option2">
+            <value>4x4 Only</value>
+          </text>
+          <text id="/data/surface:option3">
+            <value>Gravel</value>
+          </text>
+          <text id="/data/surface:option4">
+            <value>Cobblestone</value>
+          </text>
+          <text id="/data/surface:option5">
+            <value>Grass</value>
+          </text>
+          <text id="/data/highway:label">
+            <value>Highway</value>
+          </text>
+          <text id="/data/highway:option0">
+            <value>tertiary</value>
+          </text>
+          <text id="/data/highway:option1">
+            <value>Unclassified</value>
+          </text>
+          <text id="/data/highway:option2">
+            <value>secondary</value>
+          </text>
+          <text id="/data/highway:option3">
+            <value>Trunk</value>
+          </text>
+          <text id="/data/highway:option4">
+            <value>Primary</value>
+          </text>
+          <text id="/data/note:label">
+            <value>Description</value>
+          </text>
+          <text id="/data/note:hint">
+            <value>Anything  I forgot</value>
+          </text>
+        </translation>
+      </itext>
+      <bind nodeset="/data/meta/instanceID" type="string" readonly="true()" calculate="concat('uuid:', uuid())"/>
+      <bind nodeset="/data/name" type="string"/>
+      <bind nodeset="/data/surface" type="select1"/>
+      <bind nodeset="/data/highway" type="select1"/>
+      <bind nodeset="/data/note" type="string"/>
+    </model>
+  </h:head>
+  <h:body>
+    <input ref="/data/name">
+      <label ref="jr:itext('/data/name:label')"/>
+      <hint ref="jr:itext('/data/name:hint')"/>
+    </input>
+    <select1 ref="/data/surface">
+      <label ref="jr:itext('/data/surface:label')"/>
+      <item>
+        <label ref="jr:itext('/data/surface:option0')"/>
+        <value>dirt</value>
+      </item>
+      <item>
+        <label ref="jr:itext('/data/surface:option1')"/>
+        <value>paved</value>
+      </item>
+      <item>
+        <label ref="jr:itext('/data/surface:option2')"/>
+        <value>unclassified</value>
+      </item>
+      <item>
+        <label ref="jr:itext('/data/surface:option3')"/>
+        <value>gravel</value>
+      </item>
+      <item>
+        <label ref="jr:itext('/data/surface:option4')"/>
+        <value>cobblestone</value>
+      </item>
+      <item>
+        <label ref="jr:itext('/data/surface:option5')"/>
+        <value>grass</value>
+      </item>
+    </select1>
+    <select1 ref="/data/highway">
+      <label ref="jr:itext('/data/highway:label')"/>
+      <item>
+        <label ref="jr:itext('/data/highway:option0')"/>
+        <value>tertiary</value>
+      </item>
+      <item>
+        <label ref="jr:itext('/data/highway:option1')"/>
+        <value>unclassified</value>
+      </item>
+      <item>
+        <label ref="jr:itext('/data/highway:option2')"/>
+        <value>secondary</value>
+      </item>
+      <item>
+        <label ref="jr:itext('/data/highway:option3')"/>
+        <value>trunk</value>
+      </item>
+      <item>
+        <label ref="jr:itext('/data/highway:option4')"/>
+        <value>primary</value>
+      </item>
+    </select1>
+    <input ref="/data/note">
+      <label ref="jr:itext('/data/note:label')"/>
+      <hint ref="jr:itext('/data/note:hint')"/>
+    </input>
+  </h:body>
+</h:html>

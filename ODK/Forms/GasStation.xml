@@ -1,0 +1,78 @@
+<h:html xmlns="http://www.w3.org/2002/xforms" xmlns:h="http://www.w3.org/1999/xhtml" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:jr="http://openrosa.org/javarosa">
+  <h:head>
+    <h:title>GasStation</h:title>
+    <model>
+      <instance>
+        <data id="build_GasStation_1530471324">
+          <meta>
+            <instanceID/>
+          </meta>
+          <name/>
+          <location/>
+          <features/>
+          <note/>
+        </data>
+      </instance>
+      <itext>
+        <translation lang="English">
+          <text id="/data/name:label">
+            <value>Name</value>
+          </text>
+          <text id="/data/location:label">
+            <value>Location</value>
+          </text>
+          <text id="/data/features:label">
+            <value>Features</value>
+          </text>
+          <text id="/data/features:option0">
+            <value>Restroom</value>
+          </text>
+          <text id="/data/features:option1">
+            <value>Groceries</value>
+          </text>
+          <text id="/data/features:option2">
+            <value>Alcohol</value>
+          </text>
+          <text id="/data/note:label">
+            <value>Notes</value>
+          </text>
+          <text id="/data/note:hint">
+            <value>anything that doesn't fit any choices.</value>
+          </text>
+        </translation>
+      </itext>
+      <bind nodeset="/data/meta/instanceID" type="string" readonly="true()" calculate="concat('uuid:', uuid())"/>
+      <bind nodeset="/data/name" type="string"/>
+      <bind nodeset="/data/location" type="geopoint"/>
+      <bind nodeset="/data/features" type="select"/>
+      <bind nodeset="/data/note" type="string"/>
+    </model>
+  </h:head>
+  <h:body>
+    <input ref="/data/name">
+      <label ref="jr:itext('/data/name:label')"/>
+    </input>
+    <input ref="/data/location">
+      <label ref="jr:itext('/data/location:label')"/>
+    </input>
+    <select ref="/data/features">
+      <label ref="jr:itext('/data/features:label')"/>
+      <item>
+        <label ref="jr:itext('/data/features:option0')"/>
+        <value>toilet</value>
+      </item>
+      <item>
+        <label ref="jr:itext('/data/features:option1')"/>
+        <value>groceries</value>
+      </item>
+      <item>
+        <label ref="jr:itext('/data/features:option2')"/>
+        <value>alcohol</value>
+      </item>
+    </select>
+    <input ref="/data/note">
+      <label ref="jr:itext('/data/note:label')"/>
+      <hint ref="jr:itext('/data/note:hint')"/>
+    </input>
+  </h:body>
+</h:html>

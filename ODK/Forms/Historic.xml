@@ -1,0 +1,141 @@
+<h:html xmlns="http://www.w3.org/2002/xforms" xmlns:h="http://www.w3.org/1999/xhtml" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:jr="http://openrosa.org/javarosa">
+  <h:head>
+    <h:title>Historic</h:title>
+    <model>
+      <instance>
+        <data id="build_Historic_1530470951">
+          <meta>
+            <instanceID/>
+          </meta>
+          <name/>
+          <location/>
+          <historic/>
+          <note/>
+        </data>
+      </instance>
+      <itext>
+        <translation lang="English">
+          <text id="/data/name:label">
+            <value>Name</value>
+          </text>
+          <text id="/data/location:label">
+            <value>Location</value>
+          </text>
+          <text id="/data/historic:label">
+            <value>Historical Type</value>
+          </text>
+          <text id="/data/historic:option0">
+            <value>Archaeological Site</value>
+          </text>
+          <text id="/data/historic:option1">
+            <value>Unknown Building</value>
+          </text>
+          <text id="/data/historic:option2">
+            <value>Ruin</value>
+          </text>
+          <text id="/data/historic:option3">
+            <value>Castle</value>
+          </text>
+          <text id="/data/historic:option4">
+            <value>Monastary</value>
+          </text>
+          <text id="/data/historic:option5">
+            <value>Fort</value>
+          </text>
+          <text id="/data/historic:option6">
+            <value>Rune Stones</value>
+          </text>
+          <text id="/data/historic:option7">
+            <value>Tomb</value>
+          </text>
+          <text id="/data/historic:option8">
+            <value>Monument</value>
+          </text>
+          <text id="/data/historic:option9">
+            <value>Temple</value>
+          </text>
+          <text id="/data/historic:option10">
+            <value>Stumpa</value>
+          </text>
+          <text id="/data/historic:option11">
+            <value>Gompa</value>
+          </text>
+          <text id="/data/note:label">
+            <value>Notes</value>
+          </text>
+          <text id="/data/note:hint">
+            <value>anything I forgot</value>
+          </text>
+        </translation>
+      </itext>
+      <bind nodeset="/data/meta/instanceID" type="string" readonly="true()" calculate="concat('uuid:', uuid())"/>
+      <bind nodeset="/data/name" type="string"/>
+      <bind nodeset="/data/location" type="geopoint" required="true()"/>
+      <bind nodeset="/data/historic" type="select1"/>
+      <bind nodeset="/data/note" type="string"/>
+    </model>
+  </h:head>
+  <h:body>
+    <input ref="/data/name">
+      <label ref="jr:itext('/data/name:label')"/>
+    </input>
+    <input ref="/data/location">
+      <label ref="jr:itext('/data/location:label')"/>
+    </input>
+    <select1 ref="/data/historic">
+      <label ref="jr:itext('/data/historic:label')"/>
+      <item>
+        <label ref="jr:itext('/data/historic:option0')"/>
+        <value>archaeological_site</value>
+      </item>
+      <item>
+        <label ref="jr:itext('/data/historic:option1')"/>
+        <value>building</value>
+      </item>
+      <item>
+        <label ref="jr:itext('/data/historic:option2')"/>
+        <value>ruin</value>
+      </item>
+      <item>
+        <label ref="jr:itext('/data/historic:option3')"/>
+        <value>castle</value>
+      </item>
+      <item>
+        <label ref="jr:itext('/data/historic:option4')"/>
+        <value>monastary</value>
+      </item>
+      <item>
+        <label ref="jr:itext('/data/historic:option5')"/>
+        <value>fort</value>
+      </item>
+      <item>
+        <label ref="jr:itext('/data/historic:option6')"/>
+        <value>rune_stone</value>
+      </item>
+      <item>
+        <label ref="jr:itext('/data/historic:option7')"/>
+        <value>tomb</value>
+      </item>
+      <item>
+        <label ref="jr:itext('/data/historic:option8')"/>
+        <value>monument</value>
+      </item>
+      <item>
+        <label ref="jr:itext('/data/historic:option9')"/>
+        <value>temple</value>
+      </item>
+      <item>
+        <label ref="jr:itext('/data/historic:option10')"/>
+        <value>stumpa</value>
+      </item>
+      <item>
+        <label ref="jr:itext('/data/historic:option11')"/>
+        <value>gompa</value>
+      </item>
+    </select1>
+    <input ref="/data/note">
+      <label ref="jr:itext('/data/note:label')"/>
+      <hint ref="jr:itext('/data/note:hint')"/>
+    </input>
+  </h:body>
+</h:html>

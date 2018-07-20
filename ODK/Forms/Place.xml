@@ -1,0 +1,89 @@
+<h:html xmlns="http://www.w3.org/2002/xforms" xmlns:h="http://www.w3.org/1999/xhtml" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:jr="http://openrosa.org/javarosa">
+  <h:head>
+    <h:title>Place</h:title>
+    <model>
+      <instance>
+        <data id="build_Place_1530470922">
+          <meta>
+            <instanceID/>
+          </meta>
+          <location/>
+          <name/>
+          <place/>
+          <note/>
+        </data>
+      </instance>
+      <itext>
+        <translation lang="English">
+          <text id="/data/location:label">
+            <value>Location</value>
+          </text>
+          <text id="/data/name:label">
+            <value>Name</value>
+          </text>
+          <text id="/data/place:label">
+            <value>Place</value>
+          </text>
+          <text id="/data/place:hint">
+            <value>What type of place is this ?</value>
+          </text>
+          <text id="/data/place:option0">
+            <value>Town</value>
+          </text>
+          <text id="/data/place:option1">
+            <value>Village</value>
+          </text>
+          <text id="/data/place:option2">
+            <value>Hamlet</value>
+          </text>
+          <text id="/data/place:option3">
+            <value>Isolated Dwelling</value>
+          </text>
+          <text id="/data/note:label">
+            <value>Notes</value>
+          </text>
+          <text id="/data/note:hint">
+            <value>anything that doesn't fit any choices.</value>
+          </text>
+        </translation>
+      </itext>
+      <bind nodeset="/data/meta/instanceID" type="string" readonly="true()" calculate="concat('uuid:', uuid())"/>
+      <bind nodeset="/data/location" type="geopoint" required="true()"/>
+      <bind nodeset="/data/name" type="string"/>
+      <bind nodeset="/data/place" type="select1"/>
+      <bind nodeset="/data/note" type="string"/>
+    </model>
+  </h:head>
+  <h:body>
+    <input ref="/data/location">
+      <label ref="jr:itext('/data/location:label')"/>
+    </input>
+    <input ref="/data/name">
+      <label ref="jr:itext('/data/name:label')"/>
+    </input>
+    <select1 ref="/data/place">
+      <label ref="jr:itext('/data/place:label')"/>
+      <hint ref="jr:itext('/data/place:hint')"/>
+      <item>
+        <label ref="jr:itext('/data/place:option0')"/>
+        <value>town</value>
+      </item>
+      <item>
+        <label ref="jr:itext('/data/place:option1')"/>
+        <value>village</value>
+      </item>
+      <item>
+        <label ref="jr:itext('/data/place:option2')"/>
+        <value>hamlet</value>
+      </item>
+      <item>
+        <label ref="jr:itext('/data/place:option3')"/>
+        <value>isolated_dwelling</value>
+      </item>
+    </select1>
+    <input ref="/data/note">
+      <label ref="jr:itext('/data/note:label')"/>
+      <hint ref="jr:itext('/data/note:hint')"/>
+    </input>
+  </h:body>
+</h:html>

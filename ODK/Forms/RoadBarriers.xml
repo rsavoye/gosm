@@ -1,0 +1,103 @@
+<h:html xmlns="http://www.w3.org/2002/xforms" xmlns:h="http://www.w3.org/1999/xhtml" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:jr="http://openrosa.org/javarosa">
+  <h:head>
+    <h:title>RoadBarriers</h:title>
+    <model>
+      <instance>
+        <data id="build_RoadBarriers_1530470501">
+          <meta>
+            <instanceID/>
+          </meta>
+          <name/>
+          <coordinates/>
+          <barrier/>
+          <note/>
+        </data>
+      </instance>
+      <itext>
+        <translation lang="English">
+          <text id="/data/name:label">
+            <value>Name (if any)</value>
+          </text>
+          <text id="/data/name:hint">
+            <value>Barriers across road</value>
+          </text>
+          <text id="/data/coordinates:label">
+            <value>Location</value>
+          </text>
+          <text id="/data/barrier:label">
+            <value>Barrier Type</value>
+          </text>
+          <text id="/data/barrier:option0">
+            <value>Debris</value>
+          </text>
+          <text id="/data/barrier:option1">
+            <value>Bollard</value>
+          </text>
+          <text id="/data/barrier:option2">
+            <value>Block</value>
+          </text>
+          <text id="/data/barrier:option3">
+            <value>Cannons</value>
+          </text>
+          <text id="/data/barrier:option4">
+            <value>Chain</value>
+          </text>
+          <text id="/data/barrier:option5">
+            <value>Fence</value>
+          </text>
+          <text id="/data/note:label">
+            <value>Notes</value>
+          </text>
+          <text id="/data/note:hint">
+            <value>anything that doesn't fit any choices.</value>
+          </text>
+        </translation>
+      </itext>
+      <bind nodeset="/data/meta/instanceID" type="string" readonly="true()" calculate="concat('uuid:', uuid())"/>
+      <bind nodeset="/data/name" type="string"/>
+      <bind nodeset="/data/coordinates" type="geopoint"/>
+      <bind nodeset="/data/barrier" type="select1"/>
+      <bind nodeset="/data/note" type="string"/>
+    </model>
+  </h:head>
+  <h:body>
+    <input ref="/data/name">
+      <label ref="jr:itext('/data/name:label')"/>
+      <hint ref="jr:itext('/data/name:hint')"/>
+    </input>
+    <input ref="/data/coordinates">
+      <label ref="jr:itext('/data/coordinates:label')"/>
+    </input>
+    <select1 ref="/data/barrier">
+      <label ref="jr:itext('/data/barrier:label')"/>
+      <item>
+        <label ref="jr:itext('/data/barrier:option0')"/>
+        <value>debris</value>
+      </item>
+      <item>
+        <label ref="jr:itext('/data/barrier:option1')"/>
+        <value>bollard</value>
+      </item>
+      <item>
+        <label ref="jr:itext('/data/barrier:option2')"/>
+        <value>block</value>
+      </item>
+      <item>
+        <label ref="jr:itext('/data/barrier:option3')"/>
+        <value>bollard</value>
+      </item>
+      <item>
+        <label ref="jr:itext('/data/barrier:option4')"/>
+        <value>chain</value>
+      </item>
+      <item>
+        <label ref="jr:itext('/data/barrier:option5')"/>
+        <value>fence</value>
+      </item>
+    </select1>
+    <input ref="/data/note">
+      <label ref="jr:itext('/data/note:label')"/>
+      <hint ref="jr:itext('/data/note:hint')"/>
+    </input>
+  </h:body>
+</h:html>
