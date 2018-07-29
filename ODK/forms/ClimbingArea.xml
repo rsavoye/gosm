@@ -1,0 +1,337 @@
+<h:html xmlns="http://www.w3.org/2002/xforms" xmlns:h="http://www.w3.org/1999/xhtml" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:jr="http://openrosa.org/javarosa">
+  <h:head>
+    <h:title>ClimbingArea</h:title>
+    <model>
+      <instance>
+        <data id="build_ClimbingArea_1532825502">
+          <meta>
+            <instanceID/>
+          </meta>
+          <name/>
+          <location/>
+          <amenty/>
+          <descent/>
+          <sac_scale/>
+          <climbing.grade.yds_class/>
+          <type/>
+          <note/>
+        </data>
+      </instance>
+      <itext>
+        <translation lang="English">
+          <text id="/data/name:label">
+            <value>Name</value>
+          </text>
+          <text id="/data/name:hint">
+            <value>What is this thing called ?</value>
+          </text>
+          <text id="/data/location:label">
+            <value>Location</value>
+          </text>
+          <text id="/data/location:hint">
+            <value>Where the hell are we ?</value>
+          </text>
+          <text id="/data/amenty:label">
+            <value>Amenity</value>
+          </text>
+          <text id="/data/amenty:hint">
+            <value>What is here ? </value>
+          </text>
+          <text id="/data/amenty:option0">
+            <value>Trailhead</value>
+          </text>
+          <text id="/data/amenty:option1">
+            <value>Toilet</value>
+          </text>
+          <text id="/data/amenty:option2">
+            <value>Route Base</value>
+          </text>
+          <text id="/data/amenty:option3">
+            <value>Anchor</value>
+          </text>
+          <text id="/data/amenty:option4">
+            <value>Picnic Table</value>
+          </text>
+          <text id="/data/amenty:option5">
+            <value>Campsite</value>
+          </text>
+          <text id="/data/descent:label">
+            <value>Descent</value>
+          </text>
+          <text id="/data/descent:hint">
+            <value>How do we get off this ?</value>
+          </text>
+          <text id="/data/descent:option0">
+            <value>Walk-off</value>
+          </text>
+          <text id="/data/descent:option1">
+            <value>Rappel</value>
+          </text>
+          <text id="/data/sac_scale:label">
+            <value>Trail Difficulty</value>
+          </text>
+          <text id="/data/sac_scale:hint">
+            <value>Hiking scale</value>
+          </text>
+          <text id="/data/sac_scale:option0">
+            <value>Hiking (sac_scale 1)</value>
+          </text>
+          <text id="/data/sac_scale:option1">
+            <value>Mountain Hiking (sac_scale 2)</value>
+          </text>
+          <text id="/data/sac_scale:option2">
+            <value>Demanding Mountain Hiking (sac_scale 3)</value>
+          </text>
+          <text id="/data/sac_scale:option3">
+            <value>Alpine Hiking (sac_scale 4)</value>
+          </text>
+          <text id="/data/sac_scale:option4">
+            <value>Difficult Alpine Hiking (sac_scale 5)</value>
+          </text>
+          <text id="/data/sac_scale:option5">
+            <value>Demanding Alpine Hiking (sac_scale 6)</value>
+          </text>
+          <text id="/data/climbing.grade.yds_class:label">
+            <value>Rating</value>
+          </text>
+          <text id="/data/climbing.grade.yds_class:hint">
+            <value>Yosemite rating</value>
+          </text>
+          <text id="/data/climbing.grade.yds_class:option0">
+            <value>5.7</value>
+          </text>
+          <text id="/data/climbing.grade.yds_class:option1">
+            <value>5.8</value>
+          </text>
+          <text id="/data/climbing.grade.yds_class:option2">
+            <value>Hard 5.8</value>
+          </text>
+          <text id="/data/climbing.grade.yds_class:option3">
+            <value>5.9</value>
+          </text>
+          <text id="/data/climbing.grade.yds_class:option4">
+            <value>Hard 5.9</value>
+          </text>
+          <text id="/data/climbing.grade.yds_class:option5">
+            <value>5.10</value>
+          </text>
+          <text id="/data/climbing.grade.yds_class:option6">
+            <value>5.10a</value>
+          </text>
+          <text id="/data/climbing.grade.yds_class:option7">
+            <value>5.10b</value>
+          </text>
+          <text id="/data/climbing.grade.yds_class:option8">
+            <value>5.10c</value>
+          </text>
+          <text id="/data/climbing.grade.yds_class:option9">
+            <value>5.10d</value>
+          </text>
+          <text id="/data/climbing.grade.yds_class:option10">
+            <value>5.11a</value>
+          </text>
+          <text id="/data/climbing.grade.yds_class:option11">
+            <value>5.11b</value>
+          </text>
+          <text id="/data/climbing.grade.yds_class:option12">
+            <value>5.11c</value>
+          </text>
+          <text id="/data/climbing.grade.yds_class:option13">
+            <value>5.11d</value>
+          </text>
+          <text id="/data/type:label">
+            <value>Type</value>
+          </text>
+          <text id="/data/type:option0">
+            <value>Sport</value>
+          </text>
+          <text id="/data/type:option1">
+            <value>Traditional</value>
+          </text>
+          <text id="/data/type:option2">
+            <value>Alpine</value>
+          </text>
+          <text id="/data/type:option3">
+            <value>Deep Water Solo</value>
+          </text>
+          <text id="/data/note:label">
+            <value>Notes</value>
+          </text>
+          <text id="/data/note:hint">
+            <value>anything that doesn't fit any choices.</value>
+          </text>
+        </translation>
+      </itext>
+      <bind nodeset="/data/meta/instanceID" type="string" readonly="true()" calculate="concat('uuid:', uuid())"/>
+      <bind nodeset="/data/name" type="string"/>
+      <bind nodeset="/data/location" type="geopoint"/>
+      <bind nodeset="/data/amenty" type="select1"/>
+      <bind nodeset="/data/descent" type="select1"/>
+      <bind nodeset="/data/sac_scale" type="select1"/>
+      <bind nodeset="/data/climbing.grade.yds_class" type="select1"/>
+      <bind nodeset="/data/type" type="select1"/>
+      <bind nodeset="/data/note" type="string"/>
+    </model>
+  </h:head>
+  <h:body>
+    <input ref="/data/name">
+      <label ref="jr:itext('/data/name:label')"/>
+      <hint ref="jr:itext('/data/name:hint')"/>
+    </input>
+    <input ref="/data/location">
+      <label ref="jr:itext('/data/location:label')"/>
+      <hint ref="jr:itext('/data/location:hint')"/>
+    </input>
+    <select1 ref="/data/amenty">
+      <label ref="jr:itext('/data/amenty:label')"/>
+      <hint ref="jr:itext('/data/amenty:hint')"/>
+      <item>
+        <label ref="jr:itext('/data/amenty:option0')"/>
+        <value>trailhead</value>
+      </item>
+      <item>
+        <label ref="jr:itext('/data/amenty:option1')"/>
+        <value>toilet</value>
+      </item>
+      <item>
+        <label ref="jr:itext('/data/amenty:option2')"/>
+        <value>route</value>
+      </item>
+      <item>
+        <label ref="jr:itext('/data/amenty:option3')"/>
+        <value>anchor</value>
+      </item>
+      <item>
+        <label ref="jr:itext('/data/amenty:option4')"/>
+        <value>picnic</value>
+      </item>
+      <item>
+        <label ref="jr:itext('/data/amenty:option5')"/>
+        <value>camp_site</value>
+      </item>
+    </select1>
+    <select1 ref="/data/descent">
+      <label ref="jr:itext('/data/descent:label')"/>
+      <hint ref="jr:itext('/data/descent:hint')"/>
+      <item>
+        <label ref="jr:itext('/data/descent:option0')"/>
+        <value>walk</value>
+      </item>
+      <item>
+        <label ref="jr:itext('/data/descent:option1')"/>
+        <value>rappel</value>
+      </item>
+    </select1>
+    <select1 ref="/data/sac_scale">
+      <label ref="jr:itext('/data/sac_scale:label')"/>
+      <hint ref="jr:itext('/data/sac_scale:hint')"/>
+      <item>
+        <label ref="jr:itext('/data/sac_scale:option0')"/>
+        <value>hiking</value>
+      </item>
+      <item>
+        <label ref="jr:itext('/data/sac_scale:option1')"/>
+        <value>mountain_hiking</value>
+      </item>
+      <item>
+        <label ref="jr:itext('/data/sac_scale:option2')"/>
+        <value>demanding_mountain_hiking</value>
+      </item>
+      <item>
+        <label ref="jr:itext('/data/sac_scale:option3')"/>
+        <value>alpine_hiking</value>
+      </item>
+      <item>
+        <label ref="jr:itext('/data/sac_scale:option4')"/>
+        <value>difficult_alpine_hiking</value>
+      </item>
+      <item>
+        <label ref="jr:itext('/data/sac_scale:option5')"/>
+        <value>demanding_alpine_hiking</value>
+      </item>
+    </select1>
+    <select1 ref="/data/climbing.grade.yds_class">
+      <label ref="jr:itext('/data/climbing.grade.yds_class:label')"/>
+      <hint ref="jr:itext('/data/climbing.grade.yds_class:hint')"/>
+      <item>
+        <label ref="jr:itext('/data/climbing.grade.yds_class:option0')"/>
+        <value>5.7</value>
+      </item>
+      <item>
+        <label ref="jr:itext('/data/climbing.grade.yds_class:option1')"/>
+        <value>5.8</value>
+      </item>
+      <item>
+        <label ref="jr:itext('/data/climbing.grade.yds_class:option2')"/>
+        <value>5.8d</value>
+      </item>
+      <item>
+        <label ref="jr:itext('/data/climbing.grade.yds_class:option3')"/>
+        <value>5.9</value>
+      </item>
+      <item>
+        <label ref="jr:itext('/data/climbing.grade.yds_class:option4')"/>
+        <value>5.9d</value>
+      </item>
+      <item>
+        <label ref="jr:itext('/data/climbing.grade.yds_class:option5')"/>
+        <value>5.10</value>
+      </item>
+      <item>
+        <label ref="jr:itext('/data/climbing.grade.yds_class:option6')"/>
+        <value>5.10a</value>
+      </item>
+      <item>
+        <label ref="jr:itext('/data/climbing.grade.yds_class:option7')"/>
+        <value>5.10b</value>
+      </item>
+      <item>
+        <label ref="jr:itext('/data/climbing.grade.yds_class:option8')"/>
+        <value>5.10c</value>
+      </item>
+      <item>
+        <label ref="jr:itext('/data/climbing.grade.yds_class:option9')"/>
+        <value>5.10d</value>
+      </item>
+      <item>
+        <label ref="jr:itext('/data/climbing.grade.yds_class:option10')"/>
+        <value>5.11a</value>
+      </item>
+      <item>
+        <label ref="jr:itext('/data/climbing.grade.yds_class:option11')"/>
+        <value>5.11b</value>
+      </item>
+      <item>
+        <label ref="jr:itext('/data/climbing.grade.yds_class:option12')"/>
+        <value>5.11c</value>
+      </item>
+      <item>
+        <label ref="jr:itext('/data/climbing.grade.yds_class:option13')"/>
+        <value>5.11d</value>
+      </item>
+    </select1>
+    <select1 ref="/data/type">
+      <label ref="jr:itext('/data/type:label')"/>
+      <item>
+        <label ref="jr:itext('/data/type:option0')"/>
+        <value>sport</value>
+      </item>
+      <item>
+        <label ref="jr:itext('/data/type:option1')"/>
+        <value>traditional</value>
+      </item>
+      <item>
+        <label ref="jr:itext('/data/type:option2')"/>
+        <value>alpine</value>
+      </item>
+      <item>
+        <label ref="jr:itext('/data/type:option3')"/>
+        <value>dws</value>
+      </item>
+    </select1>
+    <input ref="/data/note">
+      <label ref="jr:itext('/data/note:label')"/>
+      <hint ref="jr:itext('/data/note:hint')"/>
+    </input>
+  </h:body>
+</h:html>
