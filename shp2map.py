@@ -23,11 +23,12 @@
 import os
 import sys
 import logging
+from sys import argv
+sys.path.append(os.path.dirname(argv[0]) + '/osmpylib')
 import osm
 import shp
 import config
-from sys import argv
-sys.path.append(os.path.dirname(argv[0]) + '/osmpylib')
+import string
 
 
 dd = config.config(argv)
