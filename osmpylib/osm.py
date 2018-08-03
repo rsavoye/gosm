@@ -82,6 +82,8 @@ class osmfile(object):
                 x = attrs['id']
             except:
                 attrs['id'] = str(self.osmid)
+                self.osmid -= 1
+
         try:
             x = str(attrs['user'])
         except:
@@ -109,16 +111,15 @@ class osmfile(object):
                     if value != 'None' or value != 'Ignore':
                         tag = self.makeTag(name, value)
                         for newname, newvalue in tag.items():
-                            if newname == 'addr:street' or newname == 'addr:full' or newname == 'name' or newname == 'alt_name':
-                                newvalue = string.capwords(newvalue)
+                            # if newname == 'addr:street' or newname == 'addr:full' or newname == 'name' or newname == 'alt_name':
+                            #     newvalue = string.capwords(newvalue)
 
-                            self.file.write("     <tag k=\"" + newname + "\" v=\"" + str(newvalue) + "\"/>\n")
+                            self.file.write("    <tag k=\"" + newname + "\" v=\"" + str(newvalue) + "\"/>\n")
 
         if len(tags) > 0:
             self.file.write("    </node>\n")
-        self.osmid = self.osmid - 1
 
-        return self.osmid - 1
+        return self.osmid
 
     # Here's where the fun starts. Read a field header from a file,
     # which of course are all different. Make an attempt to match these
@@ -149,7 +150,7 @@ class osmfile(object):
             newval = change[1]
             # logging.debug("ATTRS2: %r %r" % (newtag, newval))
         else:
-            tag[newtag] = newval
+            tag[newtag] = string.capwords(newval)
 
         return tag
 
@@ -169,7 +170,7 @@ class osmfile(object):
             #except:
             #    attrs['id'] = str(self.osmid)
 
-            # logging.debug("osmfile::way(refs=%r, tags=%r)" % (refs, tags))
+            #logging.debug("osmfile::way(refs=%r, tags=%r)" % (refs, tags))
             #logging.debug("osmfile::way(tags=%r)" % (tags))
             self.file.write("    <way")
             timestamp = time.strftime("%Y-%m-%dT%TZ")
@@ -184,6 +185,7 @@ class osmfile(object):
         for ref in refs:
             # FIXME: Ignore any refs that point to ourself. There shouldn't be
             # any, so this is likely a bug elsewhere when parsing the geom.
+            # logging.debug("osmfile::way(ref=%r, osmid=%r)" % (ref, self.osmid))
             if ref == self.osmid:
                 break
             self.file.write("    <nd ref=\"" + str(ref) + "\"/>\n")
