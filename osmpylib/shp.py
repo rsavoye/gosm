@@ -144,7 +144,7 @@ class shpfile(object):
             alltags = list()
             end = (len(entry.record))
             tags = dict()
-            attrs = dict()
+            #attrs = dict()
 
             i = 1
             matched = False
@@ -290,23 +290,26 @@ class shpfile(object):
             k = 0
             refs = []
             for point in entry.shape.points:
+                attrs = dict()
                 # logging.debug("POINTS: %r: %r" % (entry.record[1:2], point))
                 lon = point[0]
                 attrs['lon'] = str(lon)
                 lat = point[1]
                 attrs['lat'] = str(lat)
-                # timestamp = time.strftime("%Y-%m-%dT%TZ")
-                # tagger['timestamp'] = timestamp
-                # alltags.append(tagger)
-                node = osm.node(alltags, attrs)
+                if self.options.get('type') == "line":
+                    node = osm.node(list(), attrs)
+                else:
+                    node = osm.node(alltags, attrs)
                 refs.append(node)
+                # print("FIXMEE: %r" % node)
                 silly.write("   Processing OSM file: %s\r" % rot[k])
                 if k <= 3:
                     k = k + 1
                 else:
                     k = 0
-                    # logging.debug("OSM ID: %r %r %r" % (tags, lat, lon))
+            # logging.debug("OSM ID: %r %r %r" % (tags, lat, lon))
             # logging.debug("REFS %r" % refs)
+            # epdb.set_trace()
             if self.options.get('type') == "line":
                 osm.makeWay(refs, alltags)
 
