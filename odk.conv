@@ -1,0 +1,27 @@
+# This conversion file is for parsing the data when usibg one of
+# my forms for input.
+attribute,features,solar,generator:source=solar
+attribute,features,toilet,toilet:seated=yes
+attribute,features,outhouse,toilet:squat=yes
+attribute,features,grid,power=plant
+attribute,features,hydro,generator:source=hydro
+attribute,features,restaurant,amenity=restaurant
+attribute,features,internet,internet_access=wlan
+attribute,features,cell,internet_access=cellular
+attribute,features,sac_scale,Hiking,sac_scale=hiking
+attribute,features,camp_site,tourism=camp_site
+attribute,features,water,water=yes
+attribute,features,camp_fire,leisure=firepit
+attribute,internet,wifi,internet_access=wlan
+attribute,internet,cell,internet_access=cellular
+attribute,features,view,tourism=viewpoint
+attribute,features,parking,parking=yes
+attribute,features,picnic_table,leisure=picnic_table
+attribute,features,outhouse,toilets:disposal=pitlatrine
+attribute,features,camp_fire,leisure=firepit
+attribute,features,water,water=yes
+attribute,features,shelter,shelter=yes
+#
+attribute,attributes,parking,parking=yes
+attribute,attributes,camp_site,tourism=camp_site
+attribute,attributes,toilet,toilet=yes
