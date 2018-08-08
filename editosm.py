@@ -220,7 +220,10 @@ for docit in doc.getiterator():
                     k = value
                     continue
                 elif ref == 'v':
-                    v = value
+                    if k == 'name':
+                        v = string.capwords(value)
+                    else:
+                        v = value
                     tag = osmout.makeTag(k, v)
                     tags.append(tag)
                 else:
@@ -254,7 +257,7 @@ for docit in doc.getiterator():
         for elit in docit.getiterator():
             modified = False
             for ref,value in elit.items():
-               # print("RELATION: %r %r" % (ref, value))                    
+                #print("RELATION: %r %r" % (ref, value))
                 if ref == 'type' or ref == 'ref' or ref == 'role':
                     member = dict()
                     member[ref] = value
@@ -264,7 +267,10 @@ for docit in doc.getiterator():
                     k = value
                     continue
                 elif ref == 'v':
-                    v = value
+                    if k == 'name':
+                        v = string.capwords(value)
+                    else:
+                        v = value
                     tag = osmout.makeTag(k, v)
                     tags.append(tag)
                 else:
