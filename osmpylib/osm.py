@@ -35,7 +35,6 @@ class osmfile(object):
         self.version = 3
         self.visible = 'true'
         self.osmid = -30470
-
         # Open the OSM output file
         if outfile == False:
             self.outfile = self.options.get('outdir') + "foobar.osm"
@@ -132,31 +131,32 @@ class osmfile(object):
         newval = newval.replace('"', '')
         #newval = newval.replace('><', '')
         tag = dict()
-        # logging.debug("OSM:makeTag(field=%r, value=%r)" % (field, newval))
+        #print("OSM:makeTag(field=%r, value=%r)" % (field, newval))
 
         try:
             newtag = self.ctable.match(field)
         except Exception as inst:
-            logging.debug("MISSING Field: %r" % field)
+            #logging.warning("MISSING Field: %r, %r" % (field, newval))
             # If it's not in the conversion file, assume it maps directly
             # to an official OSM tag.
             newtag = field
 
         newval = self.ctable.attribute(newtag, newval)
-        # logging.debug("ATTRS1: %r %r" % (newtag, newval))
+        #logging.debug("ATTRS1: %r %r" % (newtag, newval))
         change = newval.split('=')
         if len(change) > 1:
             newtag = change[0]
             newval = change[1]
-            # logging.debug("ATTRS2: %r %r" % (newtag, newval))
-        else:
-            tag[newtag] = string.capwords(newval)
 
+        tag[newtag] = newval
+        # tag[newtag] = string.capwords(newval)
+
+        #print("ATTRS2: %r %r" % (newtag, newval))
         return tag
 
     def makeWay(self, refs, tags=list(), attrs=dict()):
         if len(refs) is 0:
-            logging.debug("ERROR: No refs! %r" % tags)
+            logging.error("No refs! %r" % tags)
             return
 
         if len(attrs) > 0:
@@ -230,3 +230,18 @@ class osmfile(object):
                     self.file.write("    <tag k=\"" + name + "\" v=\"" + str(value) + "\"/>\n")
             
         self.file.write("  </relation>\n")
+
+    def cleanup(self, tags):
+        cache = dict()
+        for tag in tags:
+            for name, value in tag.items():
+                try:
+                    if cache[name] != value:
+                        tmp = cache[name]
+                        cache[name] += ';' + value
+                except:
+                    cache[name] = value
+
+        tags = list()
+        tags.append(cache)
+        return tags
