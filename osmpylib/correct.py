@@ -15,6 +15,10 @@
 # Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 #
 
+# This class attempts to fix many common errors in OSM names, primarily
+# because it break navigation. This script is a bit ugly and brute force,
+# but does the trick for me. It's still hard to filter out all bad data,
+# but this gets close.
 import logging
 import html
 import string
@@ -41,7 +45,7 @@ class correct(object):
             self.value = str(number) + suffix
             if self.value != value:
                 # print("MODIFIED%r to %r" % (value, self.value))
-                modified = True
+                self.modified = True
         else:
             # print("NO CHANGE, %r" % self.value)
             self.value = value
@@ -64,7 +68,7 @@ class correct(object):
                 newvalue = value[0:m.start()]
                 rest = ' ' + value[m.start() + len(self.abbrevs[i])+1:len(value)]
                 self.value = newvalue + ' ' + self.fullname[i] + rest.rstrip(' ')
-                modified = True
+                self.modified = True
                 break
 
             pattern = " " + self.abbrevs[i] + " "
@@ -73,14 +77,27 @@ class correct(object):
                 newvalue = value[0:m.start()]
                 rest = ' ' + value[m.start() + len(self.abbrevs[i])+1:len(value)]
                 self.value = newvalue + ' ' + self.fullname[i] + rest
-                modified = True
-                break
-            # This seems to be a special case
+                self.modified = True
+
+            # These seem to be special cases
             pattern = " spur"
             m = re.search(pattern, value)
             if m is not None:
                 self.value = string.capwords(self.value)
-                modified = True
+                self.modified = True
+
+            pattern = " Mtn "
+            m = re.search(pattern, value)
+            if m is not None:
+                self.value = self.value.replace(pattern, " Mountain ")
+                self.modified = True
+
+            # Look for a few weird Rd patterns
+            pattern = " Rd[\) ]+"
+            m = re.search(pattern, value, re.IGNORECASE)
+            if m is not None:
+                self.value = self.value.replace(" Rd", " Road")
+                self.modified = True
                 break
             i = i +1
 
@@ -100,15 +117,8 @@ class correct(object):
                     self.value = newvalue
                 i = i +1
 
-        # Fix Hwy when it's the road name
-        pattern = "^Hwy "
-        m = re.search(pattern, value, re.IGNORECASE)
-        if m is not None:
-            newvalue = value[3:]
-            self.value = "Highway" + newvalue
-
         return self.value
 
     def ismodified(self):
-        return modified
+        return self.modified
 
