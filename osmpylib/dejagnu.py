@@ -67,7 +67,7 @@ class dejagnu(object):
                 self.fails(msg)
             else:
                 self.xfails(msg)
-            self.verbose("Got \'" + instr + "\', expected \'" + expected + "\'")
+            self.verbose("\tGot \'" + instr + "\', expected \'" + expected + "\'")
             return False
         
     def totals(self):
@@ -75,8 +75,12 @@ class dejagnu(object):
         print("-------")
         if self.passed > 0:
             print("Total passed: %r " % self.passed)
+        if self.xpassed > 0:
+            print("Total Xpassed: %r " % self.xpassed)
         if self.failed > 0:
             print("Total failed: %r " % self.failed)
+        if self.xfailed > 0:
+            print("Total Xfailed: %r " % self.xfailed)
         if self.untested > 0:
             print("Total untested: %r " % self.untested)
         if self.unresolved > 0:
