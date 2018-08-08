@@ -51,13 +51,14 @@ class kmlfile(object):
             self.file.close()
             self.file = False
         
-    def placemark(self, ):
+    def placemark(self, name="", type="", data=""):
         self.file.write('        <Placemark>\n')
-        self.file.write('            <name>' + record['name'] + '</name>\n')
+        if len(name) > 0:
+            self.file.write('            <name>' + name + '</name>\n')
         style = '#fixme'
-        way = record['way']
         if type == 'waypoint':
             style = self.wayStyle()
+            self.file.write('            ' + str(data))
         elif type == 'line':
             color = self.lineColor()
             style = '#line_' + color
@@ -75,7 +76,7 @@ class kmlfile(object):
             self.file.write(way + '\n')
             self.file.write('        </Polygon>\n')
             self.file.write('        <styleUrl>' + style + '</styleUrl>\n')
-            self.file.write('      </Placemark>\n')
+        self.file.write('      </Placemark>\n')
 
     def wayStyle(self):
         logging.warning("Unimplemented")
