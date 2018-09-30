@@ -18,20 +18,22 @@
 # 
 
 from sys import argv
+import os
+import sys
+sys.path.append(os.path.dirname(argv[0]) + '../osmpylib')
 import xmltodict
 import getopt
 import glob
-import os
 import odk
 import ODKForm
-import gisnode
+# import gisnode
 from osm import osmfile
 import csv
 #import kml
 import logging
 from fastkml import kml
 #from shapely.geometry import Point, LineString, Polygon
-import pdb                      # FIXME: remove later
+import epdb                      # FIXME: remove later
 
 
 def find_all(name, path):
@@ -60,7 +62,7 @@ class config(object):
         self.options['indir'] = os.getcwd()
         self.options['outdir'] = os.getcwd()
         self.options['logging'] = 0
-        self.options['convfile'] = "default.conv"
+        self.options['convfile'] = "odk.conv"
         try:
             lines = gosmfile.readlines()
         except Exception as inst:
@@ -111,13 +113,13 @@ class config(object):
             elif opt == '--format' or opt == '-f':
                 self.options['format'] = val
                 format = val
-            elif opt == "--outfile" or opt == '-o':
+            elif opt == "--outdir" or opt == '-o':
                 self.options['outdir'] = val
             elif opt == "--indir" or opt == '-i':
                 self.options['indir'] = val
             elif opt == "--verbose" or opt == '-v':
                 self.options['logging'] += 1
-                logging.basicConfig(filename='example.log',level=logging.DEBUG)
+                logging.basicConfig(filename='odkdump.log',level=logging.DEBUG)
             elif opt == "convfile" or opt == '-c':
                 self.options['convfile'] = val
                             
@@ -131,10 +133,10 @@ class config(object):
     def usage(self, argv):
         print(argv[0] + ": options: ")
         print("""\t--help(-h)   Help
-\t--format[-f]  output format [osm, kml, cvs] (default=osm)
-\t--outdir(-o)  Output directory
-\t--infile(-i)  Input file name
-\t--verbose(-v) Verbosity level
+\t--format[-f]    output format [osm, kml, cvs] (default=osm)
+\t--outdir(-o)    Output directory
+\t--infile(-i)    Input directory containing forms,instances
+\t--verbose(-v)   Verbosity level
 \t--convfile(-c)  Conversion data file name
 
 This program scans the top level directory for ODK data files as produced
@@ -148,17 +150,25 @@ file containing all the waypoints entered using that form.
         for i, j in self.options.items():
             print("\t%s: %s" % (i, j))
 
+# The logfile contains multiple runs, so add a useful delimiter
+logging.info("-----------------------\nStarting: %r " % argv)
+
 # Process the command line arguments
 args = config(argv)
-# print(args)
-
-if args.get('logging') == 1:
-    logging.basicConfig(level=logging.INFO)
-elif args.get('logging') == 2:
-    logging.basicConfig(level=logging.DEBUG)
 
 topdir = args.get('indir')
-# outfile = open(args.get('outfile'), 'w')
+#outdir = open(args.get('outdir'), 'w')
+
+# if verbose, dump to the terminal as well as the logfile.
+if args.get('verbose') == 1:
+    root = logging.getLogger()
+    root.setLevel(logging.DEBUG)
+
+    ch = logging.StreamHandler(sys.stdout)
+    ch.setLevel(logging.DEBUG)
+    formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
+    ch.setFormatter(formatter)
+    root.addHandler(ch)
 
 #file = open("/work/Mapping/ODK/Test.xml")
 #odkform = ODKForm.ODKForm()
@@ -186,7 +196,7 @@ def parse(instance, form):
         for field in doc['data']:
             if field == 'meta' or field == '@id':
                 continue
-            print("FIELD = %r" % field)
+            # print("FIELD = %r" % field)
             nodesets = form[1]['nodesets']
             # Get the type of this nodeset
             ftype = ""
@@ -203,8 +213,10 @@ def parse(instance, form):
                 gps = doc['data'][field].split(' ')
                 #print("\tGPS: %r" % gps)
             elif ftype == 'string':
-                #print("\tString: %r" % doc['data'][field])
-                alltags.append(osm.makeTag(field, doc['data'][field]))
+                #logging.debug("\tString: %r" % doc['data'][field])
+                tmptag = osm.makeTag(field, doc['data'][field])
+                if doc['data'][field] is not None: 
+                    alltags.append(osm.makeTag(field, doc['data'][field]))
             elif ftype == 'int':
                 number = doc['data'][field]
                 #print('\tInt %r' % number)
@@ -212,21 +224,27 @@ def parse(instance, form):
                     alltags.append(osm.makeTag(field, number))
                     # Select fields usually are a yes/no.
             elif ftype == 'select':
-                #print('\tSelect: ' + str(doc['data'][field]))
+                #print('\tMulti Select: %r' % str(doc['data'][field]))
                 if doc['data'][field]:
                     for data in doc['data'][field].split(' '):
-                        #print("DATA: " + data)
-                        alltags.append(osm.makeTag(field, data))
+                        #print("DATA1: %r" % data)
+                        tmptag = osm.makeTag(field, data)
+                        #print("FOOOO1: %r" % tmptag)
+                        if len(tmptag) > 0:
+                            alltags.append(osm.makeTag(field, data))
             elif ftype == 'select1':
-                #print('Multi Select')
+                #print('Select')
                 if doc['data'][field]:
                     for data in doc['data'][field].split(' '):
-                        #print("DATA: " + data)
+                        #print("DATA2: %r" % data)
+                        tmptag = osm.makeTag(field, data)
+                        #print("FOOOO2: %r" % tmptag)
                         alltags.append(osm.makeTag(field, data))
                         #print("FIXME: %r" % (gps, field))
+
     ret = dict()
     ret['GPS'] = gps
-    ret['TAGS'] = alltags
+    ret['TAGS'] = osm.cleanup(alltags)
 
     return ret
 #                try:
@@ -354,7 +372,7 @@ for form in forms.items():
 
     if format == 'osm':
         outfile = form[0]
-        osm = osmfile(args, outfile)
+        osm = osmfile(args, outdir + '/' + outfile)
         osm.header()
     # elif format == 'csv':
     #     csvfile = open('/tmp/' + form + '.csv', 'w', newline='')
@@ -385,8 +403,8 @@ for form in forms.items():
                         #osm.node(data['GPS'][0], data['GPS'][1], data['TAGS'])
                         osm.node(data['TAGS'], attrs)
                         #osm.node(data['TAGS'], attrs)
-                    except Exception as inst:
-                        print("FIXME: %r %r" % (data, inst))
+                    except:
+                        logging.warning(" has no GPS coordinates")
 
     if format == 'osm':
         osm.footer()

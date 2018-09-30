@@ -1,7 +1,7 @@
 #!/usr/bin/python3
 
 # 
-#   Copyright (C) 2017   Free Software Foundation, Inc.
+#   Copyright (C) 2017,2018ee Software Foundation, Inc.
 # 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -48,7 +48,7 @@ class ODKForm(object):
         pass
 
     def parse(self, file):
-        logging.info("Parsing file %r" % file.name)
+        print("Parsing form %r" % file.name)
         doc = etree.parse(file)
 
         head = list()
@@ -122,9 +122,15 @@ class ODKForm(object):
             except:
                 continue
             if docit.tag[index:] == 'bind':
+                #logging.debug("DOCIT.TAG: %r" % docit.tag)
                 # import pdb; pdb.set_trace()
-                btype = docit.attrib['type']
-                bname = docit.attrib['nodeset'].replace("/data/","")
+                try:
+                    #print("DOCIT.ATTRIB: %r" % docit.attrib)
+                    btype = docit.attrib['type']
+                    bname = docit.attrib['nodeset'].replace("/data/","")
+                except:
+                    btype = "unknown"
+                    bname = "unknown"
                 nodesets[bname] = btype
 
         self.xmlfile = dict()
