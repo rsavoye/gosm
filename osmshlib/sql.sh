@@ -52,6 +52,11 @@ sql_file ()
 	# We only want trails that aren't ski trails, as piste routes get different
 	# colors. The only way we can tell the difference is if the piste:type tag
 	# exists.
+	nws*)
+	    cat <<EOF >> ${sqlout}
+SELECT osm_id,name,tags->'alt_name',tags->'addr:state',ST_AsKML(way) FROM planet_osm_line SORT WHERE boundary='firezone' AND name!='' AND tags->'addr:state'='AZ';
+EOF
+	    ;;
 	road*)
 	    cat <<EOF >> ${sqlout}
 SELECT line.osm_id,line.name,ST_AsKML(line.way),line.highway,line.surface,line.access,line.tags->'smoothness',line.tags->'tracktype',tags->'alt_name',tags->'4wd_only',service from planet_osm_line AS line WHERE (line.highway!='') AND (line.highway!='path' AND line.highway!='footway' AND line.highway!='cycleway');
@@ -159,6 +164,11 @@ EOF
 	hut*)
 	    cat <<EOF >> ${sqlout}
 SELECT osm_id,name,ST_AsKML(way),tourism,tags->'phone',tags->'email',tags->'website',tags->'addr:street',tags->'addr:housenumber' from planet_osm_point WHERE tourism='wilderness_hut' OR tourism='alpine_hut' ${polysql};
+EOF
+	    ;;
+	place*)
+	    cat <<EOF >> ${sqlout}
+SELECT osm_id,name,ST_AsKML(way),place from planet_osm_point WHERE place='hamlet' OR place='village' OR place='town' OR place='isolated_dwelling';
 EOF
 	    ;;
 	lodging)

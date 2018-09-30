@@ -23,6 +23,24 @@
 # for highways. Different types and surfaces have tags signifying what type
 # it is.
 
+parse_nws()
+{
+#    echo "TRACE: $*"
+
+    local line="$1"
+    declare -A data=()
+
+    data[OSMID]="`echo ${line} | cut -d '|' -f 1`"
+    data[NAME]="`echo ${line} | cut -d '|' -f 2`"
+    data[ALTNAME]="`echo ${line} | cut -d '|' -f 3`"
+    data[STATE]="`echo ${line} | cut -d '|' -f 4`"
+    line="`echo ${line} | cut -d '|' -f 5`" 
+    data[WAY]="`echo ${line} | grep -o "<LineString>.*</LineString>" | sed -e 's:<LineString>::' -e 's:</LineString>::'`"
+
+    data[COLOR]="RED"
+    echo `declare -p data`
+    return 0
+}
 
 parse_addresses()
 {
@@ -36,7 +54,7 @@ parse_addresses()
     data[NUMBER]="`echo ${line} | cut -d '|' -f 3`"
     data[STREET]="`echo ${line} | cut -d '|' -f 4`"
     data[FULLNAME]="`echo ${line} | cut -d '|' -f 5`"
-    data[NAME]="${data[NUMBER]}"
+    data[NAME]="${data[NUMBER]} ${data[STREET]}"
 
     data[ICON]='BUILDING'
 
@@ -504,6 +522,23 @@ parse_helicopter()
 	helipad) data[ICON]="HELIPAD" ;;
 	*) ;;
     esac
+
+    echo `declare -p data`
+    return 0
+}
+
+parse_place()
+{
+#    echo "TRACE: $*"
+
+    local line="$1"
+    declare -A data=()
+
+    data[OSMID]="`echo ${line} | cut -d '|' -f 1`"
+    data[NAME]="`echo ${line} | cut -d '|' -f 2`"
+    data[WAY]="`echo ${line} | cut -d '|' -f 3`"
+    data[PLACE]="`echo ${line} | cut -d '|' -f 4`"
+    data[ICON]='TOWN'
 
     echo `declare -p data`
     return 0
