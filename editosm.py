@@ -173,6 +173,8 @@ tag = dict()
 doc = etree.parse(infile)
 members = list()
 modified = False
+fix = correct.correct()
+
 for docit in doc.getiterator():
     #print("TAG: %r" % docit.tag)
     if docit.tag == 'node':
@@ -181,7 +183,7 @@ for docit in doc.getiterator():
         for elit in docit.getiterator():
             newvalue = ""
             for ref,value in elit.items():
-                fix = correct.correct()
+
                 if ref == 'k':
                     k = value
                 elif ref == 'v':
@@ -213,6 +215,7 @@ for docit in doc.getiterator():
         #     pass
         for elit in docit.getiterator():
             modified = False
+            newvalue = ""
             for ref,value in elit.items():
                 if ref == 'ref':
                     refs.append(value)
@@ -220,11 +223,14 @@ for docit in doc.getiterator():
                     k = value
                     continue
                 elif ref == 'v':
-                    if k == 'name':
-                        v = string.capwords(value)
+                    if k == 'addr:street' or k == 'name' or k == 'alt_name':
+                        newvalue = fix.alphaNumeric(value)
+                        newvalue = fix.abbreviation(newvalue)
+                        newvalue = fix.compass(newvalue)
+                        newvalue = string.capwords(newvalue)
                     else:
-                        v = value
-                    tag = osmout.makeTag(k, v)
+                        newvalue = value
+                    tag = osmout.makeTag(k, newvalue)
                     tags.append(tag)
                 else:
                     attrs[ref] = value
