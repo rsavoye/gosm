@@ -1,0 +1,63 @@
+tag,DeletionFlag,Ignore
+tag,ROUTE,Ignore
+tag,STATUS,Ignore
+tag,DATE_EDITE,Ignore
+tag,HUTF_ID,Ignore
+tag,SEG_NB,Ignore
+tag,SEG_ID,Ignore
+tag,SEG_LENG,Ignore
+tag,FSN,name
+tag,PRD,Ignore
+tag,RD,Ignore
+tag,STS,Ignore
+tag,POD,Ignore
+tag,ASN,Ignore
+tag,ROC,Ignore
+tag,LFR,Ignore
+tag,LTO,Ignore
+tag,RFR,Ignore
+tag,RTO,Ignore
+tag,PCNL,Ignore
+tag,PCNR,Ignore
+tag,ESNL,Ignore
+tag,ESNR,Ignore
+tag,ASN2,Ignore
+tag,FUNC_1,highway
+tag,CONDITIO_1,Ignore
+tag,SURFACE_1,surface
+tag,JURISDIC_1,access
+
+attribute,surface,Asphalt,asphalt
+attribute,surface,Asphalt (High Load),asphalt
+attribute,surface,Bladed
+attribute,surface,Chip andamp; Seal,chip
+attribute,surface,Dust Control
+attribute,surface,Gravel,gravel
+attribute,surface,Mag Chloride
+attribute,surface,Maintained Native,dirt
+attribute,surface,Pit Run
+attribute,surface,Primitive,dirt
+
+attribute,access,BLM,Ignore
+attribute,access,CDOT,Ignore
+attribute,access,City,Ignore
+attribute,access,County,Ignore
+attribute,access,County\HOA,Ignore
+attribute,access,DOT,Ignore
+attribute,access,Naturita,Ignore
+attribute,access,NPS,Ignore
+attribute,access,Nucla,Ignore
+attribute,access,Olathe,Ignore
+attribute,access,Other Countys,Ignore
+attribute,access,Private,private
+attribute,access,Public Access,public
+attribute,access,USFS,Ignore
+
+attribute,highway,Local Road,tertiary
+attribute,highway,Local Street,tertiary
+attribute,highway,Major Arterial,primary
+attribute,highway,Major Collector,trunk
+attribute,highway,Minor Arterial,secondary
+attribute,highway,Minor Collector,secondary
+attribute,highway,Primitive,track
+attribute,highway,Rural Road,unclassified
