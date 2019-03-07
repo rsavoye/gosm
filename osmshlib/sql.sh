@@ -62,6 +62,11 @@ EOF
 SELECT line.osm_id,line.name,ST_AsKML(line.way),line.highway,line.surface,line.access,line.tags->'smoothness',line.tags->'tracktype',tags->'alt_name',tags->'4wd_only',service from planet_osm_line AS line WHERE (line.highway!='') AND (line.highway!='path' AND line.highway!='footway' AND line.highway!='cycleway');
 EOF
 	    ;;
+	parcel*)
+	    cat <<EOF >> ${sqlout}
+SELECT line.osm_id,line.name,ST_AsKML(line.way),line.tags->'addr:street',tags->'adrr:full',tags->'addr:housenumber' from planet_osm_line AS line;
+EOF
+	    ;;
 	trails)
 #		cat <<EOF >> ${sqlout}
 #SELECT line.osm_id,line.name,line.tags->'sac_scale',line.tags->'bicycle',line.tags->'mtb:scale:imba',line.access,ST_AsKML(line.way) FROM planet_osm_line AS line, dblink('dbname=polygons', 'select name,geom FROM boundary') AS poly(name name,geom geometry) WHERE poly.name='${polygon}' AND (ST_Crosses(line.way,poly.geom) OR ST_Contains(poly.geom,line.way)) AND (line.highway='footway' OR line.highway = 'path');
