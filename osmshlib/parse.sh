@@ -543,3 +543,44 @@ parse_place()
     echo `declare -p data`
     return 0
 }
+
+# Parse a line that is the output of the SQL query
+# $1 - A line of text from the SQL query output
+parse_parcel()
+{
+#    echo "TRACE: $*"
+
+    local line="$1"
+    declare -A data=()
+
+    data[OSMID]="`echo ${line} | cut -d '|' -f 1`"
+    data[NAME]="`echo ${line} | cut -d '|' -f 2`"
+    data[WAY]="`echo ${line} | grep -o "<LineString>.*</LineString>" | sed -e 's:<LineString>::' -e 's:</LineString>::'`"
+    data[STREET]="`echo ${line} | cut -d '|' -f 3`"
+    data[FULL]="`echo ${line} | cut -d '|' -f 4`"
+    data[NUMBER]="`echo ${line} | cut -d '|' -f 5`"
+    if test x"${data[FULL]}" != x; then
+	data[DESCRIPTION]="${data[FULL]}"
+    fi
+
+    data[FILL]="yellow"
+    case "${data[NAME]}" in
+	"United States Department Of Agriculture") data[FILL]="green" ;;
+	"United States Of America") data[FILL]="green" ;;
+	"U S Government") data[FILL]="green" ;;
+	"US Government") data[FILL]="green" ;;
+	"United States*") data[FILL]="green" ;;
+	"Usda Forest Service") data[FILL]="green" ;;
+	"Us Forest Service") data[FILL]="green" ;;
+	"Boulder County") data[FILL]="blue" ;;
+	"County Of Boulder") data[FILL]="blue" ;;
+	"City Of Boulder") data[FILL]="blue" ;;
+	*) ;;
+    esac
+
+    local width="1"
+    data[WIDTH]="${width}"
+
+    echo `declare -p data`
+    return 0
+}
