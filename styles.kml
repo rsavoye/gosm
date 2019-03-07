@@ -383,13 +383,61 @@
     <color>ff008000</color>
   </LineStyle>
 </Style>
-<Style id="Polygon">
+<Style id="PolygonRed">
   <LineStyle>
-    <color>7f0000ff</color>
+    <color>ff0000ff</color>
     <width>4</width>
   </LineStyle>
   <PolyStyle>
     <color>7f0000ff</color>
+    <colorMode>normal</colorMode>
+    <fill>1</fill>
+    <outline>1</outline>
+  </PolyStyle>
+</Style>
+<Style id="PolygonGreen">
+  <LineStyle>
+    <color>ff0000ff</color>
+    <width>4</width>
+  </LineStyle>
+  <PolyStyle>
+    <color>ff0000ff</color>
+    <colorMode>normal</colorMode>
+    <fill>1ff008000</fill>
+    <outline>1</outline>
+  </PolyStyle>
+</Style>
+<Style id="PolygonYellow">
+  <LineStyle>
+    <color>ff0000ff</color>
+    <width>4</width>
+  </LineStyle>
+  <PolyStyle>
+    <color>ffffff00</color>
+    <colorMode>normal</colorMode>
+    <fill>1</fill>
+    <outline>1</outline>
+  </PolyStyle>
+</Style>
+<Style id="PolygonPurple">
+  <LineStyle>
+    <color>ff0000ff</color>
+    <width>4</width>
+  </LineStyle>
+  <PolyStyle>
+    <color>ff800080</color>
+    <colorMode>normal</colorMode>
+    <fill>1</fill>
+    <outline>1</outline>
+  </PolyStyle>
+</Style>
+<Style id="PolygonBlue">
+  <LineStyle>
+    <color>ff0000ff</color>
+    <width>4</width>
+  </LineStyle>
+  <PolyStyle>
+    <color>ffff0000</color>
     <colorMode>normal</colorMode>
     <fill>1</fill>
     <outline>1</outline>
