@@ -1,0 +1,12 @@
+<OGRVRTDataSource>
+  <OGRVRTLayer name="Addresses">
+    <SrcDataSource>NFPD.osm</SrcDataSource>
+    <LayerSRS>WGS84</LayerSRS>
+    <SrcSQL>SELECT name,addr_housenumber as num, 'LABEL(f:"Times New
+    Roman",s:25px,t:{num})' as OGR_STYLE FROM points
+    WHERE 'addr:housenumber' is not NULL AND 'addr:full' is not NULL</SrcSQL>
+    <Field name="num"/>
+    <Field name="name"/>
+  </OGRVRTLayer>
+</OGRVRTDataSource>
+

@@ -1,0 +1,5 @@
+A VRT file is used to specify layers to be added to a GeoPDF, for example, addresses or LZs. Then use this
+command line to add the layer to the GeoPDF.
+
+gdal_translate -of PDF  -a_srs epsg:3857  XXXXX.pdf YYYYY.pdf -co OGR_DATASOURCE=names.vrt  -co OGR_DISPLAY_FIELD="num" -co OGR_DISPLAY_LAYER_NAMES="Names"
+

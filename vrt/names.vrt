@@ -1,0 +1,9 @@
+<OGRVRTDataSource>
+  <OGRVRTLayer name="Names">
+    <SrcDataSource>NFPD.osm</SrcDataSource>
+    <LayerSRS>WGS84</LayerSRS>
+    <SrcSQL>SELECT name, 'LABEL(f:"Times New Roman",s:25px,t:{name})' as OGR_STYLE FROM points WHERE name is not NULL</SrcSQL>
+    <Field name="name"/>
+  </OGRVRTLayer>
+</OGRVRTDataSource>
+
