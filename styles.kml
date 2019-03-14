@@ -385,11 +385,11 @@
 </Style>
 <Style id="PolygonRed">
   <LineStyle>
-    <color>ff0000ff</color>
+    <color>2f0000ff</color>
     <width>4</width>
   </LineStyle>
   <PolyStyle>
-    <color>7f0000ff</color>
+    <color>3f0000ff</color>
     <colorMode>normal</colorMode>
     <fill>1</fill>
     <outline>1</outline>
@@ -397,11 +397,11 @@
 </Style>
 <Style id="PolygonGreen">
   <LineStyle>
-    <color>ff0000ff</color>
+    <color>2f0000ff</color>
     <width>4</width>
   </LineStyle>
   <PolyStyle>
-    <color>ff0000ff</color>
+    <color>3f0000ff</color>
     <colorMode>normal</colorMode>
     <fill>1ff008000</fill>
     <outline>1</outline>
@@ -409,11 +409,11 @@
 </Style>
 <Style id="PolygonYellow">
   <LineStyle>
-    <color>ff0000ff</color>
+    <color>2f0000ff</color>
     <width>4</width>
   </LineStyle>
   <PolyStyle>
-    <color>ffffff00</color>
+    <color>3fffff00</color>
     <colorMode>normal</colorMode>
     <fill>1</fill>
     <outline>1</outline>
@@ -421,11 +421,11 @@
 </Style>
 <Style id="PolygonPurple">
   <LineStyle>
-    <color>ff0000ff</color>
+    <color>2f0000ff</color>
     <width>4</width>
   </LineStyle>
   <PolyStyle>
-    <color>ff800080</color>
+    <color>3f800080</color>
     <colorMode>normal</colorMode>
     <fill>1</fill>
     <outline>1</outline>
@@ -433,11 +433,11 @@
 </Style>
 <Style id="PolygonBlue">
   <LineStyle>
-    <color>ff0000ff</color>
+    <color>2f0000ff</color>
     <width>4</width>
   </LineStyle>
   <PolyStyle>
-    <color>ffff0000</color>
+    <color>3fff0000</color>
     <colorMode>normal</colorMode>
     <fill>1</fill>
     <outline>1</outline>
