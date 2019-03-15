@@ -64,7 +64,12 @@ EOF
 	    ;;
 	parcel*)
 	    cat <<EOF >> ${sqlout}
-SELECT line.osm_id,line.name,ST_AsKML(line.way),line.tags->'addr:street',tags->'adrr:full',tags->'addr:housenumber' from planet_osm_line AS line;
+SELECT line.osm_id,line.name,ST_AsKML(line.way),line.tags->'addr:full',tags->'adrr:street',tags->'addr:housenumber' from planet_osm_line AS line;
+EOF
+	    ;;
+	subdivision*)
+	    cat <<EOF >> ${sqlout}
+SELECT line.osm_id,line.name,ST_AsKML(line.way) from planet_osm_line AS line;
 EOF
 	    ;;
 	trails)

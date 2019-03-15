@@ -37,7 +37,7 @@ topdir="`dirname ${osmbin}`"
 
 # This is a list of supported subsets of data to extract.
 supportedlines="trails piste roads"
-supportedpoints="emergency lodging huts wifi waterfall swimming historic camp trailhead peak hotspring firewater helicopter milestone addresses nws places"
+supportedpoints="emergency lodging huts wifi waterfall swimming historic camp trailhead peak hotspring firewater helicopter milestone addresses nws places parcels subdivision"
 supported="${supportedlines} ${supportedpoints}"
 
 usage()
@@ -132,6 +132,8 @@ subnames[addresses]="Addresses"
 subnames[roads]="Roads"
 subnames[trails]="Hiking Trails"
 subnames[milestone]="Mile Markers"
+subnames[parcel]="Parcels"
+subnames[subdivisions]="Subdivisions"
 
 debug=yes
 

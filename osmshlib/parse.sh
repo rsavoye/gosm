@@ -556,9 +556,9 @@ parse_parcel()
     data[OSMID]="`echo ${line} | cut -d '|' -f 1`"
     data[NAME]="`echo ${line} | cut -d '|' -f 2`"
     data[WAY]="`echo ${line} | grep -o "<LineString>.*</LineString>" | sed -e 's:<LineString>::' -e 's:</LineString>::'`"
-    data[STREET]="`echo ${line} | cut -d '|' -f 3`"
     data[FULL]="`echo ${line} | cut -d '|' -f 4`"
-    data[NUMBER]="`echo ${line} | cut -d '|' -f 5`"
+    data[STREET]="`echo ${line} | cut -d '|' -f 5`"
+    data[NUMBER]="`echo ${line} | cut -d '|' -f 6`"
     if test x"${data[FULL]}" != x; then
 	data[DESCRIPTION]="${data[FULL]}"
     fi
@@ -578,6 +578,28 @@ parse_parcel()
 	*) ;;
     esac
 
+    local width="1"
+    data[WIDTH]="${width}"
+
+    echo `declare -p data`
+    return 0
+}
+
+# Parse a line that is the output of the SQL query
+# $1 - A line of text from the SQL query output
+parse_subdivision()
+{
+#    echo "TRACE: $*"
+
+    local line="$1"
+    declare -A data=()
+
+    data[OSMID]="`echo ${line} | cut -d '|' -f 1`"
+    data[NAME]="`echo ${line} | cut -d '|' -f 2`"
+    data[WAY]="`echo ${line} | grep -o "<LineString>.*</LineString>" | sed -e 's:<LineString>::' -e 's:</LineString>::'`"
+    data[DESCRIPTION]="${data[NAME]}"
+
+    data[FILL]="yellow"
     local width="1"
     data[WIDTH]="${width}"
 
