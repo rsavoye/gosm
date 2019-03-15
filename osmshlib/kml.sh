@@ -145,11 +145,24 @@ EOF
     fi
 
     fi
-    if test x"${data[FILL]}" != x; then
-	cat <<EOF >> ${outfile}
-            <styleUrl>#Polygon</styleUrl>
-EOF
-    fi
+
+    case "${data[FILL]}" in
+	"red")
+	    echo "<styleUrl>#PolygonRed</styleUrl>" >> ${outfile}
+	    ;;
+	"green")
+	    echo "<styleUrl>#PolygonGreen</styleUrl>" >> ${outfile}
+	    ;;
+	"yellow")
+	    echo "<styleUrl>#PolygonYellow</styleUrl>" >> ${outfile}
+	    ;;
+	"purple")
+	    echo "<styleUrl>#PolygonPurple</styleUrl>" >> ${outfile}
+	    ;;
+	"blue")
+	    echo "<styleUrl>#PolygonBlue</styleUrl>" >> ${outfile}
+	    ;;
+    esac
 
     # echo "FIXME: $outfile"
     # Create the description popup box
@@ -158,10 +171,13 @@ EOF
 	for i in ${!data[@]}; do
 	    case $i in
 		# ignore these, they're not part of the descriptiom
-		WIDTH|FILL|NAME|WAY|ICON|TOURISM|AMENITY|WATERWAY|HIGHWAY|EMERGENCY|COLOR|MILESTONE|STREET|NUMBER)
+		WIDTH|FILL|FULL|NAME|WAY|ICON|TOURISM|AMENITY|WATERWAY|HIGHWAY|EMERGENCY|COLOR|MILESTONE|STREET|NUMBER|BOUNDARY|ADMIN_LEVEL)
 		;;
 		ISIN)
 		    echo "Is In: ${data[ISIN]}" >> ${outfile}
+		;;
+		DESCRIPTION)
+		    echo "${data[DESCRIPTION]}" >> ${outfile}
 		;;
 		OSMID)
 		    if test x$"{data[NUMBER]" = x; then
@@ -203,8 +219,10 @@ EOF
 	cat <<EOF >> ${outfile}
         <Polygon>
             <extrude>1</extrude>
+            <outerBoundaryIs><LinearRing>
             <altitudeMode>relativeToGround</altitudeMode>
              ${data[WAY]}
+            </LinearRing></outerBoundaryIs>
         </Polygon>
 EOF
     fi
