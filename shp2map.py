@@ -54,8 +54,8 @@ if dd.get('verbose') == 1:
 # Read Shape (ERSI) file
 shp = shp.shpfile(dd)
 if dd.get('infile') == "":
-    # infile = "/work/Mapping/Utah/Trails/Trails-new.shp"
-    infile = "/work/Mapping/MapData/Gilpin/RoadCenterlines/RoadCenterlines-new"
+    usage()
+    quit()
 else:
     infile = dd.get('infile')
 
