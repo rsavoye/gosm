@@ -93,13 +93,11 @@ class myconfig(object):
 
     # Basic help message
     def usage(self, argv):
-        print(argv[0] + ": options: ")
+        print(argv[0] + ": options:")
         print("""\t--help(-h)   Help
-\t--user          OSM User name (optional)
-\t--uid           OSM User ID (optional)
 \t--dump{-d)      Dump the data
 \t--outfile(-o)   Output file name
-\t--infile(-i)    Input file name
+\t--infile(-i)    Input file names
 \t--verbose(-v)   Enable verbosity
         """)
         quit()
@@ -171,13 +169,23 @@ with open(infiles[1], mode='r') as csvfile:
         #logging.debug("str_sfx: %r" % row["str_sfx"])
         #logging.debug("legalDscr: %r" % row["legalDscr"])
         #logging.debug("mailingAddr1: %r" % row["mailingAddr1"])
-        lines[row["folio"]] = row
-        line_count += 1
+        if ('folio' in row) is True:
+            # It's a Boulder County file
+            lines[row["folio"]] = row
+        if ('GCX_OID' in row) is True:
+            # it's a Gilpin County file
+            lines[row["Parcel_ID"]] = row
+            line_count += 1
     print(f'Processed {line_count} lines.')
 
 # These are the tags we put in the output file
-process_tags = [ "owner_name", "mailingAddr1", "str_num", "str" ]
-tag_name = { "owner_name":"name", "mailingAddr1":"addr:full", "str_num":"addr:housenumber", "str":"addr:street" }
+if ('folio' in row) is True:
+    process_tags = [ "owner_name", "mailingAddr1", "str_num", "str" ]
+    tag_name = { "owner_name":"name", "mailingAddr1":"addr:full", "str_num":"addr:housenumber", "str":"addr:street" }
+elif ('GCX_OID' in row) is True:
+    # it's a Gilpin County file
+    process_tags = [ "Site_Address", "First_Owner_Name", "Recorded_Acreage", "Property_Description" ]
+    tag_name = { "Site_Address":"addr:full", "First_Owner_Name":"name", "Recorded_Acreage":"acres", "Property_Description":"description" }
 
 doc = etree.parse(infiles[0])
 for docit in doc.getiterator():
@@ -199,20 +207,32 @@ for docit in doc.getiterator():
                         if (value in lines) is False:
                             tag = osmout.makeTag(k, newvalue)
                             tags.append(tag)
-                            print("no data for %r" % value)
+                            logging.debug("no data for %r" % value)
                             continue
-                        print("got data for %r" % lines[value])
+                        logging.debug("got data for %r" % lines[value])
                         line = lines[value]
                         for key in process_tags:
-                            newvalue = line[key]
-                            newvalue = fix.alphaNumeric(newvalue)
-                            newvalue = fix.abbreviation(newvalue)
-                            #newvalue = fix.compass(newvalue)
-                            newvalue = string.capwords(newvalue)
+                            try:
+                                newvalue = line[key]
+                                if len(newvalue) > 0:
+                                    newvalue = fix.alphaNumeric(newvalue)
+                                    newvalue = fix.abbreviation(newvalue)
+                                    #newvalue = fix.compass(newvalue)
+                                    newvalue = string.capwords(newvalue)
+                                else:
+                                    continue
+                            except Exception as inst:
+                                logging.error("Key %r failed! %r" % (key, inst))
+                                newvalue = "fixme"
                             tag = osmout.makeTag(tag_name[key], newvalue)
                             tags.append(tag)
                 else:
                     attrs[ref] = value
+        logging.debug("TAGS: %r" % tags)
+        tag = osmout.makeTag("boundary", "administrative")
+        tags.append(tag)
+        tag = osmout.makeTag("admin_level", "10")
+        tags.append(tag)
         osmout.makeWay(refs, tags, attrs)
     elif docit.tag == 'node':
         tags = list()
