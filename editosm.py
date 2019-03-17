@@ -22,6 +22,9 @@
 # specifically and nothing else by just capitalizing he first letter of
 # every word in the value, and expanding abbreviations for road types tp
 # their full name.
+#
+# ogr2ogr -t_srs EPSG:4326 Roads-new.shp hwy_road_aerial.shp
+
 import os
 import sys
 import re
@@ -223,7 +226,7 @@ for docit in doc.getiterator():
                     k = value
                     continue
                 elif ref == 'v':
-                    if k == 'addr:street' or k == 'name' or k == 'alt_name':
+                    if k == 'addr:street' or k == 'name' or k == 'alt_name'  or k == 'addr:city' or k == 'addr:full':
                         newvalue = fix.alphaNumeric(value)
                         newvalue = fix.abbreviation(newvalue)
                         newvalue = fix.compass(newvalue)
