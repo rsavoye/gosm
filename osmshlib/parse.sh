@@ -37,7 +37,7 @@ parse_nws()
     line="`echo ${line} | cut -d '|' -f 5`" 
     data[WAY]="`echo ${line} | grep -o "<LineString>.*</LineString>" | sed -e 's:<LineString>::' -e 's:</LineString>::'`"
 
-    data[COLOR]="RED"
+    data[FILL]="yellow"
     echo `declare -p data`
     return 0
 }
@@ -554,17 +554,17 @@ parse_parcel()
     declare -A data=()
 
     data[OSMID]="`echo ${line} | cut -d '|' -f 1`"
-    data[NAME]="`echo ${line} | cut -d '|' -f 2`"
+    name="`echo ${line} | cut -d '|' -f 2`"
     data[WAY]="`echo ${line} | grep -o "<LineString>.*</LineString>" | sed -e 's:<LineString>::' -e 's:</LineString>::'`"
-    data[FULL]="`echo ${line} | cut -d '|' -f 4`"
+    data[ADDRFULL]="`echo ${line} | cut -d '|' -f 4`"
     data[STREET]="`echo ${line} | cut -d '|' -f 5`"
     data[NUMBER]="`echo ${line} | cut -d '|' -f 6`"
-    if test x"${data[FULL]}" != x; then
-	data[DESCRIPTION]="${data[FULL]}"
-    fi
+    data[DESCRIPTION]="${name}"
+    data[ADDRFULL]="`echo ${line} | cut -d '|' -f 8`"
+    data[PARCELID]="`echo ${line} | cut -d '|' -f 7`"
 
     data[FILL]="yellow"
-    case "${data[NAME]}" in
+    case "${name}" in
 	"United States Department Of Agriculture") data[FILL]="green" ;;
 	"United States Of America") data[FILL]="green" ;;
 	"U S Government") data[FILL]="green" ;;
@@ -574,7 +574,11 @@ parse_parcel()
 	"Us Forest Service") data[FILL]="green" ;;
 	"Boulder County") data[FILL]="blue" ;;
 	"County Of Boulder") data[FILL]="blue" ;;
+	"County Of Gilpin") data[FILL]="blue" ;;
 	"City Of Boulder") data[FILL]="blue" ;;
+	"City Of Central City") data[FILL]="blue" ;;
+	"City Of Black Hawk") data[FILL]="blue" ;;
+	"City Of Black Hawk Colorado") data[FILL]="blue" ;;
 	*) ;;
     esac
 

@@ -167,11 +167,39 @@ EOF
     # echo "FIXME: $outfile"
     # Create the description popup box
     if test ${#data[@]} -gt 3; then
- 	echo "<description>"  >> ${outfile} 	
+	echo "<description>"  >> ${outfile}
 	for i in ${!data[@]}; do
 	    case $i in
 		# ignore these, they're not part of the descriptiom
-		WIDTH|FILL|FULL|NAME|WAY|ICON|TOURISM|AMENITY|WATERWAY|HIGHWAY|EMERGENCY|COLOR|MILESTONE|STREET|NUMBER|BOUNDARY|ADMIN_LEVEL)
+		WIDTH|FILL|FULL|WAY|ICON|TOURISM|AMENITY|WATERWAY|HIGHWAY|EMERGENCY|COLOR|MILESTONE|STREET|NUMBER|BOUNDARY|ADMIN_LEVEL|NAME)
+		;;
+		ALT_NAME)
+		    # Since both field may exist, only set the name once.
+		    #echo "FIXME1: \"${data[NAME]}\""
+		    #echo "FIXME2: \"${data[ALT_NAME]}\""
+		    # if the name is an OSM ID, check the alt_name field
+		    # 	if test "`echo ${data[NAME]} | grep -c '^-[0-9]*'`" -gt 0; then
+		    # 	    if test x"${data[ALT_NAME]}" != x; then
+		    # 		echo "${data[ALT_NAME]}" >> ${outfile}
+		    # 	    else
+		    # 		echo "Unknown" >> ${outfile}
+		    # 	    fi
+		    # 	    hit=true
+		    # 	    continue
+		    # 	fi
+		    # else
+		    # 	hit=false
+		    # fi
+		    if test x"${data[NAME]}" = x -a x"${data[ALT_NAME]}" != x; then
+			echo "${data[ALT_NAME]}" >> ${outfile}
+			continue
+		    elif test x"${data[NAME]}" != x -a x"${data[ALT_NAME]}" != x; then
+			echo "Parcel ID: ${data[ALT_NAME]}" >> ${outfile}
+			continue
+		    fi
+		;;
+		ADDRFULL)
+		    echo "${data[ADDRFULL]}" >> ${outfile}
 		;;
 		ISIN)
 		    echo "Is In: ${data[ISIN]}" >> ${outfile}
@@ -218,11 +246,12 @@ EOF
     if test x"${data[FILL]}" != x; then
 	cat <<EOF >> ${outfile}
         <Polygon>
-            <extrude>1</extrude>
-            <outerBoundaryIs><LinearRing>
-            <altitudeMode>relativeToGround</altitudeMode>
-             ${data[WAY]}
-            </LinearRing></outerBoundaryIs>
+            <outerBoundaryIs>
+               <LinearRing>
+                <altitudeMode>relativeToGround</altitudeMode>
+                ${data[WAY]}
+              </LinearRing>
+	    </outerBoundaryIs>
         </Polygon>
 EOF
     fi

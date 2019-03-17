@@ -54,7 +54,7 @@ sql_file ()
 	# exists.
 	nws*)
 	    cat <<EOF >> ${sqlout}
-SELECT osm_id,name,tags->'alt_name',tags->'addr:state',ST_AsKML(way) FROM planet_osm_line SORT WHERE boundary='firezone' AND name!='' AND tags->'addr:state'='AZ';
+SELECT osm_id,name,tags->'alt_name',tags->'addr:state',ST_AsKML(way) FROM planet_osm_line SORT WHERE boundary='administrative' AND name!='';
 EOF
 	    ;;
 	road*)
@@ -64,7 +64,7 @@ EOF
 	    ;;
 	parcel*)
 	    cat <<EOF >> ${sqlout}
-SELECT line.osm_id,line.name,ST_AsKML(line.way),line.tags->'addr:full',tags->'adrr:street',tags->'addr:housenumber' from planet_osm_line AS line;
+SELECT line.osm_id,line.name,ST_AsKML(line.way),line.tags->'addr:full',tags->'adrr:street',tags->'addr:housenumber',tags->'alt_name',tags->'addr:full' from planet_osm_line AS line;
 EOF
 	    ;;
 	subdivision*)
