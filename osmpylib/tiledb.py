@@ -92,16 +92,13 @@ class tiledb(object):
         self.vrt.SetGCPs(gcpList, str(''))  # Add the GCPs to the VRT file
         self.makeTileDir(tile)
         infile = path + str(tile.y) + "." + type
-        logging.debug("INFILE: %r" % infile)
         tmpfile = self.formatPath(tile) + '/' + str(tile.y) + '-tmp.tif'
         outfile = self.formatPath(tile) + '/' + str(tile.y) + '.tif'
         imgfile = gdal.Open(infile, gdal.GA_ReadOnly)
         ds1 = gdal.Translate(tmpfile, imgfile, GCPs = gcpList)
         gdal.Warp(outfile, ds1, format='GTiff')
         self.tifs.append(outfile)
-        logging.debug("TMPFILE: %r" % tmpfile)
-        logging.debug("OUTFILE: %r" % outfile)
-        #os.remove(tmpfile)
+        os.remove(tmpfile)
 
     def getTifs(self):
         return self.tifs
