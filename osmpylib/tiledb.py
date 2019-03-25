@@ -31,6 +31,7 @@ import mercantile
 from osgeo import gdal
 from string import Template
 from osgeo import ogr
+import filetype
 
 
 class tiledb(object):
@@ -70,7 +71,7 @@ class tiledb(object):
                     pass
         self.tilesize = 256
 
-    def createVRT(self, tile=None):
+    def createVRT(self, tile=None, type="png"):
         self.drv = gdal.GetDriverByName("VRT")
         path = self.formatPath(tile) + '/'
         self.vrt = self.drv.Create(path + str(tile.y) + ".vrt", self.tilesize, self.tilesize, bands=0)
@@ -78,23 +79,9 @@ class tiledb(object):
         self.vrt.AddBand(gdal.GDT_Byte)
         band = self.vrt.GetRasterBand(1)
         #idx = "%s/%s/%s" % (tile.z, tile.x, tile.y)
-        # Changed `x_size` and `y_size` to `x_source_size` and `y_source_size`
-        # on the "SourceProperties" line, since the `RasterXSize` and `RasterYSize`
-        # attributes should correspond to this source file's pixel size.
         simple = '<SourceFilename relativeToVRT=\"1\">%s</SourceFilename>' % (str(tile.y) + ".png")
-        #self.metadata['SimpleSource'] = simple
-#        simple += '<SourceBand>%i</SourceBand>' % 1
-#        simple += '<SourceProperties RasterXSize="%i" RasterYSize="%i" DataType="Real" BlockXSize="%i" BlockYSize="%i"/>' % (self.tilesize, self.tilesize, self.tilesize, 16)
-#        simple += '<SrcRect xOff="%i" yOff="%i" xSize="%i" ySize="%i"/>' % (0, 0, self.tilesize, self.tilesize)
-#        simple += '<DstRect xOff="%i" yOff="%i" xSize="%i" ySize="%i"/>' % (0, 0, self.tilesize, self.tilesize)
-
-        pngfile = gdal.Open(path + str(tile.y) + ".png", gdal.GA_ReadOnly)
-        #png = gdal.GetDriverByName("GTiff")
-        #png.CreateCopy(path + str(tile.y) + "X.tif", pngfile)
-        #png.SetMetadataItem()
         
         band.SetMetadataItem("SimpleSource", simple)
-        #epdb.set_trace()
         bbox = mercantile.bounds(tile)
         # x=0.0, y=0.0, z=0.0, pixel=0.0, line=0.0,
         gcpList = [gdal.GCP(bbox.west,bbox.north,0,0,0),
@@ -102,22 +89,17 @@ class tiledb(object):
                    gdal.GCP(bbox.east,bbox.south,0,256,256),
                    gdal.GCP(bbox.west,bbox.south,0,0,256)]
         self.vrt.SetGCPs(gcpList, str(''))  # Add the GCPs to the VRT file
-        #ds1 = gdal.Translate(self.formatPath(tile) + str(tile.y) + '.tif',self.vrt,outputSRS = 'EPSG:26711',GCPs = gcpList)
         self.makeTileDir(tile)
+        infile = path + str(tile.y) + "." + type
+        logging.debug("INFILE: %r" % infile)
         outfile = self.formatPath(tile) + '/' + str(tile.y) + '.tif'
-        infile = self.formatPath(tile) + '/' + str(tile.y) + '.png'
-        #ds = gdal.Open(infile)
-        ds1 = gdal.Translate(outfile,pngfile,GCPs = gcpList)
-        #warped = gdal.Warp('', , format = 'MEM', tps = True)
-
-        # self.COMPLEX_SOURCE_XML.substitute(
-        #     Dataset='test.vrt',
-        #     SourceBand=1,
-        #     SourceType='GTiff',
-        #     xSize=self.tilesize,
-        #     ySize=self.tilesize,
-        #     xOff=0,
-        #     yOff=0)
+        #if type != "png":
+            #epdb.set_trace()
+            #return
+        #    imgfile = gdal.Open(path + str(tile.y) + ".jpg", gdal.GA_ReadOnly)
+        #else:
+        imgfile = gdal.Open(infile, gdal.GA_ReadOnly)
+        ds1 = gdal.Translate(outfile,imgfile,GCPs = gcpList)
 
     def download(self, url=None, dest=None):
         if url is None:
@@ -146,16 +128,28 @@ class tiledb(object):
             tmp = item.split("/")
             end = len(tmp)
             path = "/%s/%s/%s/" % (tmp[end-3], tmp[end-2], tmp[end-1].replace('.png', ''))
-            logging.debug("PATH: %r" % path)
             self.dest = self.storage + path
-        #epdb.set_trace()
-        if os.path.exists(self.dest + tmp[end-1]) is False:
+        ext = tmp[end-1].split('.')
+        # FIXME: If there is no extension, assume i's a jpg sat image, and ERSI
+        # swaps X and Y in the path name, so adjust
+        if len(ext) < 2:
+            path = "/%s/%s/%s/" % (tmp[end-3], tmp[end-1], tmp[end-2])
+            filespec = path + tmp[end-2] + ".jpg"
+            self.dest = self.storage + path
+        else:
+            filespec = self.dest + tmp[end-1]
+        if os.path.exists(filespec) is False:
             try:
                 dl = SmartDL(url, dest=self.dest, connect_default_logger=True)
                 print("DEST: %r" % dl.get_dest())
                 dl.start()
                 if dl.isSuccessful():
-                    logging.info("Speed: %s" % dl.get_speed(human=True))
+                    if dl.get_speed() > 0.0:
+                        logging.info("Speed: %s" % dl.get_speed(human=True))
+                    # ERSI does't append the filename
+                    if filetype.guess(dl.get_dest()).extension == "jpg":
+                        os.rename(dl.get_dest(), self.dest + tmp[end-2] + ".jpg")
+                        logging.debug("Renamed %r" % dl.get_dest())
             except:
                 logging.error("Couldn't download from %r!" % item)
                 return False
@@ -197,6 +191,19 @@ class tiledb(object):
             return False
         return os.path.exists(self.formatPath(tile))
 
+    def getZDirs(self):
+        top = self.storage + '/'
+        files = list()
+        if os.path.isdir(top) is True:
+            zdirs = os.listdir(top)
+            #print(zdirs)
+            for dir in zdirs:
+                if os.path.isdir(dir) is True:
+                    files.append(dir)
+        else:
+            xdirs = list()
+        return zdirs
+
     def getXDirs(self, zoom=14):
         top = self.storage + '/' + str(zoom)
         files = list()
@@ -237,3 +244,6 @@ class tiledb(object):
             
             if metadata.get(gdal.DCAP_CREATE) == "YES":
                 print("Driver {} supports CreateCopy() method.".format(fileformat))
+
+    def mosaic(self):
+        self.getXDirs();
