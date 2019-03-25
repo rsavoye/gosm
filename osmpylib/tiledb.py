@@ -47,6 +47,7 @@ class tiledb(object):
         """Initialize and manage a database of map tiles"""
         self.perms = 0o755
         self.dest = None
+        self.tifs = list()
         if top is None:
             self.storage = "./tiledb"
         else:
@@ -92,14 +93,18 @@ class tiledb(object):
         self.makeTileDir(tile)
         infile = path + str(tile.y) + "." + type
         logging.debug("INFILE: %r" % infile)
+        tmpfile = self.formatPath(tile) + '/' + str(tile.y) + '-tmp.tif'
         outfile = self.formatPath(tile) + '/' + str(tile.y) + '.tif'
-        #if type != "png":
-            #epdb.set_trace()
-            #return
-        #    imgfile = gdal.Open(path + str(tile.y) + ".jpg", gdal.GA_ReadOnly)
-        #else:
         imgfile = gdal.Open(infile, gdal.GA_ReadOnly)
-        ds1 = gdal.Translate(outfile,imgfile,GCPs = gcpList)
+        ds1 = gdal.Translate(tmpfile, imgfile, GCPs = gcpList)
+        gdal.Warp(outfile, ds1, format='GTiff')
+        self.tifs.append(outfile)
+        logging.debug("TMPFILE: %r" % tmpfile)
+        logging.debug("OUTFILE: %r" % outfile)
+        #os.remove(tmpfile)
+
+    def getTifs(self):
+        return self.tifs
 
     def download(self, url=None, dest=None):
         if url is None:
@@ -138,6 +143,7 @@ class tiledb(object):
             self.dest = self.storage + path
         else:
             filespec = self.dest + tmp[end-1]
+        logging.debug("FILESPEC: %r" % filespec)
         if os.path.exists(filespec) is False:
             try:
                 dl = SmartDL(url, dest=self.dest, connect_default_logger=True)
