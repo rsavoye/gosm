@@ -19,13 +19,6 @@
 
 # ogr2ogr -t_srs EPSG:4326 Roads-new.shp hwy_road_aerial.shp
 
-"""
-This programs merges two data files together. The first one is an OSM
-file of parcel boundaries, which usually includes no metadata. The
-metadata is in another file, usually a CSV file. So this splices the
-metadata from the CSV file into the OSM file.
-"""
-
 # lynx  https://clarity.maptiles.arcgis.com/arcgis/rest/services/World_Imagery/MapServer/tile/14/6193/3359
 # lynx https://c.tile.opentopomap.org/14/3359/6193.png
 # lynx https://caltopo.s3.amazonaws.com/topo/13/1679/3096.png
@@ -41,6 +34,9 @@ sys.path.append(os.path.dirname(argv[0]) + '/osmpylib')
 import urllib.request
 import math
 import mercantile
+from tiledb import tiledb
+import rasterio
+from rasterio.merge import merge
 
 
 class myconfig(object):
@@ -79,7 +75,7 @@ class myconfig(object):
                 self.options['poly'] = val
             elif opt == "--verbose" or opt == '-v':
                 self.options['verbose'] = True
-                logging.basicConfig(filename='parcels.log',level=logging.DEBUG)
+                logging.basicConfig(filename='tiler.log',level=logging.DEBUG)
 
     def get(self, opt):
         try:
@@ -94,6 +90,7 @@ class myconfig(object):
 
     # Basic help message
     def usage(self, argv):
+        print("This program downloads map tiles and the geo-references them")
         print(argv[0] + ": options:")
         print("""\t--help(-h)   Help
 \t--outdir(-o)   Output directory for tiles
@@ -191,39 +188,40 @@ print(xapi)
 # https://basemap.nationalmap.gov/ArcGIS/rest/services/USGSTopo/MapServer/tile/13/3102/1696
 # http://mt0.google.com/vt/lyrs=h&x=1696&y=3102&z=13&scale=1
 
-zoom = 13
+topodb = tiledb("Topo")
+terraindb = tiledb("Terrain")
+hybridb = tiledb("Hybrid")
+ersidb = tiledb("ERSI")
+
+zoom = 13,14
 foo1 = mercantile.Bbox(bbox[0], bbox[2], bbox[1], bbox[3])
 foo2 = list(mercantile.tiles(bbox[0], bbox[2], bbox[1], bbox[3], zoom))
 for tile in foo2:
     #print("%r, %r, %r" % (tile.x, tile.y, tile.z))
-    url = "http://a.tile.opentopomap.org/%s/%s/%s.png" % (tile.z, tile.x, tile.y)
-    print("lynx " + url)
+    url = ".tile.opentopomap.org/%s/%s/%s.png" % (tile.z, tile.x, tile.y)
+    mirrors = [ "https://a" + url, "https://b" + url, "https://c" + url ]
+    topodb.download(mirrors)
+    topodb.createVRT(tile, "png")
     
     url = "http://clarity.maptiles.arcgis.com/arcgis/rest/services/World_Imagery/MapServer/tile/%s/%s/%s" % (tile.z, tile.y, tile.x)
-    print("lynx " + url)
-
-    url = "http://caltopo.s3.amazonaws.com/topo/%s/%s/%s.png" % (tile.z, tile.x, tile.y)
-    print("lynx " + url)
-
-    url = "http://mt0.google.com/vt/lyrs=h&x=%s&y=%s&z=%s&scale=1" % (tile.x, tile.y, tile.z)
-    print("lynx " + url + '\n')
-
-
-#tiles = deg2num(bbox[3], bbox[0], zoom)
-#print(tiles)
-#url = "https://c.tile.opentopomap.org/%s/%s/%s.png" % (zoom, tiles[0], tiles[1])
-#print(url)
-#print("------------------------")
+    #print("lynx " + url)
+    ersidb.download(url)
+    ersidb.createVRT(tile, "jpg")
     
-#     url = "https://clarity.maptiles.arcgis.com/arcgis/rest/services/World_Imagery/MapServer/tile/%s/%s/%s" % (t.z, t.x, t.y)
-#     print(url)
-#     print("------------------------")
+    url = "http://caltopo.s3.amazonaws.com/topo/%s/%s/%s.png" % (tile.z, tile.x, tile.y)
+    #print("lynx " + url)
+    terraindb.download(url)
+    terraindb.createVRT(tile, "png")
 
-#     url = "https://caltopo.s3.amazonaws.com/topo/%s/%s/%s.png" % (t.z, t.x, t.y)
-#     print(url)
+    url = ".google.com/vt/lyrs=h&x=%s&y=%s&z=%s&scale=1" % (tile.x, tile.y, tile.z)
+    mirrors = [ "https://mt0" + url, "https://mt1" + url, "https://mt2" + url ]
+    #print("lynx " + url + '\n')
+    #hybridb.download(mirrors)
+
+#print("getXDirs: %r" % tiledb.getXDirs(13))
+#print("getYDirs(%r) %r" % (tile.x, tiledb.getYDirs(13, tile.x)))
+#print(tiledb.writeTile(tile))
     
 # lat increases northward, 0 - 90
 # lon increases eastward, 0 - 180 
-# X goes from 0 (left edge is 180 °W) to 2zoom − 1 (right edge is 180 °E)
-# Y goes from 0 (top edge is 85.0511 °N) to 2zoom − 1 (bottom edge is 85.0511 °S) in a
 
