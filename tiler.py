@@ -54,6 +54,8 @@ class myconfig(object):
         self.options['verbose'] = False
         self.options['poly'] = ""
         self.options['source'] = ""
+        self.options['format'] = None
+        self.options['force'] = False
         self.options['outdir'] = "./out"
 
         try:
@@ -205,8 +207,8 @@ for tile in foo2:
     
     url = "http://clarity.maptiles.arcgis.com/arcgis/rest/services/World_Imagery/MapServer/tile/%s/%s/%s" % (tile.z, tile.y, tile.x)
     #print("lynx " + url)
-    ersidb.download(url)
-    ersidb.createVRT(tile, "jpg")
+    #ersidb.download(url)
+    #ersidb.createVRT(tile, "jpg")
     
     url = "http://caltopo.s3.amazonaws.com/topo/%s/%s/%s.png" % (tile.z, tile.x, tile.y)
     #print("lynx " + url)
@@ -218,9 +220,29 @@ for tile in foo2:
     #print("lynx " + url + '\n')
     #hybridb.download(mirrors)
 
-#print("getXDirs: %r" % tiledb.getXDirs(13))
-#print("getYDirs(%r) %r" % (tile.x, tiledb.getYDirs(13, tile.x)))
-#print(tiledb.writeTile(tile))
+tifs = list()
+for tile in foo2:
+    file = topodb.formatPath(tile) + "/" + str(tile.y) + ".tif"
+    src = rasterio.open(file)
+    logging.debug("Y: %r" % file)
+    tifs.append(src)
+
+# # Merge function returns a single mosaic array and the transformation info
+
+mosaic, out_trans = merge(tifs)
+out_meta = src.meta.copy()
+
+# Update the metadata
+out_meta.update({"driver": "GTiff",
+                  "height": mosaic.shape[1],
+                  "width": mosaic.shape[2],
+                  "transform": out_trans,
+                  "crs": "+proj=utm +zone=35 +ellps=GRS80 +units=m +no_defs "
+                  }
+                 )
+
+with rasterio.open("Topo.tif", "w", **out_meta) as dest:
+    dest.write(mosaic)
     
 # lat increases northward, 0 - 90
 # lon increases eastward, 0 - 180 
