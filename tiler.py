@@ -37,7 +37,7 @@ import mercantile
 from tiledb import tiledb
 import rasterio
 from rasterio.merge import merge
-
+from rasterio.enums import ColorInterp
 
 class myconfig(object):
     def __init__(self, argv=list()):
@@ -52,6 +52,7 @@ class myconfig(object):
         self.options = dict()
         self.options['logging'] = True
         self.options['verbose'] = False
+        self.options['zooms'] = 13,14,15
         self.options['poly'] = ""
         self.options['source'] = ""
         self.options['format'] = None
@@ -59,8 +60,8 @@ class myconfig(object):
         self.options['outdir'] = "./out"
 
         try:
-            (opts, val) = getopt.getopt(argv[1:], "h,o:,s:,p:,v,",
-                ["help", "outdir", "source", "poly", "verbose"])
+            (opts, val) = getopt.getopt(argv[1:], "h,o:,s:,p:,v,z:,f:",
+                ["help", "outdir", "source", "poly", "verbose", "zooms", "format"])
         except getopt.GetoptError as e:
             logging.error('%r' % e)
             self.usage(argv)
@@ -75,6 +76,10 @@ class myconfig(object):
                 self.options['source'] = val
             elif opt == "--poly" or opt == '-p':
                 self.options['poly'] = val
+            elif opt == "--zooms" or opt == '-z':
+                self.options['zooms'] = ( val )
+            elif opt == "--format" or opt == '-f':
+                self.options['format'] = val
             elif opt == "--verbose" or opt == '-v':
                 self.options['verbose'] = True
                 logging.basicConfig(filename='tiler.log',level=logging.DEBUG)
@@ -95,11 +100,14 @@ class myconfig(object):
         print("This program downloads map tiles and the geo-references them")
         print(argv[0] + ": options:")
         print("""\t--help(-h)   Help
-\t--outdir(-o)   Output directory for tiles
-\t--source(-s)   Map source (default, topo)
-                 ie... topo,terrain,sat
-\t--poly(-p)     Input OSM polyfile
-\t--verbose(-v)  Enable verbosity
+\t--outdir(-o)  Output directory for tiles
+\t--source(-s)  Map source (default, topo)
+                ie... topo,terrain,sat
+\t--poly(-p)    Input OSM polyfile
+\t--format(-f)  Output file format,
+                ie... GTiff, PDF, AQM, OSMAND
+\t--zooms(-z)   Zoom levels to download
+\t--verbose(-v) Enable verbosity
         """)
         quit()
 
@@ -195,35 +203,42 @@ terraindb = tiledb("Terrain")
 hybridb = tiledb("Hybrid")
 ersidb = tiledb("ERSI")
 
-zoom = 13,14
-foo1 = mercantile.Bbox(bbox[0], bbox[2], bbox[1], bbox[3])
-foo2 = list(mercantile.tiles(bbox[0], bbox[2], bbox[1], bbox[3], zoom))
-for tile in foo2:
-    #print("%r, %r, %r" % (tile.x, tile.y, tile.z))
-    url = ".tile.opentopomap.org/%s/%s/%s.png" % (tile.z, tile.x, tile.y)
-    mirrors = [ "https://a" + url, "https://b" + url, "https://c" + url ]
-    topodb.download(mirrors)
-    topodb.createVRT(tile, "png")
-    
-    url = "http://clarity.maptiles.arcgis.com/arcgis/rest/services/World_Imagery/MapServer/tile/%s/%s/%s" % (tile.z, tile.y, tile.x)
-    #print("lynx " + url)
-    #ersidb.download(url)
+zoom = 13,14,15,16
+#foo2 = list(mercantile.tiles(bbox[0], bbox[2], bbox[1], bbox[3], dd.get('zooms')))
+tiles = list(mercantile.tiles(bbox[0], bbox[2], bbox[1], bbox[3], zoom))
+
+# (OpenTopo uses Z/X/Y.png format
+url = ".tile.opentopomap.org/{0}/{1}/{2}.png"
+mirrors = [ "https://a" + url, "https://b" + url, "https://c" + url ]
+if topodb.download(mirrors, tiles):
+    logging.info("Done downloading Terrain data")
+    #topodb.createVRT(tile, "png")
+
+url = "http://clarity.maptiles.arcgis.com/arcgis/rest/services/World_Imagery/MapServer/tile/$Z/$Y/$X"
+mirrors = [url]
+if ersidb.download(mirrors, tiles):
+    logging.info("Done downloading Sat imagery")
     #ersidb.createVRT(tile, "jpg")
     
-    url = "http://caltopo.s3.amazonaws.com/topo/%s/%s/%s.png" % (tile.z, tile.x, tile.y)
-    #print("lynx " + url)
-    terraindb.download(url)
-    terraindb.createVRT(tile, "png")
+url = "http://caltopo.s3.amazonaws.com/topo/$Z/$X/$Y.png"
+mirrors = [url]
+if terraindb.download(mirrors, tiles):
+    logging.info("Done downloading Topo data")
+    pass
+    #terraindb.createVRT(tile, "png")
 
-    url = ".google.com/vt/lyrs=h&x=%s&y=%s&z=%s&scale=1" % (tile.x, tile.y, tile.z)
-    mirrors = [ "https://mt0" + url, "https://mt1" + url, "https://mt2" + url ]
-    #print("lynx " + url + '\n')
-    #hybridb.download(mirrors)
+url = ".google.com/vt/lyrs=h&x=%s&y=%s&z=%s&scale=1" % (tile.x, tile.y, tile.z)
+mirrors = [ "https://mt0" + url, "https://mt1" + url, "https://mt2" + url ]
+#print("lynx " + url + '\n')
+#hybridb.download(mirrors)
+
+logging.info("Had %r errors downloadong Terrain data" % topodb.getErrors())
 
 tifs = list()
-for tile in foo2:
+for tile in tiles:
     file = topodb.formatPath(tile) + "/" + str(tile.y) + ".tif"
     src = rasterio.open(file)
+    src.colorinterp = [ColorInterp.red, ColorInterp.green, ColorInterp.blue]
     logging.debug("Y: %r" % file)
     tifs.append(src)
 
@@ -241,7 +256,8 @@ out_meta.update({"driver": "GTiff",
                   }
                  )
 
-with rasterio.open("Topo.tif", "w", **out_meta) as dest:
+with rasterio.open("Terrain.tif", "w", **out_meta) as dest:
+#dest.colorinterp = [ ColorInterp.red, ColorInterp.green, ColorInterp.blue]
     dest.write(mosaic)
     
 # lat increases northward, 0 - 90
