@@ -29,20 +29,12 @@ sys.path.append(os.path.dirname(argv[0]) + '/osmpylib')
 from pySmartDL import SmartDL
 import mercantile
 from osgeo import gdal
-from string import Template
 from osgeo import ogr
-import filetype
+from urllib.parse import urlparse
 
 
 class tiledb(object):
-    COMPLEX_SOURCE_XML = Template('''
-    <$SourceType>
-        <SourceFilename relativeToVRT="0">$Dataset</SourceFilename>
-        <SourceBand>$SourceBand</SourceBand>
-        <SrcRect xOff="$xOff" yOff="$yOff" xSize="$xSize" ySize="$ySize"/>
-        <DstRect xOff="0" yOff="0" xSize="$xSize" ySize="$ySize"/>
-    </$SourceType> ''')
-    
+    """Class to manage a map tiles"""
     def __init__(self, top=None, levels=None):
         """Initialize and manage a database of map tiles"""
         self.perms = 0o755
@@ -52,10 +44,10 @@ class tiledb(object):
             self.storage = "./tiledb"
         else:
             self.storage = "./tiledb/" + top
-        # Default zooms levels. Below these are usually too far away to
+        # Default zoom levels. Below these are usually too far away to
         # be useful, and above this, the files are huge.
         if levels is None:
-            self.zooms = [13, 14, 15, 16, 17]
+            self.zooms = ( 13, 14, 15, 16 )
         else:
             self.zooms = levels
         self.makeDir(self.storage)
@@ -71,16 +63,21 @@ class tiledb(object):
                 except:
                     pass
         self.tilesize = 256
+        self.errors = 0
 
-    def createVRT(self, tile=None, type="png"):
+    def createVRT(self, filespec=None, tile=None):
+        if filespec is None:
+            logging.error("Need to supply a file to process!")
+            return
+
         self.drv = gdal.GetDriverByName("VRT")
-        path = self.formatPath(tile) + '/'
-        self.vrt = self.drv.Create(path + str(tile.y) + ".vrt", self.tilesize, self.tilesize, bands=0)
+        base = os.path.splitext(filespec)
+        self.vrt = self.drv.Create(base[0] + ".vrt", self.tilesize, self.tilesize, bands=0)
         self.metadata = self.drv.GetMetadata()
         self.vrt.AddBand(gdal.GDT_Byte)
         band = self.vrt.GetRasterBand(1)
         #idx = "%s/%s/%s" % (tile.z, tile.x, tile.y)
-        simple = '<SourceFilename relativeToVRT=\"1\">%s</SourceFilename>' % (str(tile.y) + ".png")
+        simple = '<SourceFilename relativeToVRT=\"1\">%s</SourceFilename>' % os.path.basename(filespec)
         
         band.SetMetadataItem("SimpleSource", simple)
         bbox = mercantile.bounds(tile)
@@ -91,73 +88,71 @@ class tiledb(object):
                    gdal.GCP(bbox.west,bbox.south,0,0,256)]
         self.vrt.SetGCPs(gcpList, str(''))  # Add the GCPs to the VRT file
         self.makeTileDir(tile)
-        infile = path + str(tile.y) + "." + type
-        tmpfile = self.formatPath(tile) + '/' + str(tile.y) + '-tmp.tif'
-        outfile = self.formatPath(tile) + '/' + str(tile.y) + '.tif'
-        imgfile = gdal.Open(infile, gdal.GA_ReadOnly)
-        ds1 = gdal.Translate(tmpfile, imgfile, GCPs = gcpList)
-        gdal.Warp(outfile, ds1, format='GTiff')
-        self.tifs.append(outfile)
-        os.remove(tmpfile)
+        # tmpfile = base[0] + '-tmp.tif'
+        # outfile = base[0] + '.tif'
+        # imgfile = gdal.Open(filespec, gdal.GA_ReadOnly)
+        # ds1 = gdal.Translate(tmpfile, imgfile, GCPs = gcpList)
+        # gdal.Warp(outfile, ds1, format='GTiff')
+        # self.tifs.append(outfile)
+        # os.remove(tmpfile)
 
     def getTifs(self):
         return self.tifs
 
-    def download(self, url=None, dest=None):
-        if url is None:
+    def download(self, mirrors=None, tiles=None):
+        """ Download the specified tiles from the list of mirrors"""
+        if mirrors is None:
             logging.error("You need to specify a URL!")
             return None
-        logging.debug("Downloading from: %r" % url)
-        if type(url) == list:
-            item = url[0]
-        else:
-            item = url
-        if item.find('&') > 0:
-            foo = urlparse(item)
-            tmp = item.split('&')
-            end = len(tmp)
-            path = "/%s/%s/%s/" % (tmp[3][2:], tmp[1][2:], tmp[2][2:])
-            self.dest = self.storage + path
-            i = 0
+        if tiles is None:
+            logging.error("You need to specify a tile!")
+            return None
 
-            while i < len(url):
-                #url[i] =  html.escape(url[i])
-                url[i] =  url[i].replace('=', '%3D')
-                url[i] =  url[i].replace('&', '%26')
-                print("FIXME: %r" % url[i])
-                i += 1
-        else:
-            tmp = item.split("/")
-            end = len(tmp)
-            path = "/%s/%s/%s/" % (tmp[end-3], tmp[end-2], tmp[end-1].replace('.png', ''))
-            self.dest = self.storage + path
-        ext = tmp[end-1].split('.')
-        # FIXME: If there is no extension, assume i's a jpg sat image, and ERSI
-        # swaps X and Y in the path name, so adjust
-        if len(ext) < 2:
-            path = "/%s/%s/%s/" % (tmp[end-3], tmp[end-1], tmp[end-2])
-            filespec = path + tmp[end-2] + ".jpg"
-            self.dest = self.storage + path
-        else:
-            filespec = self.dest + tmp[end-1]
-        logging.debug("FILESPEC: %r" % filespec)
-        if os.path.exists(filespec) is False:
+        fixed = ()
+        for tile in tiles:
+            for url in mirrors:
+                new = url.format(tile.z, tile.x, tile.y)
+                fixed = fixed + (new,)
+
+            # Download path for files. Due to how Z/X/Y are arranged,
+            # it's possible the path we use for tile storage isn't
+            # the path part of the URL.
+            self.dest = self.formatPath(tile) + "/"
+            logging.debug("DEST: %r" % self.dest)
+
+            path = urlparse(url)[2]
+            tmp = os.path.splitext(os.path.basename(url))
+            if len(tmp) > 1:
+                ext = tmp[1]
+            else:
+                ext = ""
+            filespec = self.dest + str(tile.y) + ext
+            logging.debug("FILESPEC: %r" % filespec)
+            if os.path.exists(filespec) is True:
+                logging.debug("Tile %r already exists." % filespec)
+                continue
+
             try:
-                dl = SmartDL(url, dest=self.dest, connect_default_logger=True)
-                print("DEST: %r" % dl.get_dest())
+                logging.debug("Downloading %r/%r!" % (self.dest, path))
+                dl = SmartDL(fixed, dest=self.dest, connect_default_logger=True)
+                logging.debug("SmartDL DEST: %r" % fixed[0])
                 dl.start()
-                if dl.isSuccessful():
-                    if dl.get_speed() > 0.0:
-                        logging.info("Speed: %s" % dl.get_speed(human=True))
-                    # ERSI does't append the filename
-                    if filetype.guess(dl.get_dest()).extension == "jpg":
-                        os.rename(dl.get_dest(), self.dest + tmp[end-2] + ".jpg")
-                        logging.debug("Renamed %r" % dl.get_dest())
             except:
-                logging.error("Couldn't download from %r!" % item)
-                return False
-        else:
-            logging.debug("Tile %r already exists." % self.dest)
+                logging.error("Couldn't download from %r!" %  dl.get_errors())
+                self.errors += 1
+            #epdb.set_trace()
+            if dl.isSuccessful():
+                if dl.get_speed() > 0.0:
+                    logging.info("Speed: %s" % dl.get_speed(human=True))
+                    # ERSI does't append the filename
+                tmp = os.path.splitext(dl.get_dest())
+                if len(tmp) ==  1:
+                    os.rename(dl.get_dest(), self.dest + tmp[end-2] + ".jpg")
+                    logging.debug("Renamed %r" % dl.get_dest())
+                    ext = ".jpg"  # FIXME: probably right, but shouldbe a better test
+                else:
+                    ext = tmp[1]
+            self.createVRT(filespec, tile)
         return True
         
     def formatPath(self, tile=None):
@@ -167,6 +162,9 @@ class tiledb(object):
         path = "%s/%s/%s/%s" % (self.storage, tile.z, tile.x, tile.y)
         return path
         
+
+    def getErrors(self):
+        return self.errors
 
     def makeTileDir(self, tile=None):
         if tile is None:
@@ -248,5 +246,32 @@ class tiledb(object):
             if metadata.get(gdal.DCAP_CREATE) == "YES":
                 print("Driver {} supports CreateCopy() method.".format(fileformat))
 
-    def mosaic(self):
-        self.getXDirs();
+    def mosaic(self, tiles=None):
+        if tiles is None:
+            logging.error("Need to specify tiles!")
+            return
+
+        for tile in tiles:
+            file = topodb.formatPath(tile) + "/" + str(tile.y) + ".tif"
+            src = rasterio.open(file)
+            src.colorinterp = [ColorInterp.red, ColorInterp.green, ColorInterp.blue]
+            logging.debug("Y: %r" % file)
+            tifs.append(src)
+
+            # # Merge function returns a single mosaic array and the transformation info
+
+            mosaic, out_trans = merge(tifs)
+            out_meta = src.meta.copy()
+
+            # Update the metadata
+            out_meta.update({"driver": "GTiff",
+                             "height": mosaic.shape[1],
+                             "width": mosaic.shape[2],
+                             "transform": out_trans,
+                             "crs": "+proj=utm +zone=35 +ellps=GRS80 +units=m +no_defs "
+            }
+            )
+
+            with rasterio.open("Terrain.tif", "w", **out_meta) as dest:
+                #dest.colorinterp = [ ColorInterp.red, ColorInterp.green, ColorInterp.blue]
+                dest.write(mosaic)
