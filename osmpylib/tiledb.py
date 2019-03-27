@@ -130,12 +130,10 @@ class tiledb(object):
             if ext == '':
                 filespec = self.dest + str(tile.y) + ".jpg"
             else:
-                filespec = self.dest
+                filespec = self.dest + str(tile.y) + ".png"
 
             #logging.debug("FILESPEC: %r" % filespec)
-            if os.path.exists(filespec) is True:
-                logging.debug("Tile %r already exists." % filespec)
-            else:
+            if os.path.exists(filespec) is False:
                 try:
                     logging.debug("Downloading %r/%r!" % (self.dest, path))
                     dl = SmartDL(fixed, dest=self.dest, connect_default_logger=True)
