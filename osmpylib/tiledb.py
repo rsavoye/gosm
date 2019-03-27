@@ -88,13 +88,13 @@ class tiledb(object):
                    gdal.GCP(bbox.west,bbox.south,0,0,256)]
         self.vrt.SetGCPs(gcpList, str(''))  # Add the GCPs to the VRT file
         self.makeTileDir(tile)
-        # tmpfile = base[0] + '-tmp.tif'
-        # outfile = base[0] + '.tif'
-        # imgfile = gdal.Open(filespec, gdal.GA_ReadOnly)
-        # ds1 = gdal.Translate(tmpfile, imgfile, GCPs = gcpList)
-        # gdal.Warp(outfile, ds1, format='GTiff')
-        # self.tifs.append(outfile)
-        # os.remove(tmpfile)
+        tmpfile = base[0] + '-tmp.tif'
+        outfile = base[0] + '.tif'
+        imgfile = gdal.Open(filespec, gdal.GA_ReadOnly)
+        ds1 = gdal.Translate(tmpfile, imgfile, GCPs = gcpList)
+        gdal.Warp(outfile, ds1, format='GTiff')
+        self.tifs.append(outfile)
+        os.remove(tmpfile)
 
     def getTifs(self):
         return self.tifs
@@ -108,8 +108,8 @@ class tiledb(object):
             logging.error("You need to specify a tile!")
             return None
 
-        fixed = ()
         for tile in tiles:
+            fixed = ()
             for url in mirrors:
                 new = url.format(tile.z, tile.x, tile.y)
                 fixed = fixed + (new,)
@@ -118,40 +118,45 @@ class tiledb(object):
             # it's possible the path we use for tile storage isn't
             # the path part of the URL.
             self.dest = self.formatPath(tile) + "/"
-            logging.debug("DEST: %r" % self.dest)
+            #logging.debug("DEST: %r" % self.dest)
 
             path = urlparse(url)[2]
-            tmp = os.path.splitext(os.path.basename(url))
-            if len(tmp) > 1:
-                ext = tmp[1]
+            tmp = os.path.splitext(os.path.basename(fixed[0]))
+            ext = tmp[1]
+            # If there is no extension, it's a directory. Usually
+            # in that case, it's a jpeg. We test the actual file
+            # type later after it's downloaded, but this is to test
+            # for the existence of an existing file, post download.
+            if ext == '':
+                filespec = self.dest + str(tile.y) + ".jpg"
             else:
-                ext = ""
-            filespec = self.dest + str(tile.y) + ext
-            logging.debug("FILESPEC: %r" % filespec)
+                filespec = self.dest
+
+            #logging.debug("FILESPEC: %r" % filespec)
             if os.path.exists(filespec) is True:
                 logging.debug("Tile %r already exists." % filespec)
-                continue
-
-            try:
-                logging.debug("Downloading %r/%r!" % (self.dest, path))
-                dl = SmartDL(fixed, dest=self.dest, connect_default_logger=True)
-                logging.debug("SmartDL DEST: %r" % fixed[0])
-                dl.start()
-            except:
-                logging.error("Couldn't download from %r!" %  dl.get_errors())
-                self.errors += 1
-            #epdb.set_trace()
-            if dl.isSuccessful():
-                if dl.get_speed() > 0.0:
-                    logging.info("Speed: %s" % dl.get_speed(human=True))
+            else:
+                try:
+                    logging.debug("Downloading %r/%r!" % (self.dest, path))
+                    dl = SmartDL(fixed, dest=self.dest, connect_default_logger=True)
+                    #logging.debug("SmartDL DEST: %r" % fixed[0])
+                    dl.start()
+                except:
+                    logging.error("Couldn't download from %r!" %  dl.get_errors())
+                    self.errors += 1
+                    #epdb.set_trace()
+                if dl.isSuccessful():
+                    if dl.get_speed() > 0.0:
+                        logging.info("Speed: %s" % dl.get_speed(human=True))
                     # ERSI does't append the filename
-                tmp = os.path.splitext(dl.get_dest())
-                if len(tmp) ==  1:
-                    os.rename(dl.get_dest(), self.dest + tmp[end-2] + ".jpg")
-                    logging.debug("Renamed %r" % dl.get_dest())
-                    ext = ".jpg"  # FIXME: probably right, but shouldbe a better test
-                else:
-                    ext = tmp[1]
+                    tmp = os.path.splitext(dl.get_dest())
+                    if ext == '':
+                        os.rename(dl.get_dest(), filespec)
+                        logging.debug("Renamed %r" % dl.get_dest())
+                        ext = ".jpg"  # FIXME: probably right, but shouldbe a better test
+                    else:
+                        ext = tmp[1]
+
             self.createVRT(filespec, tile)
         return True
         
@@ -272,6 +277,6 @@ class tiledb(object):
             }
             )
 
-            with rasterio.open("Terrain.tif", "w", **out_meta) as dest:
-                #dest.colorinterp = [ ColorInterp.red, ColorInterp.green, ColorInterp.blue]
-                dest.write(mosaic)
+        with rasterio.open("Terrain.tif", "w", **out_meta) as dest:
+            #dest.colorinterp = [ ColorInterp.red, ColorInterp.green, ColorInterp.blue]
+            dest.write(mosaic)
