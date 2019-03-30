@@ -39,6 +39,7 @@ import rasterio
 from rasterio.merge import merge
 from rasterio.enums import ColorInterp
 
+
 class myconfig(object):
     def __init__(self, argv=list()):
         # Read the config file to get our OSM credentials, if we have any
@@ -54,14 +55,23 @@ class myconfig(object):
         self.options['verbose'] = False
         self.options['zooms'] = 13,14,15
         self.options['poly'] = ""
-        self.options['source'] = ""
-        self.options['format'] = None
-        self.options['force'] = False
-        self.options['outdir'] = "./out"
+        self.options['source'] = "ersi,topo,terrain"
+        self.options['format'] = "gtiff"
+        #self.options['force'] = False
+        self.options['outdir'] = "./"
+        # FIXME: 
+        self.options['mosaic'] = False
+        self.options['download'] = False
+        self.options['ersi'] = False
+        self.options['topo'] = False
+        self.options['terrain'] = False
+        self.options['gtiff'] = False
+        self.options['pdf'] = False
+        self.options['osmand'] = False
 
         try:
-            (opts, val) = getopt.getopt(argv[1:], "h,o:,s:,p:,v,z:,f:",
-                ["help", "outdir", "source", "poly", "verbose", "zooms", "format"])
+            (opts, val) = getopt.getopt(argv[1:], "h,o:,s:,p:,v,z:,f:,d,m",
+                ["help", "outdir", "source", "poly", "verbose", "zooms", "format", "download", "mosaic"])
         except getopt.GetoptError as e:
             logging.error('%r' % e)
             self.usage(argv)
@@ -76,13 +86,49 @@ class myconfig(object):
                 self.options['source'] = val
             elif opt == "--poly" or opt == '-p':
                 self.options['poly'] = val
+            elif opt == "--download" or opt == '-d':
+                self.options['download'] = True
+            elif opt == "--mosaic" or opt == '-m':
+                self.options['mosaic'] = True
             elif opt == "--zooms" or opt == '-z':
-                self.options['zooms'] = ( val )
+                self.options['zooms'] = ( val.split(',' ) )
             elif opt == "--format" or opt == '-f':
                 self.options['format'] = val
             elif opt == "--verbose" or opt == '-v':
                 self.options['verbose'] = True
                 logging.basicConfig(filename='tiler.log',level=logging.DEBUG)
+
+    def checkOptions(self):
+        """Range check some of the ptions here to reduce cutter when parsing"""
+        logging.info("Range check options")
+        if self.options['poly'] == None:
+            print("ERROR: need to specify a polygon!")
+            usage()
+        for name, val in self.options.items():
+            print("\t%s: %s" % (name, val))
+            if name == "zooms":
+                for i in val:
+                    if int(i) < 14 or int(i) > 18:
+                        print("%r out of zoom range" % i)
+                        self.usage()
+            if name == "source":
+                srcs = val.split(',')
+                for i in srcs:
+                    if i == "ersi" or i == "topo" or i == "terrain":
+                        self.options[i] = True
+                        continue
+                    else:
+                        print("%r unsupported source" % i)
+                        self.usage()
+            if name == "format":
+                fmts = val.split(',')
+                for i in fmts:
+                    if i == "gtiff" or i == "pdf" or i == "osmand":
+                        self.options[i] = True
+                        continue
+                    else:
+                        print("%r unsupported format" % i)
+                        self.usage()
 
     def get(self, opt):
         try:
@@ -96,24 +142,25 @@ class myconfig(object):
             print("\t%s: %s" % (i, j))
 
     # Basic help message
-    def usage(self, argv):
+    def usage(self, argv=["tiler.py"]):
         print("This program downloads map tiles and the geo-references them")
         print(argv[0] + ": options:")
         print("""\t--help(-h)   Help
 \t--outdir(-o)  Output directory for tiles
 \t--source(-s)  Map source (default, topo)
-                ie... topo,terrain,sat
+                ie... topo,terrain,ersi
 \t--poly(-p)    Input OSM polyfile
 \t--format(-f)  Output file format,
                 ie... GTiff, PDF, AQM, OSMAND
-\t--zooms(-z)   Zoom levels to download
+\t--zooms(-z)   Zoom levels to download (14-18)
 \t--verbose(-v) Enable verbosity
         """)
         quit()
 
 
 dd = myconfig(argv)
-dd.dump()
+dd.checkOptions()
+#dd.dump()
 if len(argv) <= 2:
     dd.usage(argv)
 
@@ -203,63 +250,45 @@ terraindb = tiledb("Terrain")
 hybridb = tiledb("Hybrid")
 ersidb = tiledb("ERSI")
 
-zoom = 13,14,15,16
-#foo2 = list(mercantile.tiles(bbox[0], bbox[2], bbox[1], bbox[3], dd.get('zooms')))
+# tiles = list(mercantile.tiles(bbox[0], bbox[2], bbox[1], bbox[3], dd.get('zooms')))
+zoom = 14,15,16
+#zoom =  tuple(dd.get('zooms'))
 tiles = list(mercantile.tiles(bbox[0], bbox[2], bbox[1], bbox[3], zoom))
-
 # (OpenTopo uses Z/X/Y.png format
 url = ".tile.opentopomap.org/{0}/{1}/{2}.png"
 mirrors = [ "https://a" + url, "https://b" + url, "https://c" + url ]
-if topodb.download(mirrors, tiles):
-    logging.info("Done downloading Terrain data")
-    #topodb.createVRT(tile, "png")
+if dd.get('download') and dd.get('topo'):
+    if topodb.download(mirrors, tiles):
+        logging.info("Done downloading Terrain data")
+if dd.get('mosaic') is True and dd.get('topo'):
+    topodb.mosaic(tiles)
 
-url = "http://clarity.maptiles.arcgis.com/arcgis/rest/services/World_Imagery/MapServer/tile/$Z/$Y/$X"
+zoom = 16,17
+tiles = list(mercantile.tiles(bbox[0], bbox[2], bbox[1], bbox[3], zoom))
+url = "http://clarity.maptiles.arcgis.com/arcgis/rest/services/World_Imagery/MapServer/tile/{0}/{2}/{1}"
 mirrors = [url]
-if ersidb.download(mirrors, tiles):
-    logging.info("Done downloading Sat imagery")
-    #ersidb.createVRT(tile, "jpg")
+if dd.get('download') and dd.get('ersi'):
+    if ersidb.download(mirrors, tiles):
+        logging.info("Done downloading Sat imagery")
+if dd.get('mosaic') is True and dd.get('ersi'):
+    ersidb.mosaic(tiles)
     
+zoom = 15,16
+tiles = list(mercantile.tiles(bbox[0], bbox[2], bbox[1], bbox[3], zoom))
 url = "http://caltopo.s3.amazonaws.com/topo/$Z/$X/$Y.png"
 mirrors = [url]
-if terraindb.download(mirrors, tiles):
-    logging.info("Done downloading Topo data")
-    pass
-    #terraindb.createVRT(tile, "png")
+if dd.get('download') and dd.get('terrain'):
+    if terraindb.download(mirrors, tiles):
+        logging.info("Done downloading Topo data")
+if dd.get('mosaic') is True and dd.get('terrain'):        
+    terraindb.mosaic()
 
-url = ".google.com/vt/lyrs=h&x=%s&y=%s&z=%s&scale=1" % (tile.x, tile.y, tile.z)
-mirrors = [ "https://mt0" + url, "https://mt1" + url, "https://mt2" + url ]
+    
+#url = ".google.com/vt/lyrs=h&x=$X&y=$Y&z=$Z&scale=1" % (tile.x, tile.y, tile.z)
+#mirrors = [ "https://mt0" + url, "https://mt1" + url, "https://mt2" + url ]
 #print("lynx " + url + '\n')
 #hybridb.download(mirrors)
 
-logging.info("Had %r errors downloadong Terrain data" % topodb.getErrors())
-
-tifs = list()
-for tile in tiles:
-    file = topodb.formatPath(tile) + "/" + str(tile.y) + ".tif"
-    src = rasterio.open(file)
-    src.colorinterp = [ColorInterp.red, ColorInterp.green, ColorInterp.blue]
-    logging.debug("Y: %r" % file)
-    tifs.append(src)
-
-# # Merge function returns a single mosaic array and the transformation info
-
-mosaic, out_trans = merge(tifs)
-out_meta = src.meta.copy()
-
-# Update the metadata
-out_meta.update({"driver": "GTiff",
-                  "height": mosaic.shape[1],
-                  "width": mosaic.shape[2],
-                  "transform": out_trans,
-                  "crs": "+proj=utm +zone=35 +ellps=GRS80 +units=m +no_defs "
-                  }
-                 )
-
-with rasterio.open("Terrain.tif", "w", **out_meta) as dest:
-#dest.colorinterp = [ ColorInterp.red, ColorInterp.green, ColorInterp.blue]
-    dest.write(mosaic)
-    
-# lat increases northward, 0 - 90
-# lon increases eastward, 0 - 180 
+# # lat increases northward, 0 - 90
+# # lon increases eastward, 0 - 180 
 
