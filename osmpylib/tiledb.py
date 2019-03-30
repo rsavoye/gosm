@@ -19,6 +19,7 @@
 
 # ogr2ogr -t_srs EPSG:4326 Roads-new.shp hwy_road_aerial.shp
 
+import operator
 import os
 import sys
 import logging
@@ -31,6 +32,9 @@ import mercantile
 from osgeo import gdal
 from osgeo import ogr
 from urllib.parse import urlparse
+import rasterio
+from rasterio.merge import merge
+from rasterio.enums import ColorInterp
 
 
 class tiledb(object):
@@ -91,10 +95,13 @@ class tiledb(object):
         tmpfile = base[0] + '-tmp.tif'
         outfile = base[0] + '.tif'
         imgfile = gdal.Open(filespec, gdal.GA_ReadOnly)
-        ds1 = gdal.Translate(tmpfile, imgfile, GCPs = gcpList)
-        gdal.Warp(outfile, ds1, format='GTiff')
-        self.tifs.append(outfile)
-        os.remove(tmpfile)
+        if os.path.exists(filespec):
+            ds1 = gdal.Translate(tmpfile, imgfile, GCPs = gcpList)
+            #gdal.Warp(outfile, ds1, format='GTiff', xRes=30, yRes=30)
+            gdal.Warp(outfile, ds1, format='GTiff', dstSRS='EPSG:4326')
+            self.tifs.append(outfile)
+            os.remove(tmpfile)
+            #print(gdal.Info(outfile))
 
     def getTifs(self):
         return self.tifs
@@ -108,6 +115,7 @@ class tiledb(object):
             logging.error("You need to specify a tile!")
             return None
 
+        logging.info("Downloading %r tiles"  % len(tiles))
         for tile in tiles:
             fixed = ()
             for url in mirrors:
@@ -133,29 +141,38 @@ class tiledb(object):
                 filespec = self.dest + str(tile.y) + ".png"
 
             #logging.debug("FILESPEC: %r" % filespec)
+            worked = False
             if os.path.exists(filespec) is False:
                 try:
-                    logging.debug("Downloading %r/%r!" % (self.dest, path))
+                    #logging.debug("Downloading %r/%r!" % (self.dest, path))
                     dl = SmartDL(fixed, dest=self.dest, connect_default_logger=True)
                     #logging.debug("SmartDL DEST: %r" % fixed[0])
                     dl.start()
                 except:
                     logging.error("Couldn't download from %r!" %  dl.get_errors())
                     self.errors += 1
-                    #epdb.set_trace()
-                if dl.isSuccessful():
-                    if dl.get_speed() > 0.0:
-                        logging.info("Speed: %s" % dl.get_speed(human=True))
-                    # ERSI does't append the filename
-                    tmp = os.path.splitext(dl.get_dest())
-                    if ext == '':
-                        os.rename(dl.get_dest(), filespec)
-                        logging.debug("Renamed %r" % dl.get_dest())
-                        ext = ".jpg"  # FIXME: probably right, but shouldbe a better test
-                    else:
-                        ext = tmp[1]
+                    worked = False
+                    logging.debug("Errors: %r %r" % (self.errors, len(tiles)))
+                try:
+                    if dl.isSuccessful():
+                        if dl.get_speed() > 0.0:
+                            logging.info("Speed: %s" % dl.get_speed(human=True))
+                            # ERSI does't append the filename
+                            tmp = os.path.splitext(dl.get_dest())
+                        if ext == '':
+                            os.rename(dl.get_dest(), filespec)
+                            logging.debug("Renamed %r" % dl.get_dest())
+                            ext = ".jpg"  # FIXME: probably right, but shouldbe a better test
+                        else:
+                            ext = tmp[1]
+                        worked = True
+                except:
+                    worked = False
 
+            #if worked is True:
             self.createVRT(filespec, tile)
+
+        logging.info("Had %r errors downloading %d tiles for data for %r" % (self.errors, len(tiles), os.path.basename(self.storage)))
         return True
         
     def formatPath(self, tile=None):
@@ -249,32 +266,53 @@ class tiledb(object):
             if metadata.get(gdal.DCAP_CREATE) == "YES":
                 print("Driver {} supports CreateCopy() method.".format(fileformat))
 
-    def mosaic(self, tiles=None):
-        if tiles is None:
-            logging.error("Need to specify tiles!")
-            return
+    def mosaic(self, tiles=list(), zoom=tuple()):
+        """Merge all the tiles together to form the basemap"""
 
+        levels = dict()
+        levels['14'] = list()
+        levels['15'] = list()
+        levels['16'] = list()
+        levels['17'] = list()
+        levels['18'] = list()
         for tile in tiles:
-            file = topodb.formatPath(tile) + "/" + str(tile.y) + ".tif"
-            src = rasterio.open(file)
-            src.colorinterp = [ColorInterp.red, ColorInterp.green, ColorInterp.blue]
-            logging.debug("Y: %r" % file)
-            tifs.append(src)
+            path = self.formatPath(tile) + "/" + str(tile.y) + ".tif"
+            if os.path.exists(path):
+                levels[str(tile.z)].append(path)
+        for level in levels:
+            # logging.debug("Opening cache file %r" % self.storage + str(level) + ".txt")
+            cnf = open(self.storage + str(level) + ".txt", "w")
+            #epdb.set_trace()
+            for tile in tiles:
+                if tile.z == int(level):
+                    cnf.write(self.formatPath(tile) + "/" + str(tile.y) + ".tif\n")
+            # logging.debug("Closing cache file %r" % self.storage + str(level) + ".txt")
+            cnf.close()
 
-            # # Merge function returns a single mosaic array and the transformation info
+        # for level in zoom:
+        for level in levels:
+            rios = list()
+            for file in levels[level]:
+                src = rasterio.open(file)
+                #src.colorinterp = [ColorInterp.red, ColorInterp.green, ColorInterp.blue]
+                logging.debug("Y: %r" % file)
+                rios.append(src)
 
-            mosaic, out_trans = merge(tifs)
-            out_meta = src.meta.copy()
+                # Merge function returns a single mosaic array and the transformation info
+                mosaic, out_trans = merge(rios)
+                out_meta = src.meta.copy()
+                #src.close()
 
-            # Update the metadata
-            out_meta.update({"driver": "GTiff",
+                # Update the metadata
+                out_meta.update({"driver": "GTiff",
                              "height": mosaic.shape[1],
                              "width": mosaic.shape[2],
                              "transform": out_trans,
                              "crs": "+proj=utm +zone=35 +ellps=GRS80 +units=m +no_defs "
-            }
-            )
+                }
+                )
 
-        with rasterio.open("Terrain.tif", "w", **out_meta) as dest:
             #dest.colorinterp = [ ColorInterp.red, ColorInterp.green, ColorInterp.blue]
-            dest.write(mosaic)
+            name = os.path.basename(self.storage + str(level))
+            with rasterio.open(name + ".tif", "w", **out_meta) as dest:
+                dest.write(mosaic)
