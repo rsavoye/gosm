@@ -38,6 +38,10 @@ from tiledb import tiledb
 import rasterio
 from rasterio.merge import merge
 from rasterio.enums import ColorInterp
+import overpy
+import osm
+import urllib.request
+from urllib.parse import urlparse
 
 
 class myconfig(object):
@@ -184,7 +188,7 @@ if dd.get('verbose') == 1:
 outfile = dd.get('outfile')
 mod = 'action="modifiy"'
 
-#outfile = open(filespec, "w")
+#poly = poly.poly(dd.get('poly'))
 
 file = open(dd.get('poly'), "r")
 data = list()
@@ -211,7 +215,7 @@ poly = ogr.Geometry(ogr.wkbLinearRing)
 poly.AddGeometry(ring)
 # Get Envelope returns a tuple (minX, maxX, minY, maxY)
 bbox = ring.GetEnvelope()
-print(bbox)
+# print(bbox)
 # print(ring.GetArea())
 # print(ring.Length())
 # kml = ring.ExportToKML()
@@ -220,8 +224,21 @@ print(bbox)
 # minimum latitude, minimum longitude, maximum latitude, maximum longitude
 xbox = "%s,%s,%s,%s" % (bbox[2], bbox[0], bbox[3], bbox[1])
 print("------------------------")
-xapi = "(\nway(%s);\nnode(%s)\nrel(%s)\n<;\n>;\n);\nout meta;" % (str(xbox), str(xbox), str(xbox))
-print(xapi)
+#xapi = "(\n  way(%s);\n  node(%s);\n  rel(%s);\n  <;\n  >;\n);\nout meta;" % (box , xbox, xbox)
+xapi = "(way(%s);node(%s);rel(%s);<;>;);out meta;" % (xbox, xbox, xbox)
+#print(xapi)
+
+polyfile = dd.get('poly')
+polyname = os.path.basename(polyfile.replace(".poly", ""))
+uri = 'https://overpass-api.de/api/interpreter'
+headers = dict()
+headers['Content-Type'] = 'application/x-www-form-urlencoded'
+req = urllib.request.Request(uri, headers=headers)
+x = urllib.request.urlopen(req, data=xapi.encode('utf-8'))
+osmfile = open(polyname + '.osm', 'w')
+output = x.read().decode('utf-8')
+osmfile.write(output)
+osmfile.close()
 
 # lynx https://c.tile.opentopomap.org/14/3359/6193.png
 
@@ -251,7 +268,7 @@ hybridb = tiledb("Hybrid")
 ersidb = tiledb("ERSI")
 
 # tiles = list(mercantile.tiles(bbox[0], bbox[2], bbox[1], bbox[3], dd.get('zooms')))
-zoom = 14,15,16
+zoom = 14,15,16,17
 #zoom =  tuple(dd.get('zooms'))
 tiles = list(mercantile.tiles(bbox[0], bbox[2], bbox[1], bbox[3], zoom))
 # (OpenTopo uses Z/X/Y.png format
@@ -263,7 +280,8 @@ if dd.get('download') and dd.get('topo'):
 if dd.get('mosaic') is True and dd.get('topo'):
     topodb.mosaic(tiles)
 
-zoom = 16,17
+# Zooms seems to go to 19, 18 was huge, and 17 was fine
+zoom = 15,16,17
 tiles = list(mercantile.tiles(bbox[0], bbox[2], bbox[1], bbox[3], zoom))
 url = "http://clarity.maptiles.arcgis.com/arcgis/rest/services/World_Imagery/MapServer/tile/{0}/{2}/{1}"
 mirrors = [url]
@@ -272,7 +290,8 @@ if dd.get('download') and dd.get('ersi'):
         logging.info("Done downloading Sat imagery")
 if dd.get('mosaic') is True and dd.get('ersi'):
     ersidb.mosaic(tiles)
-    
+
+# 16 appears to be the max zoom level available
 zoom = 15,16
 tiles = list(mercantile.tiles(bbox[0], bbox[2], bbox[1], bbox[3], zoom))
 url = "http://caltopo.s3.amazonaws.com/topo/$Z/$X/$Y.png"
