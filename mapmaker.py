@@ -45,21 +45,12 @@ class myconfig(object):
         self.options = dict()
         self.options['logging'] = True
         self.options['verbose'] = False
-        self.options['zooms'] = None
-        self.options['poly'] = ""
-        self.options['source'] = "ersi,topo,terrain"
+        self.options['poly'] = None
+        self.options['source'] = None
+        self.options['input'] = None
         self.options['format'] = "gtiff"
         #self.options['force'] = False
-        self.options['outdir'] = "./"
-        # FIXME: 
-        self.options['mosaic'] = False
-        self.options['download'] = False
-        self.options['ersi'] = False
-        self.options['topo'] = False
-        self.options['terrain'] = False
-        self.options['gtiff'] = False
-        self.options['pdf'] = False
-        self.options['osmand'] = False
+        self.options['outfile'] = "./exported-tiles"
 
         try:
             (opts, val) = getopt.getopt(argv[1:], "h,o:,s:,p:,v,f:,i:",
@@ -135,9 +126,8 @@ class myconfig(object):
         print("This program creates maps from tiles")
         print(argv[0] + ": options:")
         print("""\t--help(-h)   Help
-\t--outfile(-o)  Output filename
-\t--source(-s)   Map source (default, topo)
-                 ie... topo,terrain,ersi
+\t--outfile(-o)  Output filename if expanding into tiles
+\t--source(-s)   Map data source
 \t--poly(-p)     Input OSM polyfile
 \t--input(-i)    Text file of filenames
 \t--format(-f)   Output file format,
@@ -148,7 +138,7 @@ class myconfig(object):
 
 
 dd = myconfig(argv)
-dd.checkOptions()
+#dd.checkOptions()
 #dd.dump()
 if len(argv) <= 2:
     dd.usage(argv)
@@ -174,37 +164,73 @@ outfile = dd.get('outfile')
 
 
 class Tile(object):
-    def __init__(self, imgfile):
+    def __init__(self, imgfile=None):
         """Class to hold Tile data"""
-        parts = imgfile.split('/')
-        size = len(parts)
-        self.x = parts[size - 2]
-        self.y = parts[size - 3]
-        self.z = parts[size - 4]
-        self.blob = None
-        self.readTile(imgfile)
+        if imgfile is not None:
+            parts = imgfile.split('/')
+            size = len(parts)
+            self.x = parts[size - 2]
+            self.y = parts[size - 3]
+            self.z = parts[size - 4]
+            self.blob = self.readTile(imgfile)
+
+    def setCoords(self, x, y, z):
+        self.x = x
+        self.y = y
+        self.z = z
+
+    def setImage(self, image):
+        self.blob = image
+
+    def getX(self):
+        return self.x
+
+    def getY(self):
+        return self.y
+
+    def getZ(self):
+        return self.z
+
+    def getImage(self):
+        return self.blob
 
     def readTile(self, filespec):
         """Load the image into memory"""
-        file = open(filespec, "rb")
+        logging.debug("Reading tile %r into memory" % filespec)
+        try:
+            file = open(filespec, "rb")
+        except:
+            logging.error(e)
         #bytes = file.read(253210)
         self.blob = file.read()
-
-    def getBytes(self):
-        return self.bytes
-
-    def writeTile(self, filespec):
-        """Write the image to disk"""
-        file = open(filespec, "wb")
-        file.write(self.blob)
         file.close()
+        return self.blob
 
+    def writeTile(self, path):
+        """Write the image to disk"""
+        filespec = "%s/%s/%s/%s/%s.png" % (path, self.z, self.x, self.y, self.y)
+        #os.mkdir(os.path.dirname(filespec))
+        file = open(filespec, "wb")
+        bytes = self.blob
+        logging.debug("Writing %r bytes to %r" % (len(bytes), filespec))
+        file.write(bytes)
+        file.close()
+        logging.info("Wrote %r" % filespec)
+        return True
+
+    def dump(self):
+        if self.blob is not None:
+            image = "not loaded"
+        else:
+            image = "loaded"
+        print("X=%s, Y=%s, Z=%s, Image is %s" % (self.z, self.x, self.y, image))
 
 class Osmand(object):
     def __init__(self, db):
         """Class for managing an Osm sqlite database"""
         self.db = sqlite3.connect(db)
         self.cursor = self.db.cursor()
+        logging.debug("Opened database %r" % db)
         # See how many records are in the database
         tmp = self.cursor.execute("SELECT COUNT(*) FROM tiles;")
         self.count =  self.cursor.fetchone()[0]
@@ -221,8 +247,8 @@ class Osmand(object):
         
     def createDB(self, db):
         """Create an Osmand compatable database"""
-        self.db = sqlite3.connect(db)
-        self.cursor = self.db.cursor()
+        #self.db = sqlite3.connect(db)
+        #self.cursor = self.db.cursor()
         
         sql = list()
         sql.append("CREATE TABLE IF NOT EXISTS tiles (x int, y int, z int, s int, image blob, PRIMARY KEY (x,y,z,s));")
@@ -233,22 +259,74 @@ class Osmand(object):
         for i in sql:
             self.cursor.execute(i)
 
-    def addTile(self, Tile):
+    def addTile(self, tile):
         """Add a tile to the database"""
-        #self.cursor.execute()
-        #self.cursor.commit)
-        pass
+        x = tile.getX()
+        y = tile.getY()
+        z = tile.getZ()
+        s = 0                   # This field appears to always be zero
+        blob = sqlite3.Binary(tile.getImage())
+        logging.debug("Adding tile %r/%r/%r into the database" % (z,x,y))
+        # This field appears to always be zero
+        s = 0
+        #sql = "INSERT INTO tiles(x,y,z,s) VALUES(%r,%r,%r,%r)" % (x, y, z, s)
+        #sql = "INSERT INTO tiles(x,y,z,s,image) VALUES(%r,%r,%r,%r)", (x, y, z, s)
+        sql = "INSERT INTO tiles(x,y,z,s,image) VALUES(?,?,?,?,?);", (x,y,z,s,blob)
+        try:
+            self.cursor.execute(sql)
+            logging.debug("Got %r rows" % self.cursor.rowcount)
+        except:
+            return False
+        
+        logging.debug("Got %r rows" % self.cursor.fetchone())
+        self.db.commit()
+        return True
+
+    def readTile(self, x, y, z, tile=Tile()):
+        """Read a tile from the database"""
+        #sql = "SELECT image FROM tiles WHERE x=%r AND y=%r AND z=%r;" % (x, y, z)
+        sql = "SELECT image FROM tiles WHERE x=%r AND y=%r;" % (x, y)
+        print(sql)
+        try:
+            self.cursor.execute(sql)
+            image = self.cursor.fetchone()
+            if image is None:
+                logging.error("%r/%r/%r doesn't exist in the database" % (z, x, y))
+                return None
+            else:
+                filespec = "%r/%r/%r/%r.png" % (x,y,z,y)
+                tile.setCoords(x,y,z)
+                tile.setImage(image[0])
+        except:
+            return None
+
+        return tile
 
     def allDone(self):
         """Close the database so changes don't get lost"""
+        logging.debug("Closing the database %r" % self.db)
         self.db.close()
-        
+
+    def writeTiles(self):
+        """This writes all the tiles in a database to disk"""
+        for level in self.zooms:
+            self.cursor.execute("SELECT * FROM tiles WHERE z=%r" % level)
+            tmp = self.cursor.fetchone()
 #
 # Main body
 #
-osmand = Osmand("NFPD-Topo.sqlitedb")
+db = dd.get('source')
+osmand = Osmand(db)
 #osmand.createDB("foo.sqlitedb")
-osmand.allDone()
 
-tile = Tile("/work/Mapping/gosm.git/tiledb/Topo/16/13532/24818/24818.tif")
-tile.writeTile("furby.tif")
+png = Tile("/work/Mapping/gosm.git/tiledb/Topo/16/13532/24818/24818.png")
+#osmand.addTile(tile)
+png.writeTile("./")
+
+tile = Tile()
+tile = osmand.readTile(3389, 6200, 3)
+if tile is not None:
+    tile.dump()
+    tile.writeTile("./")
+
+osmand.allDone()
