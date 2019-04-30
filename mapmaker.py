@@ -18,7 +18,7 @@
 # 
 
 ## \copyright GNU Public License.
-## \file pgd.py Daemon to read sensors and data log it all.
+## \file mapmaker.py Creates maps from tiles
 
 import os
 import sys
@@ -173,7 +173,34 @@ if dd.get('verbose') == 1:
 outfile = dd.get('outfile')
 
 
-class Osmand():
+class Tile(object):
+    def __init__(self, imgfile):
+        """Class to hold Tile data"""
+        parts = imgfile.split('/')
+        size = len(parts)
+        self.x = parts[size - 2]
+        self.y = parts[size - 3]
+        self.z = parts[size - 4]
+        self.blob = None
+        self.readTile(imgfile)
+
+    def readTile(self, filespec):
+        """Load the image into memory"""
+        file = open(filespec, "rb")
+        #bytes = file.read(253210)
+        self.blob = file.read()
+
+    def getBytes(self):
+        return self.bytes
+
+    def writeTile(self, filespec):
+        """Write the image to disk"""
+        file = open(filespec, "wb")
+        file.write(self.blob)
+        file.close()
+
+
+class Osmand(object):
     def __init__(self, db):
         """Class for managing an Osm sqlite database"""
         self.db = sqlite3.connect(db)
@@ -192,15 +219,36 @@ class Osmand():
         logging.info("%s has zoom levels %r" % (db, self.zooms))
 
         
-    def createTables():
-        sql = """
-        REATE TABLE tiles (x int, y int, z int, s int, image blob, PRIMARY KEY (x,y,z,s));
-        CREATE INDEX IND on tiles (x,y,z,s);
-        CREATE TABLE info(minzoom,maxzoom);
-        CREATE TABLE android_metadata (locale TEXT);
-        """
+    def createDB(self, db):
+        """Create an Osmand compatable database"""
+        self.db = sqlite3.connect(db)
+        self.cursor = self.db.cursor()
+        
+        sql = list()
+        sql.append("CREATE TABLE IF NOT EXISTS tiles (x int, y int, z int, s int, image blob, PRIMARY KEY (x,y,z,s));")
+        sql.append("CREATE INDEX IND on tiles (x,y,z,s);")
+        sql.append("CREATE IF NOT EXISTS TABLE info(minzoom,maxzoom);")
+        sql.append("CREATE IF NOT EXISTS TABLE android_metadata (locale TEXT);")
 
+        for i in sql:
+            self.cursor.execute(i)
+
+    def addTile(self, Tile):
+        """Add a tile to the database"""
+        #self.cursor.execute()
+        #self.cursor.commit)
+        pass
+
+    def allDone(self):
+        """Close the database so changes don't get lost"""
+        self.db.close()
+        
 #
 # Main body
 #
 osmand = Osmand("NFPD-Topo.sqlitedb")
+#osmand.createDB("foo.sqlitedb")
+osmand.allDone()
+
+tile = Tile("/work/Mapping/gosm.git/tiledb/Topo/16/13532/24818/24818.tif")
+tile.writeTile("furby.tif")
