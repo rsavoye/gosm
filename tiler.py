@@ -57,7 +57,7 @@ class myconfig(object):
         self.options = dict()
         self.options['logging'] = True
         self.options['verbose'] = False
-        self.options['zooms'] = 13,14,15
+        self.options['zooms'] = None
         self.options['poly'] = ""
         self.options['source'] = "ersi,topo,terrain"
         self.options['format'] = "gtiff"
@@ -74,8 +74,8 @@ class myconfig(object):
         self.options['osmand'] = False
 
         try:
-            (opts, val) = getopt.getopt(argv[1:], "h,o:,s:,p:,v,z:,f:,d,m",
-                ["help", "outdir", "source", "poly", "verbose", "zooms", "format", "download", "mosaic"])
+            (opts, val) = getopt.getopt(argv[1:], "h,o:,s:,p:,v,z:,f:,d,m,n",
+                ["help", "outdir", "source", "poly", "verbose", "zooms", "format", "download", "mosaic", "nodata"])
         except getopt.GetoptError as e:
             logging.error('%r' % e)
             self.usage(argv)
@@ -98,6 +98,8 @@ class myconfig(object):
                 self.options['zooms'] = ( val.split(',' ) )
             elif opt == "--format" or opt == '-f':
                 self.options['format'] = val
+            elif opt == "--nodata" or opt == '-n':
+                self.options['nodata'] = True
             elif opt == "--verbose" or opt == '-v':
                 self.options['verbose'] = True
                 logging.basicConfig(filename='tiler.log',level=logging.DEBUG)
@@ -111,10 +113,11 @@ class myconfig(object):
         for name, val in self.options.items():
             print("\t%s: %s" % (name, val))
             if name == "zooms":
-                for i in val:
-                    if int(i) < 14 or int(i) > 18:
-                        print("%r out of zoom range" % i)
-                        self.usage()
+                if val is not None:
+                    for i in val:
+                        if int(i) < 14 or int(i) > 18:
+                            print("%r out of zoom range" % i)
+                            self.usage()
             if name == "source":
                 srcs = val.split(',')
                 for i in srcs:
@@ -157,6 +160,7 @@ class myconfig(object):
 \t--format(-f)  Output file format,
                 ie... GTiff, PDF, AQM, OSMAND
 \t--zooms(-z)   Zoom levels to download (14-18)
+\t--nodata(-n)  Disable downloading OSM data
 \t--verbose(-v) Enable verbosity
         """)
         quit()
@@ -206,7 +210,10 @@ for line in lines:
     if line == 'END' or line[0] == '!':
         continue
     coords = line.split()
-    ring.AddPoint(float(coords[0]), float(coords[1]))
+    try:
+        ring.AddPoint(float(coords[0]), float(coords[1]))
+    except:
+        logging.error("Coordinates bad: %r" % len(coords))
 
 # multipolygon = ogr.Geometry(ogr.wkbMultiPolygon)
 # multipolygon.AddGeometry(poly)
@@ -228,24 +235,19 @@ print("------------------------")
 xapi = "(way(%s);node(%s);rel(%s);<;>;);out meta;" % (xbox, xbox, xbox)
 #print(xapi)
 
-polyfile = dd.get('poly')
-polyname = os.path.basename(polyfile.replace(".poly", ""))
-uri = 'https://overpass-api.de/api/interpreter'
-headers = dict()
-headers['Content-Type'] = 'application/x-www-form-urlencoded'
-req = urllib.request.Request(uri, headers=headers)
-x = urllib.request.urlopen(req, data=xapi.encode('utf-8'))
-osmfile = open(polyname + '.osm', 'w')
-output = x.read().decode('utf-8')
-osmfile.write(output)
-osmfile.close()
-
-# lynx https://c.tile.opentopomap.org/14/3359/6193.png
-
-#with urllib.request.urlopen(url) as response:
-#   html = response.read()
-#   print(html)
-# tiles(west, south, east, north, zooms, truncate=False)
+# Download data from OpenStreetMap
+if dd.get('nodata') is False:
+    polyfile = dd.get('poly')
+    polyname = os.path.basename(polyfile.replace(".poly", ""))
+    uri = 'https://overpass-api.de/api/interpreter'
+    headers = dict()
+    headers['Content-Type'] = 'application/x-www-form-urlencoded'
+    req = urllib.request.Request(uri, headers=headers)
+    x = urllib.request.urlopen(req, data=xapi.encode('utf-8'))
+    osmfile = open(polyname + '.osm', 'w')
+    output = x.read().decode('utf-8')
+    osmfile.write(output)
+    osmfile.close()
 
 # https://clarity.maptiles.arcgis.com/arcgis/rest/services/World_Imagery/MapServer/tile/Z/Y/X
 # https://caltopo.s3.amazonaws.com/topo/Z/X/Y.png
@@ -262,45 +264,69 @@ osmfile.close()
 # https://basemap.nationalmap.gov/ArcGIS/rest/services/USGSTopo/MapServer/tile/13/3102/1696
 # http://mt0.google.com/vt/lyrs=h&x=1696&y=3102&z=13&scale=1
 
+# <customMapSource>
+#    <name>Google-hybrid-256</name>
+#    <minZoom>0</minZoom>
+#    <maxZoom>19</maxZoom>
+#    <tileType>png</tileType>
+#    <tileUpdate>None</tileUpdate>
+#    <url>http://mt{$serverpart}.google.com/vt/lyrs=h&amp;x={$x}&amp;y={$y}&amp;z={$z}&amp;scale=1</url>
+#    <serverParts>0 1 2 3</serverParts>
+#  </customMapSource>
+
 topodb = tiledb("Topo")
 terraindb = tiledb("Terrain")
 hybridb = tiledb("Hybrid")
 ersidb = tiledb("ERSI")
 
+# We only need to download the largest zoom level, and use
+# 'gdaladdo -r nearest foo.tif 2 4 8 16 32 64 128 256 512 1024'
+# to generate the lower resolution zoom levels as layers.
+
 # tiles = list(mercantile.tiles(bbox[0], bbox[2], bbox[1], bbox[3], dd.get('zooms')))
-zoom = 14,15,16,17
+zoom = 16
 #zoom =  tuple(dd.get('zooms'))
+logging.debug("Zoom level for topos is: %r" % str(zoom))
 tiles = list(mercantile.tiles(bbox[0], bbox[2], bbox[1], bbox[3], zoom))
 # (OpenTopo uses Z/X/Y.png format
+path = os.path.basename(os.path.dirname(dd.get('poly')))
+filespec = path + '-Topo' + str(zoom) + '.txt'
 url = ".tile.opentopomap.org/{0}/{1}/{2}.png"
 mirrors = [ "https://a" + url, "https://b" + url, "https://c" + url ]
 if dd.get('download') and dd.get('topo'):
     if topodb.download(mirrors, tiles):
         logging.info("Done downloading Terrain data")
+        topodb.writeTifs(filespec)
 if dd.get('mosaic') is True and dd.get('topo'):
     topodb.mosaic(tiles)
 
 # Zooms seems to go to 19, 18 was huge, and 17 was fine
-zoom = 15,16,17
+filespec = path + '-Sat' + str(zoom) + '.txt'
+zoom = 16
+logging.debug("Zoom level for ERSI is: %r" % str(zoom))
 tiles = list(mercantile.tiles(bbox[0], bbox[2], bbox[1], bbox[3], zoom))
 url = "http://clarity.maptiles.arcgis.com/arcgis/rest/services/World_Imagery/MapServer/tile/{0}/{2}/{1}"
 mirrors = [url]
 if dd.get('download') and dd.get('ersi'):
     if ersidb.download(mirrors, tiles):
         logging.info("Done downloading Sat imagery")
+        ersidb.writeTifs(filespec)
 if dd.get('mosaic') is True and dd.get('ersi'):
     ersidb.mosaic(tiles)
 
 # 16 appears to be the max zoom level available
-zoom = 15,16
+filespec = path + '-Terrain' + str(zoom) + '.txt'
+zoom = 16
+logging.debug("Zoom level for Terrain is: %r" % str(zoom))
 tiles = list(mercantile.tiles(bbox[0], bbox[2], bbox[1], bbox[3], zoom))
 url = "http://caltopo.s3.amazonaws.com/topo/$Z/$X/$Y.png"
 mirrors = [url]
 if dd.get('download') and dd.get('terrain'):
     if terraindb.download(mirrors, tiles):
         logging.info("Done downloading Topo data")
+        terraindb.writeTifs(filespec)
 if dd.get('mosaic') is True and dd.get('terrain'):        
-    terraindb.mosaic()
+    terraindb.mosaic(tiles)
 
     
 #url = ".google.com/vt/lyrs=h&x=$X&y=$Y&z=$Z&scale=1" % (tile.x, tile.y, tile.z)
