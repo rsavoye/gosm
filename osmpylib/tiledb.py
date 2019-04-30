@@ -17,6 +17,8 @@
 # Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 # 
 
+## \file tiledb.py manage of collection of map tiles.
+
 # ogr2ogr -t_srs EPSG:4326 Roads-new.shp hwy_road_aerial.shp
 
 import operator
@@ -35,6 +37,7 @@ from urllib.parse import urlparse
 import rasterio
 from rasterio.merge import merge
 from rasterio.enums import ColorInterp
+from subprocess import PIPE, Popen, STDOUT
 
 
 class tiledb(object):
@@ -51,7 +54,7 @@ class tiledb(object):
         # Default zoom levels. Below these are usually too far away to
         # be useful, and above this, the files are huge.
         if levels is None:
-            self.zooms = ( 13, 14, 15, 16 )
+            self.zooms = ( 15, 16, 17 )
         else:
             self.zooms = levels
         self.makeDir(self.storage)
@@ -65,7 +68,7 @@ class tiledb(object):
                 try:
                     self.data[zoom] = x
                 except:
-                    pass
+                  pass
         self.tilesize = 256
         self.errors = 0
 
@@ -96,15 +99,18 @@ class tiledb(object):
         outfile = base[0] + '.tif'
         imgfile = gdal.Open(filespec, gdal.GA_ReadOnly)
         if os.path.exists(filespec):
-            ds1 = gdal.Translate(tmpfile, imgfile, GCPs = gcpList)
+            # rgbExpand=rgba
+            if "ERSI" not in filespec:
+                opts = gdal.TranslateOptions(rgbExpand='RGBA', GCPs=gcpList, format='GTiff')
+            else:
+                opts = gdal.TranslateOptions(GCPs=gcpList, format='GTiff')
+
+            ds1 = gdal.Translate(tmpfile, imgfile, options=opts)
             #gdal.Warp(outfile, ds1, format='GTiff', xRes=30, yRes=30)
             gdal.Warp(outfile, ds1, format='GTiff', dstSRS='EPSG:4326')
             self.tifs.append(outfile)
             os.remove(tmpfile)
             #print(gdal.Info(outfile))
-
-    def getTifs(self):
-        return self.tifs
 
     def download(self, mirrors=None, tiles=None):
         """ Download the specified tiles from the list of mirrors"""
@@ -115,7 +121,7 @@ class tiledb(object):
             logging.error("You need to specify a tile!")
             return None
 
-        logging.info("Downloading %r tiles"  % len(tiles))
+        logging.info("Contains %r tiles"  % len(tiles))
         for tile in tiles:
             fixed = ()
             for url in mirrors:
@@ -181,7 +187,13 @@ class tiledb(object):
             return None
         path = "%s/%s/%s/%s" % (self.storage, tile.z, tile.x, tile.y)
         return path
-        
+
+    def writeTifs(self, filespec):
+        outfile = open(filespec, 'w')
+        for file in self.tifs:
+            outfile.write(file + '\n')
+        outfile.close()
+        logging.info("Wrote cache file %r" % filespec)
 
     def getErrors(self):
         return self.errors
@@ -266,53 +278,50 @@ class tiledb(object):
             if metadata.get(gdal.DCAP_CREATE) == "YES":
                 print("Driver {} supports CreateCopy() method.".format(fileformat))
 
-    def mosaic(self, tiles=list(), zoom=tuple()):
+    def mosaic(self, tiles=list()):
         """Merge all the tiles together to form the basemap"""
 
-        levels = dict()
-        levels['14'] = list()
-        levels['15'] = list()
-        levels['16'] = list()
-        levels['17'] = list()
-        levels['18'] = list()
+        logging.debug("Opening cache file %r" % self.storage + str(level) + ".txt")
+        #cnf = open(self.storage + str(level) + ".txt", "w")
+        files = list()
         for tile in tiles:
             path = self.formatPath(tile) + "/" + str(tile.y) + ".tif"
             if os.path.exists(path):
-                levels[str(tile.z)].append(path)
-        for level in levels:
-            # logging.debug("Opening cache file %r" % self.storage + str(level) + ".txt")
-            cnf = open(self.storage + str(level) + ".txt", "w")
-            #epdb.set_trace()
-            for tile in tiles:
-                if tile.z == int(level):
-                    cnf.write(self.formatPath(tile) + "/" + str(tile.y) + ".tif\n")
-            # logging.debug("Closing cache file %r" % self.storage + str(level) + ".txt")
-            cnf.close()
+                files.append(path)
+        #         if tile.z == int(level):
+        #             cnf.write(self.formatPath(tile) + "/" + str(tile.y) + ".tif\n")
+        #     # logging.debug("Closing cache file %r" % self.storage + str(level) + ".txt")
+        #     cnf.close()
 
-        # for level in zoom:
-        for level in levels:
-            rios = list()
-            for file in levels[level]:
-                src = rasterio.open(file)
-                #src.colorinterp = [ColorInterp.red, ColorInterp.green, ColorInterp.blue]
-                logging.debug("Y: %r" % file)
-                rios.append(src)
+        rios = list()
+        #epdb.set_trace()
+        for file in files:
+            src = rasterio.open(file)
+            #logging.debug("Y: %r" % file)
+            rios.append(src)
 
-                # Merge function returns a single mosaic array and the transformation info
-                mosaic, out_trans = merge(rios)
-                out_meta = src.meta.copy()
-                #src.close()
+            # Merge function returns a single mosaic array and
+            # the transformation info
+            mosaic, out_trans = merge(rios)
+            out_meta = src.meta.copy()
+            #src.close()
 
-                # Update the metadata
-                out_meta.update({"driver": "GTiff",
+            # Update the metadata
+            out_meta.update({"driver": "GTiff",
                              "height": mosaic.shape[1],
                              "width": mosaic.shape[2],
                              "transform": out_trans,
                              "crs": "+proj=utm +zone=35 +ellps=GRS80 +units=m +no_defs "
-                }
-                )
+            }
+            )
 
+            #cmd = [ "gdal_merge.py", levels[level], "-o foobar.pdf", "-of PDF" ]
+            #ppp = Popen(cmd, stdout=PIPE, bufsize=0, close_fds=ON_POSIX)
             #dest.colorinterp = [ ColorInterp.red, ColorInterp.green, ColorInterp.blue]
-            name = os.path.basename(self.storage + str(level))
+            name = os.path.basename(self.storage + file)
+            print("FIXME: %r" % name)
             with rasterio.open(name + ".tif", "w", **out_meta) as dest:
-                dest.write(mosaic)
+                try:
+                    dest.write(mosaic)
+                except:
+                    logging.error("Out of memory")
