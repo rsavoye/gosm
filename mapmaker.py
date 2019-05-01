@@ -28,8 +28,16 @@ import epdb
 from osgeo import ogr
 from sys import argv
 sys.path.append(os.path.dirname(argv[0]) + '/osmpylib')
-from tiledb import tiledb
 import sqlite3
+import filetype
+import mercantile
+from osgeo import gdal
+# These modules are part of this project
+import poly
+from tiledb import Tile
+from tiledb import Tiledb
+from subprocess import PIPE, Popen, STDOUT
+ON_POSIX = 'posix' in sys.builtin_module_names
 
 
 class myconfig(object):
@@ -46,7 +54,7 @@ class myconfig(object):
         self.options['logging'] = True
         self.options['verbose'] = False
         self.options['poly'] = None
-        self.options['source'] = None
+        self.options['sqlite'] = None
         self.options['input'] = None
         self.options['format'] = "gtiff"
         #self.options['force'] = False
@@ -54,7 +62,7 @@ class myconfig(object):
 
         try:
             (opts, val) = getopt.getopt(argv[1:], "h,o:,s:,p:,v,f:,i:",
-                ["help", "outfile", "source", "poly", "verbose", "format", "input"])
+                ["help", "outfile", "sqlite", "poly", "verbose", "format", "input"])
         except getopt.GetoptError as e:
             logging.error('%r' % e)
             self.usage(argv)
@@ -65,8 +73,8 @@ class myconfig(object):
                 self.usage(argv)
             elif opt == "--outfile" or opt == '-o':
                 self.options['outfile'] = val
-            elif opt == "--source" or opt == '-s':
-                self.options['source'] = val
+            elif opt == "--sqlite" or opt == '-s':
+                self.options['sqlite'] = val
             elif opt == "--poly" or opt == '-p':
                 self.options['poly'] = val
             elif opt == "--input" or opt == '-i':
@@ -163,74 +171,14 @@ if dd.get('verbose') == 1:
 outfile = dd.get('outfile')
 
 
-class Tile(object):
-    def __init__(self, imgfile=None):
-        """Class to hold Tile data"""
-        if imgfile is not None:
-            parts = imgfile.split('/')
-            size = len(parts)
-            self.x = parts[size - 2]
-            self.y = parts[size - 3]
-            self.z = parts[size - 4]
-            self.blob = self.readTile(imgfile)
-
-    def setCoords(self, x, y, z):
-        self.x = x
-        self.y = y
-        self.z = z
-
-    def setImage(self, image):
-        self.blob = image
-
-    def getX(self):
-        return self.x
-
-    def getY(self):
-        return self.y
-
-    def getZ(self):
-        return self.z
-
-    def getImage(self):
-        return self.blob
-
-    def readTile(self, filespec):
-        """Load the image into memory"""
-        logging.debug("Reading tile %r into memory" % filespec)
-        try:
-            file = open(filespec, "rb")
-        except:
-            logging.error(e)
-        #bytes = file.read(253210)
-        self.blob = file.read()
-        file.close()
-        return self.blob
-
-    def writeTile(self, path):
-        """Write the image to disk"""
-        filespec = "%s/%s/%s/%s/%s.png" % (path, self.z, self.x, self.y, self.y)
-        #os.mkdir(os.path.dirname(filespec))
-        file = open(filespec, "wb")
-        bytes = self.blob
-        logging.debug("Writing %r bytes to %r" % (len(bytes), filespec))
-        file.write(bytes)
-        file.close()
-        logging.info("Wrote %r" % filespec)
-        return True
-
-    def dump(self):
-        if self.blob is not None:
-            image = "not loaded"
-        else:
-            image = "loaded"
-        print("X=%s, Y=%s, Z=%s, Image is %s" % (self.z, self.x, self.y, image))
-
 class Osmand(object):
     def __init__(self, db):
         """Class for managing an Osm sqlite database"""
+        self.sqlite = db
         self.db = sqlite3.connect(db)
         self.cursor = self.db.cursor()
         logging.debug("Opened database %r" % db)
+        self.createDB()
         # See how many records are in the database
         tmp = self.cursor.execute("SELECT COUNT(*) FROM tiles;")
         self.count =  self.cursor.fetchone()[0]
@@ -245,35 +193,53 @@ class Osmand(object):
         logging.info("%s has zoom levels %r" % (db, self.zooms))
 
         
-    def createDB(self, db):
+    def createDB(self):
         """Create an Osmand compatable database"""
         #self.db = sqlite3.connect(db)
         #self.cursor = self.db.cursor()
         
         sql = list()
         sql.append("CREATE TABLE IF NOT EXISTS tiles (x int, y int, z int, s int, image blob, PRIMARY KEY (x,y,z,s));")
-        sql.append("CREATE INDEX IND on tiles (x,y,z,s);")
-        sql.append("CREATE IF NOT EXISTS TABLE info(minzoom,maxzoom);")
-        sql.append("CREATE IF NOT EXISTS TABLE android_metadata (locale TEXT);")
+        sql.append("CREATE INDEX IF NOT EXISTS IND on tiles (x,y,z,s);")
+        sql.append("CREATE TABLE IF NOT EXISTS info(minzoom,maxzoom);")
+        sql.append("CREATE TABLE IF NOT EXISTS android_metadata (locale TEXT);")
 
         for i in sql:
             self.cursor.execute(i)
 
     def addTile(self, tile):
+        # 211|387|7|0|����	10
+        # 423|775|6|0|����	11
+        # 847|1551|5|0|����	12
+        # 1694|3102|4|0|����	13
+        # 3389|6204|3|0|����	14
+        # 6778|12408|2|0|����	15
+        zoomosm = dict()
+        zoomosm[10] = 7
+        zoomosm[11] = 6
+        zoomosm[12] = 5
+        zoomosm[13] = 4
+        zoomosm[14] = 3
+        zoomosm[15] = 2
+        zoomosm[16] = 1
+        zoomosm[17] = 0
+        #zoomosm = (17, 16, 15, 14, 13, 12, 11, 10)
+
         """Add a tile to the database"""
         x = tile.getX()
         y = tile.getY()
-        z = tile.getZ()
+        # FIXME: this is the actual zoom level, needs to be converted
+        # to 1,2,3 etc...
+        z = zoomosm[int(tile.z)]
+        filespec = tile.getFilespec()
         s = 0                   # This field appears to always be zero
         blob = sqlite3.Binary(tile.getImage())
-        logging.debug("Adding tile %r/%r/%r into the database" % (z,x,y))
+        logging.debug("Adding tile for %s into the database" % filespec)
         # This field appears to always be zero
         s = 0
-        #sql = "INSERT INTO tiles(x,y,z,s) VALUES(%r,%r,%r,%r)" % (x, y, z, s)
-        #sql = "INSERT INTO tiles(x,y,z,s,image) VALUES(%r,%r,%r,%r)", (x, y, z, s)
-        sql = "INSERT INTO tiles(x,y,z,s,image) VALUES(?,?,?,?,?);", (x,y,z,s,blob)
+        sql = """INSERT INTO tiles(x,y,z,s,image) VALUES(?,?,?,?,?);"""
         try:
-            self.cursor.execute(sql)
+            self.cursor.execute(sql, (x,y,z,s,blob))
             logging.debug("Got %r rows" % self.cursor.rowcount)
         except:
             return False
@@ -302,31 +268,63 @@ class Osmand(object):
 
         return tile
 
+    def writeTiles(self, path):
+        """This writes all the tiles in a database to disk tiles"""
+        for level in self.zooms:
+            logging.debug("Writing zoom level %r" % level)
+            for row in self.cursor.execute("SELECT x,y,z,image FROM tiles WHERE z=%r" % level):
+                #foo = mercantile.bounds(self.y, self.x, 16)
+                tile = Tile()
+                tile.setCoords(row[0], row[1], row[2])
+                tile.setImage(row[3])
+                tile.writeTile(path)
+
+    def addLevel(self, bbox, zoom):
+        tiles = list(mercantile.tiles(bbox[0], bbox[2], bbox[1], bbox[3], zoom))
+
+        db = Tiledb("Topo")
+        for tile in tiles:
+            filespec = db.formatPath(tile) + '/' + str(tile.y)
+            if os.path.exists(filespec + ".jpg"):
+                filespec += ".jpg"
+            if os.path.exists(filespec + ".png"):
+                filespec += ".png"
+            if os.path.exists(filespec + ".tig"):
+                filespec += ".tif"
+
+            newtile = Tile(filespec)
+            osmand.addTile(newtile)
+
     def allDone(self):
         """Close the database so changes don't get lost"""
         logging.debug("Closing the database %r" % self.db)
+        self.db.commit()
         self.db.close()
 
-    def writeTiles(self):
-        """This writes all the tiles in a database to disk"""
-        for level in self.zooms:
-            self.cursor.execute("SELECT * FROM tiles WHERE z=%r" % level)
-            tmp = self.cursor.fetchone()
 #
 # Main body
 #
-db = dd.get('source')
-osmand = Osmand(db)
-#osmand.createDB("foo.sqlitedb")
+sqlite = dd.get('sqlite')
+osmand = Osmand(sqlite)
+#osmand.createDB()
 
-png = Tile("/work/Mapping/gosm.git/tiledb/Topo/16/13532/24818/24818.png")
-#osmand.addTile(tile)
-png.writeTile("./")
+pp = poly.Poly()
+input = dd.get('input')
+bbox = pp.getBBox(input)
+logging.info("Bounding box for %r is %r" % (input, bbox))
 
-tile = Tile()
-tile = osmand.readTile(3389, 6200, 3)
-if tile is not None:
-    tile.dump()
-    tile.writeTile("./")
+osmand.addLevel(bbox, 15)
+osmand.addLevel(bbox, 16)
+
+# This writes all the tiles in the sqlite db to disk
+#path = dd.get('outfile')
+#osmand.writeTiles("./foo")
+
+
+# Split the single zoom level TIF file into multiple lower levels
+cmd = [ 'gdal2tiles.py', '--no-kml', '--profile=raster', '/tmp/sql.tif']
+#ppp = Popen(cmd, close_fds=ON_POSIX)
+#ppp.wait()
+
 
 osmand.allDone()
