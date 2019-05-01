@@ -40,7 +40,86 @@ from rasterio.enums import ColorInterp
 from subprocess import PIPE, Popen, STDOUT
 
 
-class tiledb(object):
+class Tile(object):
+    def __init__(self, imgfile=None):
+        """Class to hold Tile data"""
+        if imgfile is not None:
+            self.filespec = imgfile
+            parts = imgfile.split('/')
+            size = len(parts)
+            self.x = parts[size - 2]
+            self.y = parts[size - 3]
+            self.z = parts[size - 4]
+            self.blob = self.readTile(imgfile)
+
+    def setCoords(self, x, y, z):
+        self.x = x
+        self.y = y
+        self.z = z
+
+    def getFilespec(self):
+        return self.filespec
+
+    def setImage(self, image):
+        self.blob = image
+
+    def getX(self):
+        return self.x
+
+    def getY(self):
+        return self.y
+
+    def getZ(self):
+        return self.z
+
+    def getImage(self):
+        return self.blob
+
+    def readTile(self, filespec):
+        """Load the image into memory"""
+        logging.debug("Reading tile %r into memory" % filespec)
+        try:
+            file = open(filespec, "rb")
+        except:
+            logging.error("Couldn't read tile %s" % filespec)
+        #bytes = file.read(253210)
+        self.blob = file.read()
+        file.close()
+        return self.blob
+
+    def writeTile(self, path):
+        """Write the image to disk"""
+        filespec = "%s/%s/%s/%s/%s.png" % (path, self.z, self.x, self.y, self.y)
+        if os.path.exists(filespec) is False:
+            tmp = ""
+            for i in os.path.dirname(filespec).split('/'):
+                tmp += i + '/'
+                if os.path.exists(tmp) is False:
+                    os.mkdir(tmp)
+        file = open(filespec, "wb")
+        bytes = self.blob
+        logging.debug("Writing %r bytes to %r" % (len(bytes), filespec))
+        file.write(bytes)
+        file.close()
+        suffix = filetype.guess(filespec)
+        print('File extension: %s' % suffix.extension)
+        if suffix.extension == 'jpg':
+            dest = filespec.replace(".png", ".jpg")
+            logging.debug("Renaming %r to %r" % (filespec, dest))
+            os.rename(filespec, dest)
+
+        foo = mercantile.bounds(self.y, self.x, self.z + 12)
+        logging.info("Wrote %r" % filespec)
+        return True
+
+    def dump(self):
+        if self.blob is not None:
+            image = "not loaded"
+        else:
+            image = "loaded"
+        print("X=%s, Y=%s, Z=%s, Image is %s" % (self.z, self.x, self.y, image))
+
+class Tiledb(object):
     """Class to manage a map tiles"""
     def __init__(self, top=None, levels=None):
         """Initialize and manage a database of map tiles"""
