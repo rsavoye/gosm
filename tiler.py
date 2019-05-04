@@ -34,7 +34,8 @@ sys.path.append(os.path.dirname(argv[0]) + '/osmpylib')
 import urllib.request
 import math
 import mercantile
-from tiledb import tiledb
+from tiledb import Tile
+from tiledb import Tiledb
 import rasterio
 from rasterio.merge import merge
 from rasterio.enums import ColorInterp
@@ -42,7 +43,7 @@ import overpy
 import osm
 import urllib.request
 from urllib.parse import urlparse
-
+from poly import Poly
 
 class myconfig(object):
     def __init__(self, argv=list()):
@@ -168,7 +169,7 @@ class myconfig(object):
 
 dd = myconfig(argv)
 dd.checkOptions()
-#dd.dump()
+dd.dump()
 if len(argv) <= 2:
     dd.usage(argv)
 
@@ -192,44 +193,48 @@ if dd.get('verbose') == 1:
 outfile = dd.get('outfile')
 mod = 'action="modifiy"'
 
-#poly = poly.poly(dd.get('poly'))
 
-file = open(dd.get('poly'), "r")
-data = list()
-lines = file.readlines()
-curname = ""
-skip = 0
-ring = ogr.Geometry(ogr.wkbLinearRing)
-for line in lines:
-    # Ignore the first two lines
-    if skip <= 2:
-        skip = skip + 1
-        continue
-    line = line.rstrip()
-    line = line.lstrip()
-    if line == 'END' or line[0] == '!':
-        continue
-    coords = line.split()
-    try:
-        ring.AddPoint(float(coords[0]), float(coords[1]))
-    except:
-        logging.error("Coordinates bad: %r" % len(coords))
+poly = Poly()
+bbox = poly.getBBox(dd.get('poly'))
+logging.info("Bounding box for %r is %r" % (input, bbox))
 
-# multipolygon = ogr.Geometry(ogr.wkbMultiPolygon)
-# multipolygon.AddGeometry(poly)
+# file = open(dd.get('poly'), "r")
+# data = list()
+# lines = file.readlines()
+# curname = ""
+# skip = 0
+# ring = ogr.Geometry(ogr.wkbLinearRing)
+# for line in lines:
+#     # Ignore the first two lines
+#     if skip <= 2:
+#         skip = skip + 1
+#         continue
+#     line = line.rstrip()
+#     line = line.lstrip()
+#     if line == 'END' or line[0] == '!':
+#         continue
+#     coords = line.split()
+#     try:
+#         ring.AddPoint(float(coords[0]), float(coords[1]))
+#     except:
+#         logging.error("Coordinates bad: %r" % len(coords))
 
-poly = ogr.Geometry(ogr.wkbLinearRing)
-poly.AddGeometry(ring)
-# Get Envelope returns a tuple (minX, maxX, minY, maxY)
-bbox = ring.GetEnvelope()
-# print(bbox)
-# print(ring.GetArea())
-# print(ring.Length())
-# kml = ring.ExportToKML()
+# # multipolygon = ogr.Geometry(ogr.wkbMultiPolygon)
+# # multipolygon.AddGeometry(poly)
+
+# poly = ogr.Geometry(ogr.wkbLinearRing)
+# poly.AddGeometry(ring)
+# # Get Envelope returns a tuple (minX, maxX, minY, maxY)
+# bbox = ring.GetEnvelope()
+print(bbox)
+# # print(ring.GetArea())
+# # print(ring.Length())
+# # kml = ring.ExportToKML()
 
 # XAPI uses:
 # minimum latitude, minimum longitude, maximum latitude, maximum longitude
 xbox = "%s,%s,%s,%s" % (bbox[2], bbox[0], bbox[3], bbox[1])
+epdb.set_trace()
 print("------------------------")
 #xapi = "(\n  way(%s);\n  node(%s);\n  rel(%s);\n  <;\n  >;\n);\nout meta;" % (box , xbox, xbox)
 xapi = "(way(%s);node(%s);rel(%s);<;>;);out meta;" % (xbox, xbox, xbox)
@@ -274,17 +279,19 @@ if dd.get('nodata') is False:
 #    <serverParts>0 1 2 3</serverParts>
 #  </customMapSource>
 
-topodb = tiledb("Topo")
-terraindb = tiledb("Terrain")
-hybridb = tiledb("Hybrid")
-ersidb = tiledb("ERSI")
+topodb = Tiledb("Topo")
+terraindb = Tiledb("Terrain")
+hybridb = Tiledb("Hybrid")
+ersidb = Tiledb("ERSI")
 
 # We only need to download the largest zoom level, and use
 # 'gdaladdo -r nearest foo.tif 2 4 8 16 32 64 128 256 512 1024'
 # to generate the lower resolution zoom levels as layers.
 
+dd.dump()
+
 # tiles = list(mercantile.tiles(bbox[0], bbox[2], bbox[1], bbox[3], dd.get('zooms')))
-zoom = 16
+zoom = 15
 #zoom =  tuple(dd.get('zooms'))
 logging.debug("Zoom level for topos is: %r" % str(zoom))
 tiles = list(mercantile.tiles(bbox[0], bbox[2], bbox[1], bbox[3], zoom))
