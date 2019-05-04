@@ -38,6 +38,7 @@ import rasterio
 from rasterio.merge import merge
 from rasterio.enums import ColorInterp
 from subprocess import PIPE, Popen, STDOUT
+import filetype
 
 
 class Tile(object):
@@ -75,13 +76,34 @@ class Tile(object):
     def getImage(self):
         return self.blob
 
+    def convert(self, filespec, format):
+        #epdb.set_trace()
+        if os.path.exists(filespec) is False:
+            return filespec
+        type = filetype.guess(filespec).extension
+        if type == "format":
+            return filespec
+        newfilespec = filespec.replace("." + type, "." + format)
+        if os.path.exists(newfilespec):
+            return newfilespec
+
+        #logging.info("Converting %s to %s", (filespec, os.path.basename(newfilespec)))
+        if type != "jpg":
+            opts = gdal.TranslateOptions(rgbExpand='RGBA', format='JPEG')
+        else:
+            opts = gdal.TranslateOptions(format='GTIFF')
+        ds1 = gdal.Translate(newfilespec, filespec, options=opts)
+        return newfilespec
+
     def readTile(self, filespec):
         """Load the image into memory"""
+        filespec = self.convert(filespec, "jpg")
         logging.debug("Reading tile %r into memory" % filespec)
         try:
             file = open(filespec, "rb")
         except:
             logging.error("Couldn't read tile %s" % filespec)
+            return bytes()
         #bytes = file.read(253210)
         self.blob = file.read()
         file.close()
@@ -200,6 +222,7 @@ class Tiledb(object):
             logging.error("You need to specify a tile!")
             return None
 
+        counter = 0
         logging.info("Contains %r tiles"  % len(tiles))
         for tile in tiles:
             fixed = ()
@@ -240,6 +263,7 @@ class Tiledb(object):
                     logging.debug("Errors: %r %r" % (self.errors, len(tiles)))
                 try:
                     if dl.isSuccessful():
+                        print(".")
                         if dl.get_speed() > 0.0:
                             logging.info("Speed: %s" % dl.get_speed(human=True))
                             # ERSI does't append the filename
@@ -254,7 +278,8 @@ class Tiledb(object):
                 except:
                     worked = False
 
-            #if worked is True:
+            counter += 1
+            logging.debug("Processed %r out of %r tile. %r% done" % (counter, len(tiles), counter/len(tiles)))
             self.createVRT(filespec, tile)
 
         logging.info("Had %r errors downloading %d tiles for data for %r" % (self.errors, len(tiles), os.path.basename(self.storage)))
