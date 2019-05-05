@@ -200,7 +200,7 @@ logging.info("Bounding box for %r is %r" % (input, bbox))
 
 # file = open(dd.get('poly'), "r")
 # data = list()
-# lines = file.readlines()
+# lines = file.readlines(
 # curname = ""
 # skip = 0
 # ring = ogr.Geometry(ogr.wkbLinearRing)
@@ -234,7 +234,7 @@ print(bbox)
 # XAPI uses:
 # minimum latitude, minimum longitude, maximum latitude, maximum longitude
 xbox = "%s,%s,%s,%s" % (bbox[2], bbox[0], bbox[3], bbox[1])
-epdb.set_trace()
+
 print("------------------------")
 #xapi = "(\n  way(%s);\n  node(%s);\n  rel(%s);\n  <;\n  >;\n);\nout meta;" % (box , xbox, xbox)
 xapi = "(way(%s);node(%s);rel(%s);<;>;);out meta;" % (xbox, xbox, xbox)

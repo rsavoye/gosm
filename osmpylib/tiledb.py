@@ -39,6 +39,9 @@ from rasterio.merge import merge
 from rasterio.enums import ColorInterp
 from subprocess import PIPE, Popen, STDOUT
 import filetype
+from threading import Thread
+from time import sleep
+import queue
 
 
 class Tile(object):
@@ -77,7 +80,6 @@ class Tile(object):
         return self.blob
 
     def convert(self, filespec, format):
-        #epdb.set_trace()
         if os.path.exists(filespec) is False:
             return filespec
         type = filetype.guess(filespec).extension
@@ -145,6 +147,7 @@ class Tiledb(object):
     """Class to manage a map tiles"""
     def __init__(self, top=None, levels=None):
         """Initialize and manage a database of map tiles"""
+        self.threads = 10       # max number of download threads
         self.perms = 0o755
         self.dest = None
         self.tifs = list()
@@ -222,65 +225,22 @@ class Tiledb(object):
             logging.error("You need to specify a tile!")
             return None
 
-        counter = 0
-        logging.info("Contains %r tiles"  % len(tiles))
-        for tile in tiles:
-            fixed = ()
-            for url in mirrors:
-                new = url.format(tile.z, tile.x, tile.y)
-                fixed = fixed + (new,)
+        total = len(tiles)
+        #groups = total / self.threads
+        #logging.debug("Needs %d thread groups" % groups)
 
-            # Download path for files. Due to how Z/X/Y are arranged,
-            # it's possible the path we use for tile storage isn't
-            # the path part of the URL.
-            self.dest = self.formatPath(tile) + "/"
-            #logging.debug("DEST: %r" % self.dest)
+        threads = queue.Queue(maxsize=self.threads)
 
-            path = urlparse(url)[2]
-            tmp = os.path.splitext(os.path.basename(fixed[0]))
-            ext = tmp[1]
-            # If there is no extension, it's a directory. Usually
-            # in that case, it's a jpeg. We test the actual file
-            # type later after it's downloaded, but this is to test
-            # for the existence of an existing file, post download.
-            if ext == '':
-                filespec = self.dest + str(tile.y) + ".jpg"
-            else:
-                filespec = self.dest + str(tile.y) + ".png"
-
-            #logging.debug("FILESPEC: %r" % filespec)
-            worked = False
-            if os.path.exists(filespec) is False:
-                try:
-                    #logging.debug("Downloading %r/%r!" % (self.dest, path))
-                    dl = SmartDL(fixed, dest=self.dest, connect_default_logger=True)
-                    #logging.debug("SmartDL DEST: %r" % fixed[0])
-                    dl.start()
-                except:
-                    logging.error("Couldn't download from %r!" %  dl.get_errors())
-                    self.errors += 1
-                    worked = False
-                    logging.debug("Errors: %r %r" % (self.errors, len(tiles)))
-                try:
-                    if dl.isSuccessful():
-                        print(".")
-                        if dl.get_speed() > 0.0:
-                            logging.info("Speed: %s" % dl.get_speed(human=True))
-                            # ERSI does't append the filename
-                            tmp = os.path.splitext(dl.get_dest())
-                        if ext == '':
-                            os.rename(dl.get_dest(), filespec)
-                            logging.debug("Renamed %r" % dl.get_dest())
-                            ext = ".jpg"  # FIXME: probably right, but shouldbe a better test
-                        else:
-                            ext = tmp[1]
-                        worked = True
-                except:
-                    worked = False
-
-            counter += 1
-            logging.debug("Processed %r out of %r tile. %r% done" % (counter, len(tiles), counter/len(tiles)))
-            self.createVRT(filespec, tile)
+        block = 0
+        epdb.set_trace()
+        while block <= len(tiles):
+            logging.debug("Block %d:%d" % (block, block + 100))
+            dler = Thread(target=dlthread, args=(self.storage, mirrors, tiles[block:block + 100]))
+            block += 100
+            dler.start()
+            threads.put(dler)
+            #dler.join()
+            threads.get()
 
         logging.info("Had %r errors downloading %d tiles for data for %r" % (self.errors, len(tiles), os.path.basename(self.storage)))
         return True
@@ -398,7 +358,6 @@ class Tiledb(object):
         #     cnf.close()
 
         rios = list()
-        #epdb.set_trace()
         for file in files:
             src = rasterio.open(file)
             #logging.debug("Y: %r" % file)
@@ -429,3 +388,76 @@ class Tiledb(object):
                     dest.write(mosaic)
                 except:
                     logging.error("Out of memory")
+
+def dlthread(dest, mirrors, tiles):
+    """Thread to handle downloads for Queue"""
+    counter = -1
+    errors = 0
+
+    logging.info("Downloading %d tiles" % len(tiles))
+    template = "{0}/{1}/{2}/{3}"
+    db = Tiledb()
+    for tile in tiles:
+        fixed = ()
+        for url in mirrors:
+            new = url.format(tile.z, tile.x, tile.y)
+            fixed = fixed + (new,)
+            
+            base = template.format(dest, str(tile.z),  str(tile.x), str(tile.y), str(tile.y), str(tile.y)) + "/"
+            path = urlparse(url)[2]
+            tmp = os.path.splitext(os.path.basename(fixed[0]))
+            ext = tmp[1]
+            # If there is no extension, it's a directory. Usually
+            # in that case, it's a jpeg. We test the actual file
+            # type later after it's downloaded, but this is to test
+            # for the existence of an existing file, post download.
+            if ext == '':
+                ext = ".jpg"
+            else:
+                ext = ".png"
+
+            filespec = base + str(tile.y) + ext
+            counter += 1
+            if os.path.exists(filespec):
+                logging.debug("tile %s exists" % filespec)
+                continue
+
+            dirname = os.path.dirname(filespec)
+            # Create the subdirectories as pySmartDL doesn't do it for us
+            if os.path.isdir(dirname) is False:
+                #epdb.set_trace()
+                tmp = "."
+                paths = dirname.split('/')
+                for i in paths[1:]:
+                    tmp += '/' + i
+                    if os.path.isdir(tmp):
+                        continue
+                    else:
+                        os.mkdir(tmp)
+
+            # Download the file
+            try:
+                dl = SmartDL(fixed, dest=dirname, connect_default_logger=True)
+                dl.start()
+                if dl.isSuccessful():
+                    if dl.get_speed() > 0.0:
+                        logging.info("Speed: %s" % dl.get_speed(human=True))
+                    # ERSI does't append the filename
+                    tmp = os.path.splitext(dl.get_dest())
+                    if ext == '':
+                        os.rename(dl.get_dest(), filespec)
+                        logging.debug("Renamed %r" % dl.get_dest())
+                        ext = ".jpg"  # FIXME: probably right, but shouldbe a better test
+                    else:
+                        ext = tmp[1]
+                        counter += 1
+            except:
+                logging.error("Couldn't download from %r!" %  dl.get_errors())
+                errors += 1
+                worked = False
+                continue
+
+            counter += 1
+            logging.debug("Processed %r out of %r tile" % (counter, len(tiles)))
+            db.createVRT(filespec, tile)
+            logging.debug("Errors: %r %r" % (errors, len(tiles)))
