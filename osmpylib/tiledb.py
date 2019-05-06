@@ -39,10 +39,12 @@ from rasterio.merge import merge
 from rasterio.enums import ColorInterp
 from subprocess import PIPE, Popen, STDOUT
 import filetype
-from threading import Thread
 from time import sleep
 import queue
-
+from datetime import datetime
+from datetime import timedelta
+import concurrent.futures
+import threading
 
 class Tile(object):
     def __init__(self, imgfile=None):
@@ -231,16 +233,14 @@ class Tiledb(object):
 
         threads = queue.Queue(maxsize=self.threads)
 
-        block = 0
-        epdb.set_trace()
-        while block <= len(tiles):
-            logging.debug("Block %d:%d" % (block, block + 100))
-            dler = Thread(target=dlthread, args=(self.storage, mirrors, tiles[block:block + 100]))
-            block += 100
-            dler.start()
-            threads.put(dler)
-            #dler.join()
-            threads.get()
+        #epdb.set_trace()
+        with concurrent.futures.ThreadPoolExecutor(max_workers = self.threads) as executor:
+            block = 0
+            while block <= len(tiles):
+                future = executor.submit(dlthread, self.storage, mirrors, tiles[block:block+100])
+                #logging.debug("FUTURE: %r" % future.result.running())
+                #logging.debug("Block %d:%d" % (block, block + 100))
+                block += 100
 
         logging.info("Had %r errors downloading %d tiles for data for %r" % (self.errors, len(tiles), os.path.basename(self.storage)))
         return True
@@ -394,7 +394,11 @@ def dlthread(dest, mirrors, tiles):
     counter = -1
     errors = 0
 
-    logging.info("Downloading %d tiles" % len(tiles))
+    start = datetime.now()
+
+    totaltime = 0.0
+    logging.info("Downloading %d tiles in thread %d" % (len(tiles), threading.get_ident())
+    )
     template = "{0}/{1}/{2}/{3}"
     db = Tiledb()
     for tile in tiles:
@@ -442,8 +446,11 @@ def dlthread(dest, mirrors, tiles):
                 if dl.isSuccessful():
                     if dl.get_speed() > 0.0:
                         logging.info("Speed: %s" % dl.get_speed(human=True))
+                        logging.info("Download time: %r" % dl.get_dl_time(human=True))
+                    totaltime +=  dl.get_dl_time()
                     # ERSI does't append the filename
                     tmp = os.path.splitext(dl.get_dest())
+                    totaltime +=  dl.get_dl_time()
                     if ext == '':
                         os.rename(dl.get_dest(), filespec)
                         logging.debug("Renamed %r" % dl.get_dest())
@@ -452,12 +459,15 @@ def dlthread(dest, mirrors, tiles):
                         ext = tmp[1]
                         counter += 1
             except:
-                logging.error("Couldn't download from %r!" %  dl.get_errors())
+                logging.error("Couldn't download from %r: %s" %  (filespec, dl.get_errors()))
                 errors += 1
                 worked = False
                 continue
 
             counter += 1
-            logging.debug("Processed %r out of %r tile" % (counter, len(tiles)))
             db.createVRT(filespec, tile)
-            logging.debug("Errors: %r %r" % (errors, len(tiles)))
+
+    end = datetime.now()
+    delta = start - end
+    logging.debug("%d errors out of %f tiles" % (errors, len(tiles)))
+    logging.debug("Processed %d tiles in %d.%d seconds" % (len(tiles), delta.seconds, delta.microseconds))
