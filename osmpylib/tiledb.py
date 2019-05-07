@@ -101,7 +101,7 @@ class Tile(object):
 
     def readTile(self, filespec):
         """Load the image into memory"""
-        filespec = self.convert(filespec, "jpg")
+        #filespec = self.convert(filespec, "jpg")
         logging.debug("Reading tile %r into memory" % filespec)
         try:
             file = open(filespec, "rb")
@@ -149,7 +149,8 @@ class Tiledb(object):
     """Class to manage a map tiles"""
     def __init__(self, top=None, levels=None):
         """Initialize and manage a database of map tiles"""
-        self.threads = 10       # max number of download threads
+        self.threads = 20       # max number of download threads
+        self.cache = None
         self.perms = 0o755
         self.dest = None
         self.tifs = list()
@@ -241,16 +242,37 @@ class Tiledb(object):
                 #logging.debug("FUTURE: %r" % future.result.running())
                 #logging.debug("Block %d:%d" % (block, block + 100))
                 block += 100
-
+            executor.shutdown()
         logging.info("Had %r errors downloading %d tiles for data for %r" % (self.errors, len(tiles), os.path.basename(self.storage)))
         return True
-        
+
     def formatPath(self, tile=None):
         if tile is None:
             logging.error("You need to supply a tile!")
             return None
         path = "%s/%s/%s/%s" % (self.storage, tile.z, tile.x, tile.y)
         return path
+
+    def writeCache(self, tiles, filespec=None):
+        if filespec is not None:
+            outfile = open(filespec, 'w')
+        else:
+            outfile = open(self.cache, 'w')
+
+        # Downloaded tiles are usually png or jpg format. The Topo
+        # maps use png, Sat imagery is usually jpg. GTifs are
+        # produced by this program, but not used for creating an
+        # mbtiles or sqlite3 file.
+        for tile in tiles:
+            file = self.formatPath(tile) + '/' + str(tile.y)
+            if os.path.exists(file + ".jpg"):
+                outfile.write(file  + ".jpg\n")
+            elif os.path.exists(file + ".png"):
+                outfile.write(file  + ".png\n")
+            else:
+                outfile.write(file  + ".tif\n")
+        outfile.close()
+        logging.info("Wrote cache file %r" % filespec)
 
     def writeTifs(self, filespec):
         outfile = open(filespec, 'w')
@@ -449,9 +471,10 @@ def dlthread(dest, mirrors, tiles):
                         logging.info("Download time: %r" % dl.get_dl_time(human=True))
                     totaltime +=  dl.get_dl_time()
                     # ERSI does't append the filename
-                    tmp = os.path.splitext(dl.get_dest())
                     totaltime +=  dl.get_dl_time()
-                    if ext == '':
+                    suffix = filetype.guess(dl.get_dest())
+                    print('File extension: %s' % suffix.extension)
+                    if suffix.extension == 'jpg':
                         os.rename(dl.get_dest(), filespec)
                         logging.debug("Renamed %r" % dl.get_dest())
                         ext = ".jpg"  # FIXME: probably right, but shouldbe a better test
@@ -461,7 +484,6 @@ def dlthread(dest, mirrors, tiles):
             except:
                 logging.error("Couldn't download from %r: %s" %  (filespec, dl.get_errors()))
                 errors += 1
-                worked = False
                 continue
 
             counter += 1
@@ -469,5 +491,5 @@ def dlthread(dest, mirrors, tiles):
 
     end = datetime.now()
     delta = start - end
-    logging.debug("%d errors out of %f tiles" % (errors, len(tiles)))
-    logging.debug("Processed %d tiles in %d.%d seconds" % (len(tiles), delta.seconds, delta.microseconds))
+    logging.debug("%d errors out of %d tiles" % (errors, len(tiles)))
+    logging.debug("Processed %d tiles in %d.%d.%d minutes" % (len(tiles), delta.minutes, delta.microseconds))

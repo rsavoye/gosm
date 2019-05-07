@@ -288,7 +288,7 @@ ersidb = Tiledb("ERSI")
 # 'gdaladdo -r nearest foo.tif 2 4 8 16 32 64 128 256 512 1024'
 # to generate the lower resolution zoom levels as layers.
 
-dd.dump()
+#d.dump()
 
 # tiles = list(mercantile.tiles(bbox[0], bbox[2], bbox[1], bbox[3], dd.get('zooms')))
 zoom = 15
@@ -296,19 +296,19 @@ zoom = 15
 logging.debug("Zoom level for topos is: %r" % str(zoom))
 tiles = list(mercantile.tiles(bbox[0], bbox[2], bbox[1], bbox[3], zoom))
 # (OpenTopo uses Z/X/Y.png format
-path = os.path.basename(os.path.dirname(dd.get('poly')))
-filespec = path + '-Topo' + str(zoom) + '.txt'
+path = dd.get('poly').split('.')
+filespec = path[0] + '-Topo' + str(zoom) + '.txt'
 url = ".tile.opentopomap.org/{0}/{1}/{2}.png"
 mirrors = [ "https://a" + url, "https://b" + url, "https://c" + url ]
 if dd.get('download') and dd.get('topo'):
     if topodb.download(mirrors, tiles):
         logging.info("Done downloading Terrain data")
-        topodb.writeTifs(filespec)
+        topodb.writeCache(tiles, filespec)
 if dd.get('mosaic') is True and dd.get('topo'):
     topodb.mosaic(tiles)
 
 # Zooms seems to go to 19, 18 was huge, and 17 was fine
-filespec = path + '-Sat' + str(zoom) + '.txt'
+filespec = path[0] + '-Sat' + str(zoom) + '.txt'
 zoom = 16
 logging.debug("Zoom level for ERSI is: %r" % str(zoom))
 tiles = list(mercantile.tiles(bbox[0], bbox[2], bbox[1], bbox[3], zoom))
@@ -317,12 +317,12 @@ mirrors = [url]
 if dd.get('download') and dd.get('ersi'):
     if ersidb.download(mirrors, tiles):
         logging.info("Done downloading Sat imagery")
-        ersidb.writeTifs(filespec)
+        ersidb.writeCache(tiles, filespec)
 if dd.get('mosaic') is True and dd.get('ersi'):
     ersidb.mosaic(tiles)
 
-# 16 appears to be the max zoom level available
-filespec = path + '-Terrain' + str(zoom) + '.txt'
+# 17 appears to be the max zoom level available
+filespec = path[0] + '-Terrain' + str(zoom) + '.txt'
 zoom = 16
 logging.debug("Zoom level for Terrain is: %r" % str(zoom))
 tiles = list(mercantile.tiles(bbox[0], bbox[2], bbox[1], bbox[3], zoom))
@@ -331,7 +331,7 @@ mirrors = [url]
 if dd.get('download') and dd.get('terrain'):
     if terraindb.download(mirrors, tiles):
         logging.info("Done downloading Topo data")
-        terraindb.writeTifs(filespec)
+        terraindb.writeCache(tiles,filespec)
 if dd.get('mosaic') is True and dd.get('terrain'):        
     terraindb.mosaic(tiles)
 
