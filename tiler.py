@@ -46,7 +46,7 @@ import urllib.request
 from urllib.parse import urlparse
 from poly import Poly
 from osm import osmConvert
-from datetime import datetime
+from datetime import timedelta, datetime
 
 
 class myconfig(object):
@@ -67,7 +67,7 @@ class myconfig(object):
         self.options['source'] = "ersi,topo,terrain"
         self.options['format'] = "gtiff"
         #self.options['force'] = False
-        self.options['outdir'] = "./"
+        self.options['outfile'] = "./"
         # FIXME: 
         self.options['mosaic'] = False
         self.options['download'] = False
@@ -80,7 +80,7 @@ class myconfig(object):
 
         try:
             (opts, val) = getopt.getopt(argv[1:], "h,o:,s:,p:,v,z:,f:,d,m,n",
-                ["help", "outdir", "source", "poly", "verbose", "zooms", "format", "download", "mosaic", "nodata"])
+                ["help", "outfile", "source", "poly", "verbose", "zooms", "format", "download", "mosaic", "nodata"])
         except getopt.GetoptError as e:
             logging.error('%r' % e)
             self.usage(argv)
@@ -222,28 +222,37 @@ if dd.get('nodata') is False:
     now = datetime.now().isoformat()
 
     osmc = osmConvert()
-    last = osmc.getLastTimestamp(polyname + ".osm")
+    last = osmc.getLastTimestamp(outfile + '/' + polyname + ".osm")
     if last is not None:
-        logging.info("Last timestamp in %s is %s" % (polyname + ".osm", last))
-        xapi = '[adiff: "%s","%s"];%s' % (last, now, xapi)
+        tdelta = timedelta(seconds=10)
+        past = last + tdelta
+        logging.info("Last timestamp in %s is %s" % (polyname + ".osm", past.isoformat()))
+        xapi = '[adiff: "%s","%s"];%s' % (past.isoformat(), now, xapi)
 
+    logging.debug("XAPI: %s" % xapi)
     uri = 'https://overpass-api.de/api/interpreter'
+    #uri = 'https://overpass-api.de/api/augmented_diff'
     headers = dict()
     headers['Content-Type'] = 'application/x-www-form-urlencodebd'
     req = urllib.request.Request(uri, headers=headers)
     x = urllib.request.urlopen(req, data=xapi.encode('utf-8'))
     output = x.read().decode('utf-8')
+    logging.debug("FIXME: %r" % len(output))
+    adiff = "interpreter"
     if last is not None:
-        osmfile = open(polyname + 'X.osm', 'w')
+        osmfile = open(adiff, 'w')
     else:
-        osmfile = open(polyname + '.osm', 'w')
+        osmfile = open(outfile + '/' + polyname + '.osm', 'w')
     osmfile.write(output)
-    # Make changeset file
-    # osmconvert interpreter --out-o5m -o=interpreter.o5m
-    # osmconvert previous.osm interpreter.o5m -o now.osm
     osmfile.close()
 
-dd.dump()
+    # Make changeset file
+    if last is not None and len(output) > 300:
+        o5m = osmc.createChanges(adiff)
+        osmc.applyChanges(polyname + ".osm")
+    else:
+        logging.info("No changes found for %s" % polyname + '.osm')
+
 if dd.get('download') is False:
     logging.info("Not downloading tiles (the default)")
     quit()
@@ -268,16 +277,14 @@ if dd.get('download') is False:
 #    <serverParts>0 1 2 3</serverParts>
 #  </customMapSource>
 
-topodb = Tiledb("Topo")
-terraindb = Tiledb("Terrain")
-hybridb = Tiledb("Hybrid")
-ersidb = Tiledb("ERSI")
+topodb = Tiledb(outfile + "/Topo")
+terraindb = Tiledb(outfile + "/Terrain")
+hybridb = Tiledb(outfile + "/Hybrid")
+ersidb = Tiledb(outfile + "/ERSI")
 
 # We only need to download the largest zoom level, and use
 # 'gdaladdo -r nearest foo.tif 2 4 8 16 32 64 128 256 512 1024'
 # to generate the lower resolution zoom levels as layers.
-
-#d.dump()
 
 # tiles = list(mercantile.tiles(bbox[0], bbox[2], bbox[1], bbox[3], dd.get('zooms')))
 zoom = 15
@@ -286,7 +293,7 @@ logging.debug("Zoom level for topos is: %r" % str(zoom))
 tiles = list(mercantile.tiles(bbox[0], bbox[2], bbox[1], bbox[3], zoom))
 # (OpenTopo uses Z/X/Y.png format
 path = dd.get('poly').split('.')
-filespec = path[0] + '-Topo' + str(zoom) + '.txt'
+filespec = outfile + '/' + os.path.basename(path[0]) + '-Topo' + str(zoom) + '.txt'
 url = ".tile.opentopomap.org/{0}/{1}/{2}.png"
 mirrors = [ "https://a" + url, "https://b" + url, "https://c" + url ]
 if dd.get('download') and dd.get('topo'):
