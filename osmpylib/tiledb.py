@@ -31,8 +31,7 @@ from sys import argv
 sys.path.append(os.path.dirname(argv[0]) + '/osmpylib')
 from pySmartDL import SmartDL
 import mercantile
-from osgeo import gdal
-from osgeo import ogr
+from osgeo import gdal,ogr,osr
 from urllib.parse import urlparse
 import rasterio
 from rasterio.merge import merge
@@ -45,6 +44,9 @@ from datetime import datetime
 from datetime import timedelta
 import concurrent.futures
 import threading
+import glob
+import shutil
+
 
 class Tile(object):
     def __init__(self, imgfile=None):
@@ -81,27 +83,9 @@ class Tile(object):
     def getImage(self):
         return self.blob
 
-    def convert(self, filespec, format):
-        if os.path.exists(filespec) is False:
-            return filespec
-        type = filetype.guess(filespec).extension
-        if type == "format":
-            return filespec
-        newfilespec = filespec.replace("." + type, "." + format)
-        if os.path.exists(newfilespec):
-            return newfilespec
-
-        #logging.info("Converting %s to %s", (filespec, os.path.basename(newfilespec)))
-        if type != "jpg":
-            opts = gdal.TranslateOptions(rgbExpand='RGBA', format='JPEG')
-        else:
-            opts = gdal.TranslateOptions(format='GTIFF')
-        ds1 = gdal.Translate(newfilespec, filespec, options=opts)
-        return newfilespec
-
     def readTile(self, filespec):
         """Load the image into memory"""
-        #filespec = self.convert(filespec, "jpg")
+        #filespec = convert(filespec, "jpg")
         logging.debug("Reading tile %r into memory" % filespec)
         try:
             file = open(filespec, "rb")
@@ -149,7 +133,7 @@ class Tiledb(object):
     """Class to manage a map tiles"""
     def __init__(self, top=None, levels=None):
         """Initialize and manage a database of map tiles"""
-        self.threads = 20       # max number of download threads
+        self.threads = 40       # max number of download threads
         self.cache = None
         self.perms = 0o755
         self.dest = None
@@ -411,6 +395,65 @@ class Tiledb(object):
                 except:
                     logging.error("Out of memory")
 
+    def makeLevels(self):
+        # $x       cmd = [ "gdal_retile.py", "-pyramidOnly", "-useDirForEachRow", "-levels 3", "-targetDir", "ofoo" ]
+        #ppp = Popen(cmd, stdout=PIPE, bufsize=0, close_fds=ON_POSIX)
+        #glob.glob("ofoo/1/**", recursive=True)
+
+        zooms = [1, 2, 3]
+        for i in zooms:
+            template = "ofoo/{0}/**/*.tif"
+            pattern = template.format(i)
+            files = glob.glob(pattern, recursive=True)
+            #print(files)
+            # Move from ofoo/1/1... to z/x/y/
+
+            for tif in files:
+                ds = gdal.Open(tif)
+                if ds is None:
+                    logging.error("Tile %s doesn't exist!" % tif)
+                    continue
+                width = ds.RasterXSize
+                height = ds.RasterYSize
+                # adfGeoTransform[0] /* top left x */
+                # adfGeoTransform[1] /* w-e pixel resolution */
+                # adfGeoTransform[2] /* 0 */
+                # adfGeoTransform[3] /* top left y */
+                # adfGeoTransform[4] /* 0 */
+                # adfGeoTransform[5] /* n-s pixel resolution (negative value) */
+                gt = ds.GetGeoTransform()
+                minx = gt[0]
+                miny = gt[3] + width*gt[4] + height*gt[5]
+                maxx = gt[0] + width*gt[1] + height*gt[2]
+                maxy = gt[3]
+
+                # mercantile.ul()
+                #print("%f,%f,%f,%f" % (minx,miny,maxx,maxy))
+                m = mercantile.tile(minx, miny,15) # seems to be level 16
+                #epdb.set_trace()
+                filespec = "./tiledb/ERSI/15/" + str(m.x) + '/' + str(m.y) + '/' + str(m.y) + ".tif"
+                dirname = os.path.dirname(filespec)
+                # Create the subdirectories as pySmartDL doesn't do it for us
+                if os.path.isdir(dirname) is False:
+                    tmp = "."
+                    paths = dirname.split('/')
+                    for i in paths[1:]:
+                        tmp += '/' + i
+                        if os.path.isdir(tmp):
+                            continue
+                        else:
+                            os.mkdir(tmp)
+
+                #epdb.set_trace()
+                shutil.copy(tif, filespec)
+                tmp = filespec.replace('.tif', '.jpg')
+                logging.debug("Copying %s to %s" % (tif, tmp))
+                if not os.path.exists(tmp):
+                    jpg = convert(filespec, 'jpg')
+                else:
+                    jpg = tmp
+                #print(tif, jpg, filespec)
+
 def dlthread(dest, mirrors, tiles):
     """Thread to handle downloads for Queue"""
     counter = -1
@@ -493,3 +536,24 @@ def dlthread(dest, mirrors, tiles):
     delta = start - end
     logging.debug("%d errors out of %d tiles" % (errors, len(tiles)))
     logging.debug("Processed %d tiles in %d.%d.%d minutes" % (len(tiles), delta.minutes, delta.microseconds))
+ 
+def convert(filespec, format):
+    if os.path.exists(filespec) is False:
+        return filespec
+    type = filetype.guess(filespec).extension
+    if type == "format":
+        return filespec
+    newfilespec = filespec.replace("." + type, "." + format)
+    if os.path.exists(newfilespec):
+        return newfilespec
+
+    #logging.info("Converting %s to %s", (filespec, os.path.basename(newfilespec)))
+    # if type != "jpg":
+    opts = gdal.TranslateOptions(format='JPEG')
+    #     opts = gdal.TranslateOptions(rgbExpand='RGBA', format='JPEG')
+    # else:
+    #     opts = gdal.TranslateOptions(format='GTIFF')
+    #epdb.set_trace()
+    ds1 = gdal.Translate(newfilespec, filespec, options=opts)
+
+    return newfilespec
