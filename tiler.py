@@ -28,7 +28,7 @@ import sys
 import logging
 import getopt
 import epdb
-from osgeo import ogr
+from osgeo import gdal,ogr,osr
 from sys import argv
 sys.path.append(os.path.dirname(argv[0]) + '/osmpylib')
 import urllib.request
@@ -40,10 +40,14 @@ import rasterio
 from rasterio.merge import merge
 from rasterio.enums import ColorInterp
 import overpy
-import osm
+#import osm
+import glob
 import urllib.request
 from urllib.parse import urlparse
 from poly import Poly
+from osm import osmConvert
+from datetime import datetime
+
 
 class myconfig(object):
     def __init__(self, argv=list()):
@@ -154,18 +158,18 @@ class myconfig(object):
         print("This program downloads map tiles and the geo-references them")
         print(argv[0] + ": options:")
         print("""\t--help(-h)   Help
-\t--outdir(-o)  Output directory for tiles
-\t--source(-s)  Map source (default, topo)
-                ie... topo,terrain,ersi
-\t--poly(-p)    Input OSM polyfile
-\t--format(-f)  Output file format,
-                ie... GTiff, PDF, AQM, OSMAND
-\t--zooms(-z)   Zoom levels to download (14-18)
-\t--nodata(-n)  Disable downloading OSM data
-\t--verbose(-v) Enable verbosity
+\t--outdir(-o)    Output directory for tiles
+\t--source(-s)    Map source (default, topo)
+                  ie... topo,terrain,ersi
+\t--poly(-p)      Input OSM polyfile
+\t--format(-f)    Output file format,
+                  ie... GTiff, PDF, AQM, OSMAND
+\t--zooms(-z)     Zoom levels to download (14-18)
+\t--nodata(-n)    Disable downloading OSM data
+\t--download(-d)  Disable downloading OSM data
+\t--verbose(-v)   Enable verbosity
         """)
         quit()
-
 
 dd = myconfig(argv)
 dd.checkOptions()
@@ -193,43 +197,9 @@ if dd.get('verbose') == 1:
 outfile = dd.get('outfile')
 mod = 'action="modifiy"'
 
-
 poly = Poly()
 bbox = poly.getBBox(dd.get('poly'))
 logging.info("Bounding box for %r is %r" % (input, bbox))
-
-# file = open(dd.get('poly'), "r")
-# data = list()
-# lines = file.readlines(
-# curname = ""
-# skip = 0
-# ring = ogr.Geometry(ogr.wkbLinearRing)
-# for line in lines:
-#     # Ignore the first two lines
-#     if skip <= 2:
-#         skip = skip + 1
-#         continue
-#     line = line.rstrip()
-#     line = line.lstrip()
-#     if line == 'END' or line[0] == '!':
-#         continue
-#     coords = line.split()
-#     try:
-#         ring.AddPoint(float(coords[0]), float(coords[1]))
-#     except:
-#         logging.error("Coordinates bad: %r" % len(coords))
-
-# # multipolygon = ogr.Geometry(ogr.wkbMultiPolygon)
-# # multipolygon.AddGeometry(poly)
-
-# poly = ogr.Geometry(ogr.wkbLinearRing)
-# poly.AddGeometry(ring)
-# # Get Envelope returns a tuple (minX, maxX, minY, maxY)
-# bbox = ring.GetEnvelope()
-print(bbox)
-# # print(ring.GetArea())
-# # print(ring.Length())
-# # kml = ring.ExportToKML()
 
 # XAPI uses:
 # minimum latitude, minimum longitude, maximum latitude, maximum longitude
@@ -237,28 +207,47 @@ xbox = "%s,%s,%s,%s" % (bbox[2], bbox[0], bbox[3], bbox[1])
 
 print("------------------------")
 #xapi = "(\n  way(%s);\n  node(%s);\n  rel(%s);\n  <;\n  >;\n);\nout meta;" % (box , xbox, xbox)
-xapi = "(way(%s);node(%s);rel(%s);<;>;);out meta;" % (xbox, xbox, xbox)
 #print(xapi)
+#osmc.createChanges()
+# osmc.applyChanges()
+
+#xapi = '[adiff: "2018-03-29T00:26:13Z","2019-05-13T17:27:18-06:00"];' + xapi
 
 # Download data from OpenStreetMap
 if dd.get('nodata') is False:
+    xapi = "(way(%s);node(%s);rel(%s);<;>;);out meta;" % (xbox, xbox, xbox)
     polyfile = dd.get('poly')
     polyname = os.path.basename(polyfile.replace(".poly", ""))
+
+    now = datetime.now().isoformat()
+
+    osmc = osmConvert()
+    last = osmc.getLastTimestamp(polyname + ".osm")
+    if last is not None:
+        logging.info("Last timestamp in %s is %s" % (polyname + ".osm", last))
+        xapi = '[adiff: "%s","%s"];%s' % (last, now, xapi)
+
     uri = 'https://overpass-api.de/api/interpreter'
     headers = dict()
-    headers['Content-Type'] = 'application/x-www-form-urlencoded'
+    headers['Content-Type'] = 'application/x-www-form-urlencodebd'
     req = urllib.request.Request(uri, headers=headers)
     x = urllib.request.urlopen(req, data=xapi.encode('utf-8'))
-    osmfile = open(polyname + '.osm', 'w')
     output = x.read().decode('utf-8')
+    if last is not None:
+        osmfile = open(polyname + 'X.osm', 'w')
+    else:
+        osmfile = open(polyname + '.osm', 'w')
     osmfile.write(output)
+    # Make changeset file
+    # osmconvert interpreter --out-o5m -o=interpreter.o5m
+    # osmconvert previous.osm interpreter.o5m -o now.osm
     osmfile.close()
 
-# https://clarity.maptiles.arcgis.com/arcgis/rest/services/World_Imagery/MapServer/tile/Z/Y/X
-# https://caltopo.s3.amazonaws.com/topo/Z/X/Y.png
-# https://a.tile.opentopomap.org/Z/X/Y.png"
-# https://b.tile.opentopomap.org/Z/X/Y.png"
-# https://c.tile.opentopomap.org/Z/X/Y.png"
+dd.dump()
+if dd.get('download') is False:
+    logging.info("Not downloading tiles (the default)")
+    quit()
+
 # https://mt.google.com/vt/lyrs=s&x=${X}&amp;y=${y}&z=${Z} -- Satellite
 # https://mt.google.com/vt/lyrs=y&amp;x=${X}&amp;y=${y}&z=${Z} -- Hybrid
 # https://mt.google.com/vt/lyrs=t&amp;x=${X}&amp;y=${y}&z=${Z} -- Terrain 
@@ -344,3 +333,6 @@ if dd.get('mosaic') is True and dd.get('terrain'):
 # # lat increases northward, 0 - 90
 # # lon increases eastward, 0 - 180 
 
+# This creates 3 lower zoom levels, used for datavase driven
+# mapping formats like Osmand sqlitedb or mbtiles formats.
+ersidb.makeLevels()
