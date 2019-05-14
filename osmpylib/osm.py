@@ -282,31 +282,38 @@ class osmConvert(object):
         if len(grep) == 0:
             logging.error("Couldn't get last timestamp from %s!" % file)
             return None
-        timestamp = grep.decode('utf-8').split('=')[1]
-        return timestamp.strip('\n\"')
+        # Clean up the timestamp and make it a datetime type
+        timestamp = grep.decode('utf-8').split('=')[1].strip('\n\"Z')
+        return datetime.strptime(timestamp, '%Y-%m-%dT%H:%M:%S')
 
-    def createChanges(self, file=None):
+    def createChanges(self, adiff=None):
         """This method takes an adiff file as produced by the Overpass QL
         server, which then later gets applied to produce an updated OSM file."""
-        if file is None and self.file is not None:
-            file = self.file
-        else:
+        if adiff is None and self.file is not None:
+            adiff = self.file
+
+        if os.path.exists(adiff) is False:
+            logging.error("%s doesn't exist!" % adiff)
             return None
 
-        timestamp = self.getLastTimestamp(file)
-        logging.debug("TIMESTAMP: %s" % timestamp)
-
-        cmd = "osmconvert " + file + " --out-o5m -o=/tmp/osmc" + str(os.getpid()) + '.o5m'
+        outfile = "/tmp/osmc" + str(os.getpid()) + '.o5m'
+        cmd = "osmconvert " + adiff + " --out-o5m -o=" + outfile
         diff = subprocess.check_output(cmd, shell=True)
-        logging.debug("DIFF: %r" % diff)
+        if len(diff) == 0:
+            return outfile
 
-    def applyChanges(self, file=None, adiff=None):
-        """ """
+    def applyChanges(self, file=None):
+        """Apply the chngeset file to the osm file"""
         if file is None and self.file is not None:
             file = self.file
+
+        if os.path.exists(file) is False:
+            logging.error("%s doesn't exist!" % file)
+            return False
+
         os.rename(file, "tmp.osm")
-        if adiff is None:
-            adiff = '/tmp/osmc' + str(os.getpid()) + '.o5m'
-        cmd = [ 'osmconvert', "tmp.osm", adiff, '-o=' + file]
-        osmc = Popen(cmd, close_fds=ON_POSIX)
-        osmc.wait()
+        adiff = "/tmp/osmc" + str(os.getpid()) + '.o5m'
+        cmd = 'osmconvert ' + "tmp.osm " + adiff + ' -o=' + file
+        osmc = subprocess.check_output(cmd, shell=True)
+
+        return True
