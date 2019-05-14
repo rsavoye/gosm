@@ -16,6 +16,7 @@
 # Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 #
 
+import sys
 import os.path
 import time
 import logging
@@ -23,7 +24,11 @@ from datafile import convfile
 import config
 import html
 import string
-import pdb
+import epdb
+#from subprocess import PIPE, Popen, STDOUT
+import subprocess
+ON_POSIX = 'posix' in sys.builtin_module_names
+from datetime import datetime
 
 class osmfile(object):
     """OSM File output"""
@@ -39,7 +44,9 @@ class osmfile(object):
         if outfile == False:
             self.outfile = self.options.get('outdir') + "foobar.osm"
         try:
-            outfile += ".osm"
+            suffix = outfile.split('.')[1]
+            if suffix != "osm":
+                outfile += ".osm"
             if os.path.isfile(outfile):
                 self.file = open(outfile, 'w')
             else:
@@ -245,3 +252,61 @@ class osmfile(object):
         tags = list()
         tags.append(cache)
         return tags
+
+
+class osmConvert(object):
+    def __init__(self, file=None):
+        """This class uses osmconvert to apply a changeset to an OSM file"""
+        self.file = file
+        # Make changeset file
+        # osmconvert interpreter --out-o5m -o=interpreter.o5m
+        # osmconvert previous.osm interpreter.o5m -o now.osm
+
+    def getLastTimestamp(self, file=None):
+        """First find the last timestamp in the OSM file so we know where
+        to start the adiff."""
+
+        if file is None and self.file is not None:
+            file = self.file
+
+        if os.path.exists(file) is False:
+            logging.error("%s does not exist!" % file)
+            return None
+        else:
+            if os.stat(file).st_size == 0:
+                logging.error("%s has zero content!" % file)
+                return None
+
+        cmd = "grep -o 'timestamp=.[0-9A-Z:-]*'" + " " + file + " | sort -M | tail -1"
+        grep = subprocess.check_output(cmd, shell=True)
+        if len(grep) == 0:
+            logging.error("Couldn't get last timestamp from %s!" % file)
+            return None
+        timestamp = grep.decode('utf-8').split('=')[1]
+        return timestamp.strip('\n\"')
+
+    def createChanges(self, file=None):
+        """This method takes an adiff file as produced by the Overpass QL
+        server, which then later gets applied to produce an updated OSM file."""
+        if file is None and self.file is not None:
+            file = self.file
+        else:
+            return None
+
+        timestamp = self.getLastTimestamp(file)
+        logging.debug("TIMESTAMP: %s" % timestamp)
+
+        cmd = "osmconvert " + file + " --out-o5m -o=/tmp/osmc" + str(os.getpid()) + '.o5m'
+        diff = subprocess.check_output(cmd, shell=True)
+        logging.debug("DIFF: %r" % diff)
+
+    def applyChanges(self, file=None, adiff=None):
+        """ """
+        if file is None and self.file is not None:
+            file = self.file
+        os.rename(file, "tmp.osm")
+        if adiff is None:
+            adiff = '/tmp/osmc' + str(os.getpid()) + '.o5m'
+        cmd = [ 'osmconvert', "tmp.osm", adiff, '-o=' + file]
+        osmc = Popen(cmd, close_fds=ON_POSIX)
+        osmc.wait()
