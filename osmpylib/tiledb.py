@@ -139,9 +139,10 @@ class Tiledb(object):
         self.dest = None
         self.tifs = list()
         if top is None:
-            self.storage = "./tiledb"
+            self.storage = "./tiledb/"
         else:
-            self.storage = "./tiledb/" + top
+            self.storage = top + '/'
+
         # Default zoom levels. Below these are usually too far away to
         # be useful, and above this, the files are huge.
         if levels is None:
@@ -168,6 +169,7 @@ class Tiledb(object):
             logging.error("Need to supply a file to process!")
             return
 
+        logging.debug("Creating VRT for %s" % filespec)
         self.drv = gdal.GetDriverByName("VRT")
         base = os.path.splitext(filespec)
         self.vrt = self.drv.Create(base[0] + ".vrt", self.tilesize, self.tilesize, bands=0)
@@ -213,12 +215,8 @@ class Tiledb(object):
             return None
 
         total = len(tiles)
-        #groups = total / self.threads
-        #logging.debug("Needs %d thread groups" % groups)
-
         threads = queue.Queue(maxsize=self.threads)
 
-        #epdb.set_trace()
         with concurrent.futures.ThreadPoolExecutor(max_workers = self.threads) as executor:
             block = 0
             while block <= len(tiles):
@@ -465,7 +463,7 @@ def dlthread(dest, mirrors, tiles):
     logging.info("Downloading %d tiles in thread %d" % (len(tiles), threading.get_ident())
     )
     template = "{0}/{1}/{2}/{3}"
-    db = Tiledb()
+    db = Tiledb(dest)
     for tile in tiles:
         fixed = ()
         for url in mirrors:
@@ -475,6 +473,7 @@ def dlthread(dest, mirrors, tiles):
             base = template.format(dest, str(tile.z),  str(tile.x), str(tile.y), str(tile.y), str(tile.y)) + "/"
             path = urlparse(url)[2]
             tmp = os.path.splitext(os.path.basename(fixed[0]))
+
             ext = tmp[1]
             # If there is no extension, it's a directory. Usually
             # in that case, it's a jpeg. We test the actual file
@@ -494,8 +493,7 @@ def dlthread(dest, mirrors, tiles):
             dirname = os.path.dirname(filespec)
             # Create the subdirectories as pySmartDL doesn't do it for us
             if os.path.isdir(dirname) is False:
-                #epdb.set_trace()
-                tmp = "."
+                tmp = ""
                 paths = dirname.split('/')
                 for i in paths[1:]:
                     tmp += '/' + i
