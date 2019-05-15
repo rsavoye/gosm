@@ -193,10 +193,11 @@ class Tiledb(object):
         imgfile = gdal.Open(filespec, gdal.GA_ReadOnly)
         if os.path.exists(filespec):
             # rgbExpand=rgba
-            if "ERSI" not in filespec:
-                opts = gdal.TranslateOptions(rgbExpand='RGBA', GCPs=gcpList, format='GTiff')
-            else:
-                opts = gdal.TranslateOptions(GCPs=gcpList, format='GTiff')
+            # if "ERSI" not in filespec:
+            #     opts = gdal.TranslateOptions(rgbExpand='RGBA', GCPs=gcpList, format='GTiff')
+            # else:
+            #     opts = gdal.TranslateOptions(GCPs=gcpList, format='GTiff')
+            opts = gdal.TranslateOptions(GCPs=gcpList, format='GTiff')
 
             ds1 = gdal.Translate(tmpfile, imgfile, options=opts)
             #gdal.Warp(outfile, ds1, format='GTiff', xRes=30, yRes=30)
@@ -216,6 +217,7 @@ class Tiledb(object):
 
         total = len(tiles)
         threads = queue.Queue(maxsize=self.threads)
+        logging.info("Total number of tiles required is %d" % total)
 
         with concurrent.futures.ThreadPoolExecutor(max_workers = self.threads) as executor:
             block = 0
@@ -247,12 +249,7 @@ class Tiledb(object):
         # mbtiles or sqlite3 file.
         for tile in tiles:
             file = self.formatPath(tile) + '/' + str(tile.y)
-            if os.path.exists(file + ".jpg"):
-                outfile.write(file  + ".jpg\n")
-            elif os.path.exists(file + ".png"):
-                outfile.write(file  + ".png\n")
-            else:
-                outfile.write(file  + ".tif\n")
+            outfile.write(file  + ".tif\n")
         outfile.close()
         logging.info("Wrote cache file %r" % filespec)
 
@@ -428,7 +425,6 @@ class Tiledb(object):
                 # mercantile.ul()
                 #print("%f,%f,%f,%f" % (minx,miny,maxx,maxy))
                 m = mercantile.tile(minx, miny,15) # seems to be level 16
-                #epdb.set_trace()
                 filespec = "./tiledb/ERSI/15/" + str(m.x) + '/' + str(m.y) + '/' + str(m.y) + ".tif"
                 dirname = os.path.dirname(filespec)
                 # Create the subdirectories as pySmartDL doesn't do it for us
@@ -442,7 +438,6 @@ class Tiledb(object):
                         else:
                             os.mkdir(tmp)
 
-                #epdb.set_trace()
                 shutil.copy(tif, filespec)
                 tmp = filespec.replace('.tif', '.jpg')
                 logging.debug("Copying %s to %s" % (tif, tmp))
@@ -451,6 +446,20 @@ class Tiledb(object):
                 else:
                     jpg = tmp
                 #print(tif, jpg, filespec)
+
+
+def mkdirp(path):
+    dirname = os.path.dirname(path)
+    # Create the subdirectories as pySmartDL doesn't do it for us
+    if os.path.isdir(dirname) is False:
+        tmp = ""
+        dirs = dirname.split('/')
+        for i in dirs[1:]:
+            tmp += '/' + i
+            if os.path.isdir(tmp):
+                continue
+            else:
+                os.mkdir(tmp)
 
 def dlthread(dest, mirrors, tiles):
     """Thread to handle downloads for Queue"""
@@ -466,6 +475,7 @@ def dlthread(dest, mirrors, tiles):
     db = Tiledb(dest)
     for tile in tiles:
         fixed = ()
+        logging.debug("Tile: %r/%r/%r in thread %r" % (tile.z, tile.y, tile.x,  threading.get_ident()))
         for url in mirrors:
             new = url.format(tile.z, tile.x, tile.y)
             fixed = fixed + (new,)
@@ -506,26 +516,27 @@ def dlthread(dest, mirrors, tiles):
             try:
                 dl = SmartDL(fixed, dest=dirname, connect_default_logger=True)
                 dl.start()
-                if dl.isSuccessful():
-                    if dl.get_speed() > 0.0:
-                        logging.info("Speed: %s" % dl.get_speed(human=True))
-                        logging.info("Download time: %r" % dl.get_dl_time(human=True))
-                    totaltime +=  dl.get_dl_time()
-                    # ERSI does't append the filename
-                    totaltime +=  dl.get_dl_time()
-                    suffix = filetype.guess(dl.get_dest())
-                    print('File extension: %s' % suffix.extension)
-                    if suffix.extension == 'jpg':
-                        os.rename(dl.get_dest(), filespec)
-                        logging.debug("Renamed %r" % dl.get_dest())
-                        ext = ".jpg"  # FIXME: probably right, but shouldbe a better test
-                    else:
-                        ext = tmp[1]
-                        counter += 1
             except:
                 logging.error("Couldn't download from %r: %s" %  (filespec, dl.get_errors()))
                 errors += 1
                 continue
+
+            if dl.isSuccessful():
+                if dl.get_speed() > 0.0:
+                    logging.info("Speed: %s" % dl.get_speed(human=True))
+                    logging.info("Download time: %r" % dl.get_dl_time(human=True))
+                totaltime +=  dl.get_dl_time()
+                # ERSI does't append the filename
+                totaltime +=  dl.get_dl_time()
+                suffix = filetype.guess(dl.get_dest())
+                print('File extension: %s' % suffix.extension)
+                if suffix.extension == 'jpg':
+                    os.rename(dl.get_dest(), filespec)
+                    logging.debug("Renamed %r" % dl.get_dest())
+                    ext = ".jpg"  # FIXME: probably right, but shouldbe a better test
+                else:
+                    ext = tmp[1]
+                    counter += 1
 
             counter += 1
             db.createVRT(filespec, tile)
@@ -551,7 +562,6 @@ def convert(filespec, format):
     #     opts = gdal.TranslateOptions(rgbExpand='RGBA', format='JPEG')
     # else:
     #     opts = gdal.TranslateOptions(format='GTIFF')
-    #epdb.set_trace()
     ds1 = gdal.Translate(newfilespec, filespec, options=opts)
 
     return newfilespec
