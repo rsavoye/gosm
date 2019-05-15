@@ -64,7 +64,7 @@ class myconfig(object):
         self.options['verbose'] = False
         self.options['zooms'] = None
         self.options['poly'] = ""
-        self.options['source'] = "ersi,topo,terrain"
+        self.options['source'] = "ersi,topo,usgs,terrain"
         self.options['format'] = "gtiff"
         #self.options['force'] = False
         self.options['outfile'] = "./"
@@ -72,6 +72,7 @@ class myconfig(object):
         self.options['mosaic'] = False
         self.options['download'] = False
         self.options['ersi'] = False
+        self.options['usgs'] = False
         self.options['topo'] = False
         self.options['terrain'] = False
         self.options['gtiff'] = False
@@ -126,7 +127,7 @@ class myconfig(object):
             if name == "source":
                 srcs = val.split(',')
                 for i in srcs:
-                    if i == "ersi" or i == "topo" or i == "terrain":
+                    if i == "ersi" or i == "topo" or i == "terrain" or i == "usgs":
                         self.options[i] = True
                         continue
                     else:
@@ -159,8 +160,8 @@ class myconfig(object):
         print(argv[0] + ": options:")
         print("""\t--help(-h)   Help
 \t--outdir(-o)    Output directory for tiles
-\t--source(-s)    Map source (default, topo)
-                  ie... topo,terrain,ersi
+\t--source(-s)    Map source (default, usgs)
+                  ie... topo,terrain,ersi,usgs
 \t--poly(-p)      Input OSM polyfile
 \t--format(-f)    Output file format,
                   ie... GTiff, PDF, AQM, OSMAND
@@ -277,14 +278,37 @@ if dd.get('download') is False:
 #    <serverParts>0 1 2 3</serverParts>
 #  </customMapSource>
 
+usgsdb = Tiledb(outfile + "/USGS")
 topodb = Tiledb(outfile + "/Topo")
 terraindb = Tiledb(outfile + "/Terrain")
 hybridb = Tiledb(outfile + "/Hybrid")
 ersidb = Tiledb(outfile + "/ERSI")
 
+
+# mappacks/region_america_north/USNationalMapRelief.java
+# https://basemap.nationalmap.gov/ArcGIS/rest/services/USGSTopo/MapServer/tile/Z/Y/X
+# https://basemap.nationalmap.gov/arcgis/rest/services/USGSShadedReliefOnly/MapServer/tile/Z/Y/X
+# https://basemap.nationalmap.gov/arcgis/rest/services/USGSImageryOnly/MapServer/tile/Z/Y/X
 # We only need to download the largest zoom level, and use
 # 'gdaladdo -r nearest foo.tif 2 4 8 16 32 64 128 256 512 1024'
 # to generate the lower resolution zoom levels as layers.
+
+
+if dd.get('download') and dd.get('usgs'):
+    zoom = 15
+    #zoom =  tuple(dd.get('zooms'))
+    logging.debug("Zoom level for USGS is: %r" % str(zoom))
+    tiles = list(mercantile.tiles(bbox[0], bbox[2], bbox[1], bbox[3], zoom))
+    # tile/Z/Y/X
+    url = "https://basemap.nationalmap.gov/ArcGIS/rest/services/USGSTopo/MapServer/tile/{0}/{2}/{1}"
+    mirrors = [url]
+    if usgsdb.download(mirrors, tiles):
+        logging.info("Done downloading USGS data")
+        path = dd.get('poly').split('.')
+        filespec = outfile + '/' + os.path.basename(path[0]) + '-USGS' + str(zoom) + '.txt'
+        usgsdb.writeCache(tiles, filespec)
+
+
 
 # tiles = list(mercantile.tiles(bbox[0], bbox[2], bbox[1], bbox[3], dd.get('zooms')))
 zoom = 15
@@ -298,10 +322,10 @@ url = ".tile.opentopomap.org/{0}/{1}/{2}.png"
 mirrors = [ "https://a" + url, "https://b" + url, "https://c" + url ]
 if dd.get('download') and dd.get('topo'):
     if topodb.download(mirrors, tiles):
-        logging.info("Done downloading Terrain data")
+        logging.info("Done downloading Topo data")
         topodb.writeCache(tiles, filespec)
-if dd.get('mosaic') is True and dd.get('topo'):
-    topodb.mosaic(tiles)
+#if dd.get('mosaic') is True and dd.get('topo'):
+#    topodb.mosaic(tiles)
 
 # Zooms seems to go to 19, 18 was huge, and 17 was fine
 filespec = path[0] + '-Sat' + str(zoom) + '.txt'
@@ -322,7 +346,7 @@ filespec = path[0] + '-Terrain' + str(zoom) + '.txt'
 zoom = 16
 logging.debug("Zoom level for Terrain is: %r" % str(zoom))
 tiles = list(mercantile.tiles(bbox[0], bbox[2], bbox[1], bbox[3], zoom))
-url = "http://caltopo.s3.amazonaws.com/topo/$Z/$X/$Y.png"
+url = "http://caltopo.s3.amazonaws.com/topo/{2}/{1}/{0}.png"
 mirrors = [url]
 if dd.get('download') and dd.get('terrain'):
     if terraindb.download(mirrors, tiles):
