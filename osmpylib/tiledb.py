@@ -46,6 +46,7 @@ import concurrent.futures
 import threading
 import glob
 import shutil
+import sqlite3
 
 
 class Tile(object):
@@ -252,6 +253,20 @@ class Tiledb(object):
             outfile.write(file  + ".tif\n")
         outfile.close()
         logging.info("Wrote cache file %r" % filespec)
+
+    def writeDB(self, tiles, filespec, poly, source):
+        db = sqlite3.connect(filespec + ".sqlitedb")
+        cursor = db.cursor()
+        sql = """CREATE TABLE IF NOT EXISTS data (poly text, source text, z int, x int, y int);"""
+        cursor.execute(sql)
+        for tile in tiles:
+            #sql = """INSERT OR REPLACE INTO data(poly, source, z, x, y) VALUES(?,?,?,?);"""
+            #file = "%s/%s/%s/%s.tif" % (tile.z, tile.x, tile.y, tile.y)
+            sql = """INSERT INTO data(poly, source, z, x, y) VALUES(?,?,?,?,?);"""
+            cursor.execute(sql, (os.path.basename(poly), source, tile.z, tile.x, tile.y))
+        db.commit()
+        logging.info("Wrote cache db %r" % filespec)
+
 
     def writeTifs(self, filespec):
         outfile = open(filespec, 'w')

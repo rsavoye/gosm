@@ -174,7 +174,7 @@ class myconfig(object):
 
 dd = myconfig(argv)
 dd.checkOptions()
-dd.dump()
+#dd.dump()
 if len(argv) <= 2:
     dd.usage(argv)
 
@@ -200,7 +200,7 @@ mod = 'action="modifiy"'
 
 poly = Poly()
 bbox = poly.getBBox(dd.get('poly'))
-logging.info("Bounding box for %r is %r" % (input, bbox))
+#logging.info("Bounding box is %r" % bbox)
 
 # XAPI uses:
 # minimum latitude, minimum longitude, maximum latitude, maximum longitude
@@ -209,13 +209,14 @@ xbox = "%s,%s,%s,%s" % (bbox[2], bbox[0], bbox[3], bbox[1])
 print("------------------------")
 #xapi = "(\n  way(%s);\n  node(%s);\n  rel(%s);\n  <;\n  >;\n);\nout meta;" % (box , xbox, xbox)
 #print(xapi)
-#osmc.createChanges()
+# osmc.createChanges()
 # osmc.applyChanges()
 
 #xapi = '[adiff: "2018-03-29T00:26:13Z","2019-05-13T17:27:18-06:00"];' + xapi
 
 # Download data from OpenStreetMap
 if dd.get('nodata') is False:
+    logging.info("Downloading OSM data, which could take awhile...")
     xapi = "(way(%s);node(%s);rel(%s);<;>;);out meta;" % (xbox, xbox, xbox)
     polyfile = dd.get('poly')
     polyname = os.path.basename(polyfile.replace(".poly", ""))
@@ -238,7 +239,7 @@ if dd.get('nodata') is False:
     req = urllib.request.Request(uri, headers=headers)
     x = urllib.request.urlopen(req, data=xapi.encode('utf-8'))
     output = x.read().decode('utf-8')
-    logging.debug("FIXME: %r" % len(output))
+    #logging.debug("FIXME: %r" % len(output))
     adiff = "interpreter"
     if last is not None:
         osmfile = open(adiff, 'w')
@@ -256,7 +257,7 @@ if dd.get('nodata') is False:
 
 if dd.get('download') is False:
     logging.info("Not downloading tiles (the default)")
-    quit()
+#    quit()
 
 # https://mt.google.com/vt/lyrs=s&x=${X}&amp;y=${y}&z=${Z} -- Satellite
 # https://mt.google.com/vt/lyrs=y&amp;x=${X}&amp;y=${y}&z=${Z} -- Hybrid
@@ -281,7 +282,7 @@ if dd.get('download') is False:
 usgsdb = Tiledb(outfile + "/USGS")
 topodb = Tiledb(outfile + "/Topo")
 terraindb = Tiledb(outfile + "/Terrain")
-hybridb = Tiledb(outfile + "/Hybrid")
+#hybridb = Tiledb(outfile + "/Hybrid")
 ersidb = Tiledb(outfile + "/ERSI")
 
 
@@ -294,66 +295,75 @@ ersidb = Tiledb(outfile + "/ERSI")
 # to generate the lower resolution zoom levels as layers.
 
 
-if dd.get('download') and dd.get('usgs'):
+path = dd.get('poly').split('.')
+
+if dd.get('usgs'):
     zoom = 15
     #zoom =  tuple(dd.get('zooms'))
     logging.debug("Zoom level for USGS is: %r" % str(zoom))
     tiles = list(mercantile.tiles(bbox[0], bbox[2], bbox[1], bbox[3], zoom))
-    # tile/Z/Y/X
-    url = "https://basemap.nationalmap.gov/ArcGIS/rest/services/USGSTopo/MapServer/tile/{0}/{2}/{1}"
-    mirrors = [url]
-    if usgsdb.download(mirrors, tiles):
-        logging.info("Done downloading USGS data")
-        path = dd.get('poly').split('.')
-        filespec = outfile + '/' + os.path.basename(path[0]) + '-USGS' + str(zoom) + '.txt'
-        usgsdb.writeCache(tiles, filespec)
+    if dd.get('download'):
+        # tile/Z/Y/X
+        url = "https://basemap.nationalmap.gov/ArcGIS/rest/services/USGSTopo/MapServer/tile/{0}/{2}/{1}"
+        mirrors = [url]
+        if usgsdb.download(mirrors, tiles):
+            logging.info("Done downloading USGS data")
+    filespec = outfile + '/' + os.path.basename(path[0]) + '-USGS' + str(zoom) + '.txt'
+    usgsdb.writeCache(tiles, filespec)
+    usgsdb.writeDB(tiles, "tiledb", poly.getName(), 'usgs')
 
 
-
-# tiles = list(mercantile.tiles(bbox[0], bbox[2], bbox[1], bbox[3], dd.get('zooms')))
-zoom = 15
-#zoom =  tuple(dd.get('zooms'))
-logging.debug("Zoom level for topos is: %r" % str(zoom))
-tiles = list(mercantile.tiles(bbox[0], bbox[2], bbox[1], bbox[3], zoom))
-# (OpenTopo uses Z/X/Y.png format
-path = dd.get('poly').split('.')
-filespec = outfile + '/' + os.path.basename(path[0]) + '-Topo' + str(zoom) + '.txt'
-url = ".tile.opentopomap.org/{0}/{1}/{2}.png"
-mirrors = [ "https://a" + url, "https://b" + url, "https://c" + url ]
-if dd.get('download') and dd.get('topo'):
-    if topodb.download(mirrors, tiles):
-        logging.info("Done downloading Topo data")
-        topodb.writeCache(tiles, filespec)
+if dd.get('topo'):
+    # tiles = list(mercantile.tiles(bbox[0], bbox[2], bbox[1], bbox[3], dd.get('zooms')))
+    zoom = 15
+    #zoom =  tuple(dd.get('zooms'))
+    logging.debug("Zoom level for topos is: %r" % str(zoom))
+    tiles = list(mercantile.tiles(bbox[0], bbox[2], bbox[1], bbox[3], zoom))
+    if dd.get('download') and dd.get('topo'):
+        # (OpenTopo uses Z/X/Y.png format
+        url = ".tile.opentopomap.org/{0}/{1}/{2}.png"
+        mirrors = [ "https://a" + url, "https://b" + url, "https://c" + url ]
+        if topodb.download(mirrors, tiles):
+            logging.info("Done downloading Topo data")
+    filespec = outfile + '/' + os.path.basename(path[0]) + '-Topo' + str(zoom) + '.txt'
+    topodb.writeCache(tiles, filespec)
+    topodb.writeDB(tiles, "tiledb", poly.getName(), 'topo')
 #if dd.get('mosaic') is True and dd.get('topo'):
 #    topodb.mosaic(tiles)
 
-# Zooms seems to go to 19, 18 was huge, and 17 was fine
-filespec = path[0] + '-Sat' + str(zoom) + '.txt'
-zoom = 16
-logging.debug("Zoom level for ERSI is: %r" % str(zoom))
-tiles = list(mercantile.tiles(bbox[0], bbox[2], bbox[1], bbox[3], zoom))
-url = "http://clarity.maptiles.arcgis.com/arcgis/rest/services/World_Imagery/MapServer/tile/{0}/{2}/{1}"
-mirrors = [url]
-if dd.get('download') and dd.get('ersi'):
-    if ersidb.download(mirrors, tiles):
-        logging.info("Done downloading Sat imagery")
-        ersidb.writeCache(tiles, filespec)
-if dd.get('mosaic') is True and dd.get('ersi'):
-    ersidb.mosaic(tiles)
+# Sat Imagery
+if dd.get('ersi'):
+    zoom = 16
+    tiles = list(mercantile.tiles(bbox[0], bbox[2], bbox[1], bbox[3], zoom))
+    if dd.get('download'):
+        # Zooms seems to go to 19, 18 was huge, and 17 was fine
+        logging.debug("Zoom level for ERSI is: %r" % str(zoom))
+        url = "http://clarity.maptiles.arcgis.com/arcgis/rest/services/World_Imagery/MapServer/tile/{0}/{2}/{1}"
+        mirrors = [url]
+        if ersidb.download(mirrors, tiles):
+            logging.info("Done downloading Sat imagery")
+    filespec = path[0] + '-Sat' + str(zoom) + '.txt'
+    ersidb.writeCache(tiles, filespec)
+    ersidb.writeDB(tiles, "tiledb", poly.getName(), 'ersi')
+
+#if dd.get('mosaic') is True and dd.get('ersi'):
+#    ersidb.mosaic(tiles)
 
 # 17 appears to be the max zoom level available
-filespec = path[0] + '-Terrain' + str(zoom) + '.txt'
-zoom = 16
-logging.debug("Zoom level for Terrain is: %r" % str(zoom))
-tiles = list(mercantile.tiles(bbox[0], bbox[2], bbox[1], bbox[3], zoom))
-url = "http://caltopo.s3.amazonaws.com/topo/{2}/{1}/{0}.png"
-mirrors = [url]
-if dd.get('download') and dd.get('terrain'):
-    if terraindb.download(mirrors, tiles):
-        logging.info("Done downloading Topo data")
-        terraindb.writeCache(tiles,filespec)
-if dd.get('mosaic') is True and dd.get('terrain'):        
-    terraindb.mosaic(tiles)
+if dd.get('terrain'):
+    zoom = 16
+    logging.debug("Zoom level for Terrain is: %r" % str(zoom))
+    tiles = list(mercantile.tiles(bbox[0], bbox[2], bbox[1], bbox[3], zoom))
+    url = "http://caltopo.s3.amazonaws.com/topo/{2}/{1}/{0}.png"
+    mirrors = [url]
+    if dd.get('download'):
+        if terraindb.download(mirrors, tiles):
+            logging.info("Done downloading Topo data")
+            terraindb.writeCache(tiles,filespec)
+    filespec = path[0] + '-Terrain' + str(zoom) + '.txt'
+    usgsdb.writeDB(tiles, "tiledb", poly.getName(), 'terrain')
+#if dd.get('mosaic') is True and dd.get('terrain'):
+#    terraindb.mosaic(tiles)
 
     
 #url = ".google.com/vt/lyrs=h&x=$X&y=$Y&z=$Z&scale=1" % (tile.x, tile.y, tile.z)
