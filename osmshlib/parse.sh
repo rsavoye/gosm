@@ -382,7 +382,9 @@ parse_roads()
     data[TRACETYPE]="`echo ${line} | cut -d '|' -f 8`"
     data[ALTNAME]="`echo ${line} | cut -d '|' -f 9`"
     data[4WD]="`echo ${line} | cut -d '|' -f 10`"
-    data[SERVICE]="`echo ${line} | cut -d '|' -f 11`"
+    data[ATV]="`echo ${line} | cut -d '|' -f 11`"
+    data[OPEN]="`echo ${line} | cut -d '|' -f 12`"
+    data[SERVICE]="`echo ${line} | cut -d '|' -f 13`"
     data[COLOR]="`roads_color "${data[HIGHWAY]}" "${data[SURFACE]}" "${data[ACCESS]}" "${data[SMOOTHNESS]}" "${data[TRACKTYPE]}" "${data[4WD]}" "${data[SERVICE]}"`"
 
     local width=3

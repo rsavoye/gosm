@@ -1,5 +1,5 @@
 # 
-#   Copyright (C) 2016, 2017, 2018   Free Software Foundation, Inc.
+#   Copyright (C) 2016, 2017, 2018, 2018   Free Software Foundation, Inc.
 # 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -28,7 +28,7 @@
 # $2 - Title in the file
 kml_file_header ()
 {
-#    echo "TRACE: kml_folder_header()"
+#    echo "TRACE: kml_file_header()"
 
     local outfile="$1"
     local title="$2"
