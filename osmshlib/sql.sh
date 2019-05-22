@@ -15,14 +15,14 @@
 # Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 # 
 
+# See if the polygon exists in the database. If not we obviously can't
+# use it.
 poly_exists ()
 {
 #    echo "TRACE: $*"
     
     local poly=$"1"
     
-    # See if the polygon exists in the database. If not we obviously can't
-    # use it.
     local rows=`psql --tuples-only --dbname=${database} --command="SELECT name FROM planet_osm_polygon WHERE name='${poly}'""`
     
     if test x"${rows}" = x; then
@@ -30,6 +30,111 @@ poly_exists ()
     fi
 
     return 0
+}
+
+# a few functions to see if data of the requested type exists in the database
+count_roads ()
+{    
+    local result="`psql --tuples-only --dbname=${database} --command="SELECT count(*) FROM planet_osm_line WHERE highway is not NULL AND highway!='path' OR highway!='footway' OR highway!='cycleway'" | tr -d ' '`"
+
+    echo "Found ${result} roads"
+    return ${result}
+}
+
+count_trails ()
+{
+    local result="`psql --tuples-only --dbname=${database} --command="SELECT count(*) FROM planet_osm_line WHERE highway='path' OR highway='footway' OR highway='cycleway'" | tr -d ' '`"
+    
+    echo "Found ${result} trails"
+    return ${result}
+}
+
+count_swimming ()
+{    
+    local result="`psql --tuples-only --dbname=${database} --command="SELECT count(*) FROM planet_osm_point WHERE tags->'sport'='swimming' AND tags->'amenity'!='swimming_pool'" | tr -d ' '`"
+
+    echo "Found ${result} swimming locations"
+    return ${result}
+}
+
+count_historic ()
+{    
+    local result="`psql --tuples-only --dbname=${database} --command="SELECT count(*) FROM planet_osm_point WHERE historic is not NULL" | tr -d ' '`"
+
+    echo "Found ${result} historic sites"
+    return ${result}
+}
+
+count_camp ()
+{    
+    local result="`psql --tuples-only --dbname=${database} --command="SELECT count(*) FROM planet_osm_point WHERE tourism='camp_site' OR  amenity='campground'"  | tr -d ' '`"
+
+    echo "Found ${result} camp sites"
+    return ${result}
+}
+
+count_firewater ()
+{    
+    local result="`psql --tuples-only --dbname=${database} --command="SELECT COUNT(*) FROM planet_osm_point WHERE tags->'emergency'='fire_hydrant' OR tags->'emergency'='water_tank'" | tr -d ' '`"
+
+    echo "Found ${result} emergency water sources"
+    return ${result}
+}
+
+count_helicopter ()
+{    
+    local result="`psql --tuples-only --dbname=${database} --command="SELECT COUNT(*) FROM planet_osm_point WHERE tags->'aeroway'='helipad' OR tags->'emergency'='landing_site'" | tr -d ' '`"
+
+    echo "Found ${result} landing sites"
+    return ${result}
+}
+
+count_stations ()
+{    
+    local result="`psql --tuples-only --dbname=${database} --command="SELECT COUNT(*) FROM planet_osm_point WHERE tags->'emergency'='fire_station'" | tr -d ' '`"
+
+    echo "Found ${result} emergency fire stations"
+    return ${result}
+}
+
+count_piste ()
+{    
+    local result="`psql --tuples-only --dbname=${database} --command="SELECT count(*) FROM planet_osm_line WHERE tags->'piste:type' is not NULL" | tr -d ' '`"
+
+    echo "Found ${result} emergency fire stations"
+    return ${result}
+}
+
+count_addresses ()
+{    
+    local result="`psql --tuples-only --dbname=${database} --command="SELECT count(*) FROM planet_osm_point WHERE addr:housenumber is not NULL" | tr -d ' '`"
+
+    echo "Found ${result} addresses"
+    return ${result}
+}
+
+count_milestone ()
+{    
+    local result="`psql --tuples-only --dbname=${database} --command="SELECT count(*) FROM planet_osm_point WHERE milestone is not NULL" | tr -d ' '`"
+
+    echo "Found ${result} addresses"
+    return ${result}
+}
+
+count_hotspring ()
+{    
+    local result="`psql --tuples-only --dbname=${database} --command="SELECT count(*) FROM planet_osm_point WHERE amenity='hot_spring' OR leisure='hot_spring'" | tr -d ' '`"
+
+    echo "Found ${result} Hot springs"
+    return ${result}
+}
+
+count_trailhead ()
+{    
+    local result="`psql --tuples-only --dbname=${database} --command="SELECT count(*) FROM planet_osm_point WHERE amenity='parking' AND name LIKE '%Trailhead'" | tr -d ' '`"
+
+    echo "Found ${result} Hot springs"
+    return ${result}
 }
 
 # Setup the query as a string to avoid weird shell escaping syntax ugliness
