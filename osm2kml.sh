@@ -158,6 +158,7 @@ mkdir -p ${outdir}
 if test x"${outfile}" = x; then
     outfile="./${database}-${subs}.kml"
 fi
+outfile="`echo ${outfile} | tr -d ' '`"
 
 rm -f ${outdir}/debug.log
 
@@ -236,7 +237,7 @@ EOF
 # fi
 
 # Create the final KML file
-kml_file_header ${outfile} "${title}"
+kml_file_header "${outfile}" "${title}"
 
 tmpout="${outdir}/campgrounds.out"
 rm -f ${tmpout}
@@ -249,6 +250,12 @@ flevel=0
 # Execute the query. The index is an integer, whuc can be used in ${subnames} to
 # get the full name.
 for subset in ${subsets[@]}; do
+    func="count_${subset}"
+    count="`${func}`"
+    if test $? -eq 0; then
+	echo "No data entries for ${subset} in ${database}"
+	continue
+    fi
     # Create the SQL command file
     sqlcmd="`sql_file ${subset} ${outdir}/${database}-${subset}`"
     sqlout="`echo ${sqlcmd} | sed -e 's:\.sql:.tmp:'`"
@@ -325,8 +332,8 @@ for subset in ${subsets[@]}; do
     done
 done
 
-cat ${outdir}/*.kml >> ${outfile}
-kml_file_footer ${outfile}
+cat ${outdir}/*.kml >> "${outfile}"
+kml_file_footer "${outfile}"
 kmlstatus="footer"
 
 echo "SQL file is ${sqlcmd}"
