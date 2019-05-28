@@ -1,0 +1,8 @@
+<Style id="Hostel">
+  <IconStyle>
+    <scale>1.0</scale>
+    <Icon>
+      <href>icons/mx_tourism_hostel.png</href>
+    </Icon>
+  </IconStyle>
+</Style>

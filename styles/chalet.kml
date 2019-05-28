@@ -1,0 +1,8 @@
+<Style id="Chalet">
+  <IconStyle>
+    <scale>1.0</scale>
+    <Icon>
+      <href>icons/mx_tourism_chalet.png</href>
+    </Icon>
+  </IconStyle>
+</Style>

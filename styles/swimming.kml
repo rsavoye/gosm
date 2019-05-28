@@ -1,0 +1,8 @@
+<Style id="Swimming">
+  <IconStyle>
+    <scale>1.0</scale>
+    <Icon>
+      <href>icons/mx_sport_swimming.png</href>
+    </Icon>
+  </IconStyle>
+</Style>

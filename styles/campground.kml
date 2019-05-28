@@ -1,0 +1,8 @@
+<Style id="Campground">
+  <IconStyle>
+    <scale>1.0</scale>
+    <Icon>
+      <href>icons/campground.png</href>
+    </Icon>
+  </IconStyle>
+</Style>

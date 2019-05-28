@@ -1,0 +1,8 @@
+<Style id="Archae">
+  <IconStyle>
+    <scale>1.0</scale>
+    <Icon>
+      <href>icons/mx_historic_archaeological_site.png</href>
+    </Icon>
+  </IconStyle>
+</Style>

@@ -1,0 +1,8 @@
+<Style id="AHut">
+  <IconStyle>
+    <scale>1.0</scale>
+    <Icon>
+      <href>icons/mx_tourism_alpine_hut.png</href>
+    </Icon>
+  </IconStyle>
+</Style>

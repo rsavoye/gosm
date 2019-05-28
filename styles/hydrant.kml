@@ -1,0 +1,8 @@
+<Style id="Hydrant">
+  <IconStyle>
+    <scale>1.0</scale>
+    <Icon>
+      <href>icons/mx_emergency_fire_hydrant.png</href>
+    </Icon>
+  </IconStyle>
+</Style>

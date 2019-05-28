@@ -1,0 +1,8 @@
+<Style id="Building">
+  <IconStyle>
+    <scale>1.0</scale>
+    <Icon>
+      <href>icons/mm_building.png</href>
+    </Icon>
+  </IconStyle>
+</Style>

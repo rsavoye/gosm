@@ -1,0 +1,8 @@
+<Style id="Ruins">
+  <IconStyle>
+    <scale>1.0</scale>
+    <Icon>
+      <href>icons/mx_historic_ruins.png</href>
+    </Icon>
+  </IconStyle>
+</Style>

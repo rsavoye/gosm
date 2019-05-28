@@ -1,0 +1,8 @@
+<Style id="Wifi">
+  <IconStyle>
+    <scale>1.0</scale>
+    <Icon>
+      <href>icons/WirelessConnection.png</href>
+    </Icon>
+  </IconStyle>
+</Style>
