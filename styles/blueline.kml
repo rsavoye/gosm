@@ -1,0 +1,5 @@
+<Style id="line_blue">
+  <LineStyle>
+    <color>ffff0000</color>
+  </LineStyle>
+</Style>

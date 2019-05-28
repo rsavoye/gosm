@@ -1,0 +1,5 @@
+<Style id="line_maroon">
+  <LineStyle>
+    <color>ff800000</color>
+  </LineStyle>
+</Style>

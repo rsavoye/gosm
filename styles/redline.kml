@@ -1,0 +1,5 @@
+<Style id="line_red">
+  <LabelStyle>
+    <color>ff0000ff</color>
+  </LabelStyle>
+</Style>

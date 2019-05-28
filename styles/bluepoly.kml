@@ -1,0 +1,12 @@
+<Style id="PolygonBlue">
+  <LineStyle>
+    <color>2f0000ff</color>
+    <width>4</width>
+  </LineStyle>
+  <PolyStyle>
+    <color>3fff0000</color>
+    <colorMode>normal</colorMode>
+    <fill>1</fill>
+    <outline>1</outline>
+  </PolyStyle>
+</Style>
