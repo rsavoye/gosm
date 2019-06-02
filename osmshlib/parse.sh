@@ -220,10 +220,11 @@ parse_lodging()
     fi
     tmp="`echo ${line} | cut -d '|' -f 10`"
     if test x"${tmp}" != x; then
-	data[NAMEEN]="`echo ${line} | cut -d '|' -f 10`"
+	data[NAME]="`echo ${line} | cut -d '|' -f 10`"
     fi
     case ${data[TOURISM]} in
 	chalet)         data[ICON]="CHALET" ;;
+	guest_house)    data[ICON]="GUEST" ;;
 	wilderness_hut) data[ICON]="WHUT" ;;
 	alpine_hut)     data[ICON]="AHUT" ;;
 	hotel)          data[ICON]="HOTEL" ;;
@@ -258,7 +259,7 @@ parse_wifi()
 
 # Parse a line that is the output of the SQL query
 # $1 - A line of text from the SQL query output
-parse_peak()
+parse_peaks()
 {
 #    echo "TRACE: $*"
 
@@ -287,6 +288,7 @@ parse_hotspring()
     data[OSMID]="`echo ${line} | cut -d '|' -f 1`"
     data[NAME]="`echo ${line} | cut -d '|' -f 2`"
     data[WAY]="`echo ${line} | cut -d '|' -f 3`"
+    data[DESCRIPTION]="`echo ${line} | cut -d '|' -f 4`"
     data[ICON]="HOTSPRING"
 
     echo `declare -p data`
@@ -529,7 +531,7 @@ parse_helicopter()
     return 0
 }
 
-parse_place()
+parse_places()
 {
 #    echo "TRACE: $*"
 
