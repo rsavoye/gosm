@@ -1,3 +1,60 @@
+# Shapefile filed names are limited to 10 characters
+#'JURISDICTION' to 'JURISDICTI'
+#'OPERATIONALMAINTLEVEL' to 'OPERATIONA'
+#'SURFACETYPE' to 'SURFACETYP'
+#'PASSENGERVEHICLE' to 'PASSENGERV'
+#'PASSENGERVEHICLE_DATESOPEN' to 'PASSENGE_1'
+#'HIGHCLEARANCEVEHICLE' to 'HIGHCLEARA'
+#'HIGHCLEARANCEVEHICLE_DATESOPEN' to 'HIGHCLEA_1'
+#'TRUCK_DATESOPEN' to 'TRUCK_DATE'
+#'BUS_DATESOPEN' to 'BUS_DATESO'
+#'MOTORHOME_DATESOPEN' to 'MOTORHOME_'
+#'FOURWD_GT50INCHES' to 'FOURWD_GT5'
+#'FOURWD_GT50_DATESOPEN' to 'FOURWD_G_1'
+#'TWOWD_GT50INCHES' to 'TWOWD_GT50'
+#'TWOWD_GT50_DATESOPEN' to 'TWOWD_GT_1'
+#'TRACKED_OHV_GT50INCHES' to 'TRACKED_OH'
+#'TRACKED_OHV_GT50_DATESOPEN' to 'TRACKED__1'
+#'OTHER_OHV_GT50INCHES' to 'OTHER_OHV_'
+#'OTHER_OHV_GT50_DATESOPEN' to 'OTHER_OH_1'
+#'ATV_DATESOPEN' to 'ATV_DATESO'
+#'MOTORCYCLE_DATESOPEN' to 'MOTORCYC_1'
+#'OTHERWHEELED_OHV' to 'OTHERWHEEL'
+#'OTHERWHEELED_OHV_DATESOPEN' to 'OTHERWHE_1'
+#'TRACKED_OHV_LT50INCHES' to 'TRACKED__2'
+#'TRACKED_OHV_LT50_DATESOPEN' to 'TRACKED__3'
+#'OTHER_OHV_LT50INCHES' to 'OTHER_OH_2'
+#'OTHER_OHV_LT50_DATESOPEN' to 'OTHER_OH_3'
+#'DISTRICTNAME' to 'DISTRICTNA'
+#'SBS_SYMBOL_NAME' to 'SBS_SYMBOL'
+#'ROUTESTATUS' to 'ROUTESTATU'
+#'SHAPE_Length' to 'SHAPE_Leng'
+
+# These seemed to have changed when converting the GDB file to a shapefile
+tag,RTE_CN,Ignore
+tag,ID,Ignore
+tag,SYMBOL_COD,Ignore
+tag,JURISDICTI,Ignore
+tag,SYSTEM,Ignore
+tag,ROUTE_STAT,Ignore
+tag,OPER_MAINT,smoothness
+tag,OBJECTIVE_,Ignore
+tag,FUNCTIONAL,highway
+tag,SURFACE_TY,surface
+tag,LANES,lanes
+tag,PRIMARY_MA,Ignore
+tag,COUNTY,Ignore
+tag,CONGRESSIO,Ignore
+tag,ADMIN_ORG,Ignore
+tag,SERVICE_LI,Ignore
+tag,LEVEL_OF_S,Ignore
+tag,MANAGING_O,Ignore
+tag,LOC_ERROR,Ignore
+tag,SECURITY_I,Ignore
+tag,OPENFORUSE,access
+tag,IVM_SYMBOL,Ignore
+tag,SYMBOL_NAM,highway
+
 # For ARP_RecPoints
 tag,REV_DATE,Ignore
 tag,DATA_SOURC,Ignore
@@ -58,6 +115,7 @@ tag,TRACKED_OH,Ignore
 tag,TRACKED__1,Ignore
 tag,OTHER_OHV_,Ignore
 tag,OTHER_OHV1,Ignore
+tag,OTHER_OH_3,Ignore
 tag,ATV,atv
 tag,ATV_DATESO,Ignore
 tag,MOTORCYCLE,motorcycle
@@ -72,7 +130,7 @@ tag,ADMINORG,Ignore
 tag,SECURITYID,Ignore
 tag,DISTRICTNA,addr:district
 tag,FORESTNAME,Ignore
-tag,FIELD_ID,Ignore
+tag,FIELD_ID,alt_name
 tag,SBS_SYMBOL,highway
 tag,ROUTESTATU,Ignore
 tag,GLOBALID,Ignore
@@ -153,8 +211,8 @@ tag,ROUTE_STAT,Ignore
 tag,OPER_MAINT,smoothness
 tag,OBJECTIVE_,Ignore
 tag,FUNCTIONAL,Ignore
-tag,SURFACE_TY,surface
-tag,LANES,Ignore
+tag,SURFACE_TY,surfacetype
+
 tag,PRIMARY_MA,Ignore
 tag,COUNTY,Ignore
 tag,CONGRESSIO,Ignore
@@ -165,12 +223,21 @@ tag,IVM_SYMBOL,Ignore
 tag,SYMBOL_NAM,highway
 tag,OPENFORUSE,Ignore
 
+# For Lanes
+attribute,lanes,1 - SINGLE LANE,1
+attribute,lanes,2 - SINGLE LANE,2
+attribute,lanes,3 - SINGLE LANE,3
+attribute,lanes,4 - SINGLE LANE,4
+attribute,lanes,5 - SINGLE LANE,5
+
 # For the ARPNF gate data
 tag,CLOSURE,access
 tag,DONE,Ignore
 tag,SOURCE,Ignore
 tag,STRUCTURE,barrier
 
+attribute,access,ALL,access=yes
+attribute,access,AdminL,access=forestry
 attribute,access,Seasonal,seasonal=summer
 attribute,access,Permanant,access=no
 attribute,barrier,Gate,gate
@@ -180,9 +247,9 @@ attribute,smoothness,1 - BASIC CUSTODIAL CARE (CLOSED),access=service
 attribute,smoothness,2 - HIGH CLEARANCE VEHICLES,very_bad
 # These are actually the same, the source data was missing the rest.
 attribute,smoothness,2,very_bad
-attribute,smoothness,3 - SUITABLE FOR PASSENGER CARS,bad
-attribute,smoothness,4 - MODERATE DEGREE OF USER COMFORT,intermediate
-attribute,smoothness,5 - HIGH DEGREE OF USER COMFORT,good
+attribute,smoothness,3 - SUITABLE FOR PASSENGER CARS,good
+attribute,smoothness,4 - MODERATE DEGREE OF USER COMFORT,bad
+attribute,smoothness,5 - HIGH DEGREE OF USER COMFORT,excellent
 
 # Vehicle access, passenger vehicle
 attribute,psv,N,no
@@ -200,14 +267,29 @@ attribute,atv,N,no
 attribute,atv,Y,yes
 attribute,atv,open,yes
 
-# Surface attributes for Roads
+# Surface attributes for Roads and trails
+attribute,surface,AC - ASPHALT,asphalt
 attribute,surface,AGG - CRUSHED AGGREGATE OR GRAVEL,gravel
 attribute,surface,NAT - NATIVE MATERIAL,dirt
-attribute,surface,AC - ASPHALT,asphalt
+attribute,surface,BST - BITUMINOUS SURFACE TREATMENT,gravel
+attribute,surface,CSOIL - COMPACTED SOIL,compacted
+attribute,surface,FSOIL - FROZEN SOIL,ice
+attribute,surface,IMP - IMPROVED NATIVE MATERIAL,compacted
+attribute,surface,OTHER - OTHER,unknown
 attribute,surface,P - PAVED,paved
-attribute,surface,IMP - IMPROVED NATIVE MATERIAL,comppacted
-# For Trails
-attribute,surface,AC- ASPHALT,asphalt
+attribute,surface,PCC - PORTLAND CEMENT CONCRETE,concrete
+
+attribute,surfacetype,AC - ASPHALT,surface=asphalt
+attribute,surfacetype,AGG - CRUSHED AGGREGATE OR GRAVEL,surface=gravel
+attribute,surfacetype,NAT - NATIVE MATERIAL,surface=dirt
+attribute,surfacetype,BST - BITUMINOUS SURFACE TREATMENT,surface=gravel
+attribute,surfacetype,CSOIL - COMPACTED SOIL,surface=compacted
+attribute,surfacetype,FSOIL - FROZEN SOIL,surface=ice
+attribute,surfacetype,IMP - IMPROVED NATIVE MATERIAL,surface=compacted
+attribute,surfacetype,OTHER - OTHER,Ignore
+attribute,surfacetype,P - PAVED,surface=paved
+attribute,surfacetype,PCC - PORTLAND CEMENT CONCRETE,surface=concrete
+
 attribute,surface,CHUNK WOOD,wood
 attribute,surface,CON - CONCRETE,concrete
 attribute,surface,IMPORTED COMPACTED MATERIAL,
@@ -227,6 +309,9 @@ attribute,highway,Road Not Maintained for Passenger Car,4wd_only=yes
 attribute,highway,Dirt Road Suitable for Passenger Car,unclassified
 attribute,highway,Gravel Road Suitable for Passenger Car,unclassified
 attribute,highway,Paved Road,tertiary
+attribute,highway,L - LOCAL,unclassified
+attribute,highway,A - ARTERIAL,Ignore
+attribute,highway,C - COLLECTOR,Ignore
 
 attribute,route,1,hiking=yes
 attribute,route,2,horse=yes
@@ -256,3 +341,36 @@ attribute,seasonal,permanent,seasonal=no
 attribute,seasonal,Permanent,seasonal=no
 attribute,seasonal,seasonal,seasonal=yes
 attribute,seasonal,Seasonal,seasonal=yes
+
+
+# Warning 6: Normalized/laundered field name: 'JURISDICTION' to 'JURISDICTI'
+# Warning 6: Normalized/laundered field name: 'OPERATIONALMAINTLEVEL' to 'OPERATIONA'
+# Warning 6: Normalized/laundered field name: 'SURFACETYPE' to 'SURFACETYP'
+# Warning 6: Normalized/laundered field name: 'PASSENGERVEHICLE' to 'PASSENGERV'
+# Warning 6: Normalized/laundered field name: 'PASSENGERVEHICLE_DATESOPEN' to 'PASSENGE_1'
+# Warning 6: Normalized/laundered field name: 'HIGHCLEARANCEVEHICLE' to 'HIGHCLEARA'
+# Warning 6: Normalized/laundered field name: 'HIGHCLEARANCEVEHICLE_DATESOPEN' to 'HIGHCLEA_1'
+# Warning 6: Normalized/laundered field name: 'TRUCK_DATESOPEN' to 'TRUCK_DATE'
+# Warning 6: Normalized/laundered field name: 'BUS_DATESOPEN' to 'BUS_DATESO'
+# Warning 6: Normalized/laundered field name: 'MOTORHOME_DATESOPEN' to 'MOTORHOME_'
+# Warning 6: Normalized/laundered field name: 'FOURWD_GT50INCHES' to 'FOURWD_GT5'
+# Warning 6: Normalized/laundered field name: 'FOURWD_GT50_DATESOPEN' to 'FOURWD_G_1'
+# Warning 6: Normalized/laundered field name: 'TWOWD_GT50INCHES' to 'TWOWD_GT50'
+# Warning 6: Normalized/laundered field name: 'TWOWD_GT50_DATESOPEN' to 'TWOWD_GT_1'
+# Warning 6: Normalized/laundered field name: 'TRACKED_OHV_GT50INCHES' to 'TRACKED_OH'
+# Warning 6: Normalized/laundered field name: 'TRACKED_OHV_GT50_DATESOPEN' to 'TRACKED__1'
+# Warning 6: Normalized/laundered field name: 'OTHER_OHV_GT50INCHES' to 'OTHER_OHV_'
+# Warning 6: Normalized/laundered field name: 'OTHER_OHV_GT50_DATESOPEN' to 'OTHER_OH_1'
+# Warning 6: Normalized/laundered field name: 'ATV_DATESOPEN' to 'ATV_DATESO'
+# Warning 6: Normalized/laundered field name: 'MOTORCYCLE_DATESOPEN' to 'MOTORCYC_1'
+# Warning 6: Normalized/laundered field name: 'OTHERWHEELED_OHV' to 'OTHERWHEEL'
+# Warning 6: Normalized/laundered field name: 'OTHERWHEELED_OHV_DATESOPEN' to 'OTHERWHE_1'
+# Warning 6: Normalized/laundered field name: 'TRACKED_OHV_LT50INCHES' to 'TRACKED__2'
+# Warning 6: Normalized/laundered field name: 'TRACKED_OHV_LT50_DATESOPEN' to 'TRACKED__3'
+# Warning 6: Normalized/laundered field name: 'OTHER_OHV_LT50INCHES' to 'OTHER_OH_2'
+# Warning 6: Normalized/laundered field name: 'OTHER_OHV_LT50_DATESOPEN' to 'OTHER_OH_3'
+# Warning 6: Normalized/laundered field name: 'DISTRICTNAME' to 'DISTRICTNA'
+# Warning 6: Normalized/laundered field name: 'SBS_SYMBOL_NAME' to 'SBS_SYMBOL'
+# Warning 6: Normalized/laundered field name: 'ROUTESTATUS' to 'ROUTESTATU'
+# Warning 6: Normalized/laundered field name: 'SHAPE_Length' to 'SHAPE_Leng'
+
