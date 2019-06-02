@@ -40,7 +40,6 @@ tag,ROUTE_STAT,Ignore
 tag,OPER_MAINT,smoothness
 tag,OBJECTIVE_,Ignore
 tag,FUNCTIONAL,highway
-tag,SURFACE_TY,surface
 tag,LANES,lanes
 tag,PRIMARY_MA,Ignore
 tag,COUNTY,Ignore
@@ -94,7 +93,6 @@ tag,GIS_MILES,Ignore
 tag,SYMBOL,Ignore
 tag,JURISDICTI,Ignore
 tag,OPERATIONA,smoothness
-tag,SURFACETYP,surface
 tag,SYSTEM,Ignore
 tag,SEASONAL,Ignore
 tag,PASSENGERV,Ignore
@@ -211,7 +209,6 @@ tag,ROUTE_STAT,Ignore
 tag,OPER_MAINT,smoothness
 tag,OBJECTIVE_,Ignore
 tag,FUNCTIONAL,Ignore
-tag,SURFACE_TY,surfacetype
 
 tag,PRIMARY_MA,Ignore
 tag,COUNTY,Ignore
@@ -267,17 +264,21 @@ attribute,atv,N,no
 attribute,atv,Y,yes
 attribute,atv,open,yes
 
+# FIXME: figure out the weirdness with the surface fields
+tag,SURFACE_TY,surface
+tag,SURFACETYP,surfacetype
+tag,SURFACE_TY,surfacetype
 # Surface attributes for Roads and trails
-attribute,surface,AC - ASPHALT,asphalt
-attribute,surface,AGG - CRUSHED AGGREGATE OR GRAVEL,gravel
-attribute,surface,NAT - NATIVE MATERIAL,dirt
-attribute,surface,BST - BITUMINOUS SURFACE TREATMENT,gravel
-attribute,surface,CSOIL - COMPACTED SOIL,compacted
-attribute,surface,FSOIL - FROZEN SOIL,ice
-attribute,surface,IMP - IMPROVED NATIVE MATERIAL,compacted
-attribute,surface,OTHER - OTHER,unknown
-attribute,surface,P - PAVED,paved
-attribute,surface,PCC - PORTLAND CEMENT CONCRETE,concrete
+attribute,surface,AC - ASPHALT,surface=asphalt
+attribute,surface,AGG - CRUSHED AGGREGATE OR GRAVEL,surface=gravel
+attribute,surface,NAT - NATIVE MATERIAL,surface=dirt
+attribute,surface,BST - BITUMINOUS SURFACE TREATMENT,surface=gravel
+attribute,surface,CSOIL - COMPACTED SOIL,surface=compacted
+attribute,surface,FSOIL - FROZEN SOIL,surface=ice
+attribute,surface,IMP - IMPROVED NATIVE MATERIAL,surface=compacted
+attribute,surface,OTHER - OTHER,Ignore
+attribute,surface,P - PAVED,surface=paved
+attribute,surface,PCC - PORTLAND CEMENT CONCRETE,surface=concrete
 
 attribute,surfacetype,AC - ASPHALT,surface=asphalt
 attribute,surfacetype,AGG - CRUSHED AGGREGATE OR GRAVEL,surface=gravel
