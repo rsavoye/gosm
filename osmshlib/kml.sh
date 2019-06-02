@@ -23,6 +23,11 @@
 # for highways. Different types and surfaces have tags signifying what type
 # it is.
 
+osmbin="`which $0`"
+topdir="`dirname ${osmbin}`"
+. "${topdir}/osmshlib/colors.sh" || exit 1
+. "${topdir}/osmshlib/styles.sh" || exit 1
+
 # Create the KML file header
 # $1 - name of the output file
 # $2 - Title in the file
@@ -30,8 +35,9 @@ kml_file_header ()
 {
 #    echo "TRACE: kml_file_header()"
 
-    local outfile="$1"
-    local title="$2"
+    local outfile="${1}"
+    local title="${2}"
+    local args="${3}"
     
     cat <<EOF > ${outfile}
 <?xml version="1.0" encoding="UTF-8"?>
@@ -41,7 +47,42 @@ kml_file_header ()
     <visibility>1</visibility>
     <open>1</open>
 EOF
-    
+    # linecolors="lightblue yellow lightgreen pink orange red green"
+    # for style in ${args}; do
+    # 	# lines obviously don't have an icon
+    # 	if test x"${style}" = x'roads' -o x"${style}" = x'trails' -o x"${style}" = x'piste'; then
+    # 	    for color in ${linecolors}; do
+    # 		cat ${topdir}/styles/${color}line.kml >> ${outfile}
+    # 	    done
+    # 	    continue
+    # 	else			# some subsets have multiple possible icons
+    # 	    case ${style} in
+    # 		addresses*)
+    # 		    cat ${topdir}/styles/camp*.kml >> ${outfile}
+    # 		    ;;
+    # 		camp*)
+    # 		    cat ${topdir}/styles/camp*.kml >> ${outfile}
+    # 		    ;;
+    # 		historic*)
+    # 		    cat ${topdir}/styles/ruins.kml >> ${outfile}
+    # 		    cat ${topdir}/styles/archae.kml >> ${outfile}
+    # 		    ;;
+    # 		lodging*)
+    # 		    cat ${topdir}/styles/hostel.kml >> ${outfile}
+    # 		    cat ${topdir}/styles/hotel.kml >> ${outfile}
+    # 		    cat ${topdir}/styles/lodging.kml >> ${outfile}
+    # 		    ;;
+    # 		fire*)
+    # 		    cat ${topdir}/styles/firepond.kml >> ${outfile}
+    # 		    cat ${topdir}/styles/hydrant.kml >> ${outfile}
+    # 		    cat ${topdir}/styles/cistern.kml >> ${outfile}
+    # 		    ;;
+    # 		*)		# helicopter, waterfall, swimming
+    # 		    cat ${topdir}/styles/${style}.kml >> ${outfile}
+    # 		    ;;
+    # 	    esac
+    # 	fi
+    # done
     cat ${topdir}/styles.kml >> ${outfile}
 
     return 0
@@ -111,17 +152,23 @@ kml_placemark ()
     local outfile="$1"
     eval "$2"
     local name="`echo ${data[NAME]} | sed -e 's:&: and :'`"
+    if test x"${name}" = x; then
+	local name="`echo ${data[NAMEEN]} | sed -e 's:&: and :'`"
+    fi
 
     if test x"${data[WAY]}" = x; then
 	echo "WARNING: Way has no coordinates! ${name}"
 	return 1
     fi
 
-#    declare -p data
-    cat <<EOF >> ${outfile}
-        <Placemark>
-            <name>${name:-"OSM-ID ${data[OSMID]}"}</name>
+    #    declare -p data
+    echo "        <Placemark>"  >> ${outfile}
+    if test x"${name}" != x; then
+	cat <<EOF >> ${outfile}
+            <name>${name}</name>
 EOF
+	#      <name>${name:-"OSM-ID ${data[OSMID]}"}</name>
+    fi
     if test x"${data[ICON]}" != x; then
 	icon="${icons[${data[ICON]}]}"
 #	echo "icon = ${data[ICON]} ${icons[${data[ICON]}]}"
@@ -171,7 +218,7 @@ EOF
 	for i in ${!data[@]}; do
 	    case $i in
 		# ignore these, they're not part of the descriptiom
-		WIDTH|FILL|FULL|WAY|ICON|TOURISM|AMENITY|WATERWAY|HIGHWAY|EMERGENCY|COLOR|MILESTONE|STREET|NUMBER|BOUNDARY|ADMIN_LEVEL|NAME)
+		WIDTH|FILL|FULL|WAY|ICON|TOURISM|AMENITY|WATERWAY|HIGHWAY|EMERGENCY|COLOR|MILESTONE|STREET|NUMBER|BOUNDARY|ADMIN_LEVEL|NAME|NAMEEN)
 		;;
 		ALT_NAME)
 		    # Since both field may exist, only set the name once.
@@ -202,7 +249,9 @@ EOF
 		    echo "${data[ADDRFULL]}" >> ${outfile}
 		;;
 		ISIN)
-		    echo "Is In: ${data[ISIN]}" >> ${outfile}
+		    if test x"${data[ISIN]}" != x; then
+			echo "Is In: ${data[ISIN]}" >> ${outfile}
+		    fi
 		;;
 		DESCRIPTION)
 		    echo "${data[DESCRIPTION]}" >> ${outfile}
@@ -221,7 +270,10 @@ EOF
 		    ;;
 	    esac
 	done
- 	echo "</description>"  >> ${outfile}
+	if test x"${name}" = x; then
+	    echo "OSM-ID ${data[OSMID]}" >> ${outfile}
+	fi
+ 	echo "</description>" >> ${outfile}
     fi
 
     # Only lines have COLOR set
