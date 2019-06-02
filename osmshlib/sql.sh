@@ -1,5 +1,5 @@
 # 
-#   Copyright (C) 2017   Free Software Foundation, Inc.
+#   Copyright (C) 2017,2018,2019   Free Software Foundation, Inc.
 # 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -37,7 +37,8 @@ count_roads ()
 {    
     local result="`psql --tuples-only --dbname=${database} --command="SELECT count(*) FROM planet_osm_line WHERE highway is not NULL AND highway!='path' OR highway!='footway' OR highway!='cycleway'" | tr -d ' '`"
 
-    echo "Found ${result} roads"
+    #echo "Found ${result} roads"
+    echo "${result}"
     return ${result}
 }
 
@@ -45,7 +46,46 @@ count_trails ()
 {
     local result="`psql --tuples-only --dbname=${database} --command="SELECT count(*) FROM planet_osm_line WHERE highway='path' OR highway='footway' OR highway='cycleway'" | tr -d ' '`"
     
-    echo "Found ${result} trails"
+    #echo "Found ${result} trails"
+    echo "${result}"
+    return ${result}
+}
+
+count_huts ()
+{
+    local result="$(psql --tuples-only --dbname=${database} --command="SELECT osm_id,name,ST_AsKML(way),tourism,tags->'phone',tags->'email',tags->'website',tags->'addr:street',tags->'addr:housenumber' from planet_osm_point WHERE tourism='wilderness_hut' OR tourism='alpine_hut' ${polysql};")"
+
+    if test x"${result}" = x; then
+	result=0
+    fi
+    echo ${result}
+    return ${result}
+}
+
+count_lodging ()
+{
+    local result="`psql --tuples-only --dbname=${database} --command="SELECT count(*) FROM planet_osm_point WHERE tourism='hotel' OR tourism='hostel' OR tourism='guest_house'" | tr -d ' '`"
+
+    #echo "Found ${result} trails"
+    echo ${result}
+    return ${result}
+}
+
+count_peaks ()
+{
+    local result="`psql --tuples-only --dbname=${database} --command="SELECT count(*) FROM planet_osm_point WHERE natural='peak'" | tr -d ' '`"
+
+    #echo "Found ${result} trails"
+    echo ${result}
+    return ${result}
+}
+
+count_places ()
+{
+    local result="`psql --tuples-only --dbname=${database} --command="SELECT count(*) FROM planet_osm_point WHERE place='hamlet' OR place='village' OR place='town' OR place='isolated_dwelling' OR place='locality'" | tr -d ' '`"
+
+    #echo "Found ${result} trails"
+    echo ${result}
     return ${result}
 }
 
@@ -53,7 +93,8 @@ count_swimming ()
 {    
     local result="`psql --tuples-only --dbname=${database} --command="SELECT count(*) FROM planet_osm_point WHERE tags->'sport'='swimming' AND tags->'amenity'!='swimming_pool'" | tr -d ' '`"
 
-    echo "Found ${result} swimming locations"
+    #echo "Found ${result} swimming locations"
+    echo ${result}
     return ${result}
 }
 
@@ -61,7 +102,8 @@ count_historic ()
 {    
     local result="`psql --tuples-only --dbname=${database} --command="SELECT count(*) FROM planet_osm_point WHERE historic is not NULL" | tr -d ' '`"
 
-    echo "Found ${result} historic sites"
+    #echo "Found ${result} historic sites"
+    echo ${result}
     return ${result}
 }
 
@@ -69,7 +111,8 @@ count_camp ()
 {    
     local result="`psql --tuples-only --dbname=${database} --command="SELECT count(*) FROM planet_osm_point WHERE tourism='camp_site' OR  amenity='campground'"  | tr -d ' '`"
 
-    echo "Found ${result} camp sites"
+    #echo "Found ${result} camp sites"
+    echo ${result}
     return ${result}
 }
 
@@ -77,7 +120,8 @@ count_firewater ()
 {    
     local result="`psql --tuples-only --dbname=${database} --command="SELECT COUNT(*) FROM planet_osm_point WHERE tags->'emergency'='fire_hydrant' OR tags->'emergency'='water_tank'" | tr -d ' '`"
 
-    echo "Found ${result} emergency water sources"
+    #echo "Found ${result} emergency water sources"
+    echo ${result}
     return ${result}
 }
 
@@ -85,7 +129,8 @@ count_helicopter ()
 {    
     local result="`psql --tuples-only --dbname=${database} --command="SELECT COUNT(*) FROM planet_osm_point WHERE tags->'aeroway'='helipad' OR tags->'emergency'='landing_site'" | tr -d ' '`"
 
-    echo "Found ${result} landing sites"
+    #echo "Found ${result} landing sites"
+    echo ${result}
     return ${result}
 }
 
@@ -93,7 +138,8 @@ count_stations ()
 {    
     local result="`psql --tuples-only --dbname=${database} --command="SELECT COUNT(*) FROM planet_osm_point WHERE tags->'emergency'='fire_station'" | tr -d ' '`"
 
-    echo "Found ${result} emergency fire stations"
+    #echo "Found ${result} emergency fire stations"
+    echo ${result}
     return ${result}
 }
 
@@ -101,15 +147,17 @@ count_piste ()
 {    
     local result="`psql --tuples-only --dbname=${database} --command="SELECT count(*) FROM planet_osm_line WHERE tags->'piste:type' is not NULL" | tr -d ' '`"
 
-    echo "Found ${result} emergency fire stations"
+    #echo "Found ${result} emergency fire stations"
+    echo ${result}
     return ${result}
 }
 
 count_addresses ()
 {    
-    local result="`psql --tuples-only --dbname=${database} --command="SELECT count(*) FROM planet_osm_point WHERE addr:housenumber is not NULL" | tr -d ' '`"
+    local result="`psql --tuples-only --dbname=${database} --command="SELECT count(*) FROM planet_osm_point WHERE 'addr:housenumber' is not NULL" | tr -d ' '`"
 
-    echo "Found ${result} addresses"
+    #echo "Found ${result} addresses"
+    echo ${result}
     return ${result}
 }
 
@@ -117,15 +165,21 @@ count_milestone ()
 {    
     local result="`psql --tuples-only --dbname=${database} --command="SELECT count(*) FROM planet_osm_point WHERE milestone is not NULL" | tr -d ' '`"
 
-    echo "Found ${result} addresses"
+    #echo "Found ${result} milestones"
+    echo ${result}
     return ${result}
 }
 
 count_hotspring ()
-{    
-    local result="`psql --tuples-only --dbname=${database} --command="SELECT count(*) FROM planet_osm_point WHERE amenity='hot_spring' OR leisure='hot_spring'" | tr -d ' '`"
+{
+    cat <<EOF >> /tmp/foo-$$.sql
+SELECT COUNT(*) FROM planet_osm_point WHERE "natural"='hot_spring' OR "leisure"='hot_spring' OR "amenity"='hot_spring' OR "natural"='hot_spring' OR 'bath:type'='hot_spring' OR name LIKE '%Hot%' ;
+EOF
+    local result="`psql --tuples-only --dbname=${database} -f /tmp/foo-$$.sql`"
+    rm -f tmp/foo-$$.sql
 
-    echo "Found ${result} Hot springs"
+    #echo "Found ${result} Hot springs"
+    echo "${result}"
     return ${result}
 }
 
@@ -133,7 +187,8 @@ count_trailhead ()
 {    
     local result="`psql --tuples-only --dbname=${database} --command="SELECT count(*) FROM planet_osm_point WHERE amenity='parking' AND name LIKE '%Trailhead'" | tr -d ' '`"
 
-    echo "Found ${result} Hot springs"
+    #echo "Found ${result} Trailheads"
+    echo "${result}"
     return ${result}
 }
 
@@ -197,7 +252,8 @@ EOF
 	    ;;
 	piste*)
 	    cat <<EOF >> ${sqlout}
-SELECT line.osm_id,line.name,ST_AsKML(line.way),line.tags->'piste:type',line.tags->'piste:difficulty',line.tags->'piste:grooming',line.aerialway,line.access FROM planet_osm_line AS line WHERE line.tags?'piste:type' = 't' OR line.aerialway = 'chair_lift';
+SELECT line.osm_id,line.name,ST_AsKML(line.way),line.tags->'piste:type',line.tags->'piste:difficulty',line.tags->'piste:grooming',line.aerialway,line.access FROM planet_osm_line AS line WHERE line.tags->'piste:type' is not NULL
+ OR line.aerialway='chair_lift';
 EOF
 # SELECT line.osm_id,line.name,line.tags->'piste:type',line.tags->'piste:difficulty',line.tags->'piste:grooming',line.aerialway,line.access,ST_AsKML(line.way) FROM planet_osm_line AS line, (SELECT name,way FROM planet_osm_polygon WHERE name='${folder}') AS poly WHERE (ST_Crosses(line.way,poly.way) OR ST_Contains(poly.way,line.way)) AND (line.tags?'piste:type' = 't' OR line.aerialway = 'chair_lift');
 #		cat <<EOF >> ${sqlout}
@@ -223,24 +279,25 @@ SELECT osm_id,name,ST_AsKML(way),tags->'alt_name' from planet_osm_point WHERE hi
 EOF
 	    ;;
 	historic)
+#SELECT osm_id,name,ST_AsKML(way),historic from planet_osm_point WHERE historic='archaeological_site' OR historic='building' OR historic='ruins';
 	    cat <<EOF >> ${sqlout}
-SELECT osm_id,name,ST_AsKML(way),historic from planet_osm_point WHERE historic='archaeological_site' OR historic='building' OR historic='ruins';
+SELECT osm_id,name,ST_AsKML(way),historic from planet_osm_point WHERE historic is not NULL;
 EOF
 	    ;;
 	peak*)
 	    cat <<EOF >> ${sqlout}
-SELECT osm_id,name,ST_AsKML(way),ele FROM planet_osm_point WHERE "natural"='peak';
+SELECT osm_id,name,ST_AsKML(way),ele FROM planet_osm_point WHERE natural='peak';
 EOF
 	    ;;
 	addr*)
 	    cat <<EOF >> ${sqlout}
-SELECT osm_id,ST_AsKML(way),"addr:housenumber",tags->'addr:street',tags->'addr:full' FROM planet_osm_point WHERE tags->'addr:street'!='' AND "addr:housenumber"!='';
-SELECT osm_id,ST_AsKML(ST_Centroid(way)),"addr:housenumber",tags->'addr:street',tags->'addr:full' FROM planet_osm_polygon WHERE tags->'addr:street'!='' AND "addr:housenumber"!='' AND building='yes';
+SELECT osm_id,ST_AsKML(way),"addr:housenumber",tags->'addr:street',tags->'addr:full' FROM planet_osm_point WHERE tags->'addr:street'!='' AND 'addr:housenumber' is not NULL;
+SELECT osm_id,ST_AsKML(ST_Centroid(way)),'addr:housenumber',tags->'addr:street',tags->'addr:full' FROM planet_osm_polygon WHERE tags->'addr:street'!='' AND 'addr:housenumber' is not NULL AND building='yes';
 EOF
 	    ;;
 	hots*)
 	    cat <<EOF >> ${sqlout}
-SELECT osm_id,name,ST_AsKML(way) FROM planet_osm_point WHERE "natural"='hot_spring' OR "leisure"='hot_spring' OR "amenity"='hot_spring';
+SELECT osm_id,name,ST_AsKML(way),tags->'description' FROM planet_osm_point WHERE "natural"='hot_spring' OR "leisure"='hot_spring' OR "amenity"='hot_spring' OR 'bath:type'='hot_spring' OR name LIKE '%Hot%' ;
 EOF
 	    ;;
 	helicopter)
@@ -276,6 +333,11 @@ EOF
 SELECT osm_id,name,ST_AsKML(way),name.en,description from planet_osm_point WHERE tags->'sport'='swimming' AND tags->'amenity'!='swimming_pool' ${polysql};
 EOF
 	    ;;
+	climb)
+	    cat <<EOF >> ${sqlout}
+SELECT osm_id,name,ST_AsKML(way),name.en,description from planet_osm_point WHERE tags->'sport'='climbing'' ${polysql};
+EOF
+	    ;;
 	hut*)
 	    cat <<EOF >> ${sqlout}
 SELECT osm_id,name,ST_AsKML(way),tourism,tags->'phone',tags->'email',tags->'website',tags->'addr:street',tags->'addr:housenumber' from planet_osm_point WHERE tourism='wilderness_hut' OR tourism='alpine_hut' ${polysql};
@@ -283,7 +345,7 @@ EOF
 	    ;;
 	place*)
 	    cat <<EOF >> ${sqlout}
-SELECT osm_id,name,ST_AsKML(way),place from planet_osm_point WHERE place='hamlet' OR place='village' OR place='town' OR place='isolated_dwelling';
+SELECT osm_id,name,ST_AsKML(way),place from planet_osm_point WHERE place='hamlet' OR place='village' OR place='town' OR place='isolated_dwelling' OR place='locality';
 EOF
 	    ;;
 	lodging)

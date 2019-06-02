@@ -99,6 +99,11 @@ styles[HOTSPRING]=.kml"styles/hotspring.kml"
 styles[PLACE]=.kml"styles/place.kml"
 styles[TOWN]=.kml"styles/town.kml"
 
+get_style()
+{
+    local tag="${1:-UNKNOWN}"
+    local scale="${2:-1.0}"
+}
 
 get_icon()
 {
