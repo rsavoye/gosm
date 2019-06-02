@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # 
-#   Copyright (C) 2016, 2017, 2018   Free Software Foundation, Inc.
+#   Copyright (C) 2016, 2017, 2018, 2019   Free Software Foundation, Inc.
 # 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -29,6 +29,7 @@
 osmbin="`which $0`"
 topdir="`dirname ${osmbin}`"
 . "${topdir}/osmshlib/colors.sh" || exit 1
+. "${topdir}/osmshlib/styles.sh" || exit 1
 . "${topdir}/osmshlib/parse.sh" || exit 1
 . "${topdir}/osmshlib/sql.sh" || exit 1
 . "${topdir}/osmshlib/kml.sh" || exit 1
@@ -37,8 +38,11 @@ topdir="`dirname ${osmbin}`"
 
 # This is a list of supported subsets of data to extract.
 supportedlines="trails piste roads"
-supportedpoints="emergency lodging huts wifi waterfall swimming historic camp trailhead peak hotspring firewater helicopter milestone addresses nws places parcels subdivision"
+supportedpoints="emergency lodging huts wifi waterfall swimming historic camp trailhead peaks hotspring firewater helicopter milestone addresses nws places parcels subdivision"
 supported="${supportedlines} ${supportedpoints}"
+
+sets[REC]="camp trails trailhead piste hotspring swimming waterfall roads"
+sets[EMERGENCY]="firewater milestone trails trailhead roads camps"
 
 usage()
 {
@@ -127,6 +131,7 @@ subnames[emergency]="Emergency Buildings"
 subnames[lodging]="Lodging"
 subnames[hut]="Alpine Huts"
 subnames[camp]="Campgrounds"
+subnames[places]="Towns"
 #subnames[camp]="Campsites"
 subnames[addresses]="Addresses"
 subnames[roads]="Roads"
@@ -162,67 +167,6 @@ outfile="`echo ${outfile} | tr -d ' '`"
 
 rm -f ${outdir}/debug.log
 
-# Our custom Icons for waypoints
-icondir=icons
-declare -A icons=()
-icons[BUILDING]="#Building"
-icons[MILESTONE]="#Milestone"
-icons[HISTYES]="#Histyes"
-icons[ARCHAE]="#Archae"
-icons[RUINS]="#Ruins"
-icons[BUILDING]="#Building"
-icons[AHUT]="#AHut"
-icons[HOSTEL]="#Hostel"
-icons[HOTEL]="#Hotel"
-icons[CASA]="#Casa"
-icons[UNKNOWN]="#town"
-icons[LODGING]="#Lodging"
-icons[WIFI]="#Wifi"
-icons[CAMPFIRE]="#Campfire"
-icons[CAMPSITE]="#Campsite"
-icons[CAMPGROUND]="#Campground"
-icons[PICNIC]="#Picnic"
-icons[MOUNTAINS]="#Mountains"
-icons[HIKER]="#Hiker"
-icons[FIRESTATION]="#FireStation"
-icons[WATERTANK]="#WaterTowerOutline"
-icons[CISTERN]="#Cistern"
-icons[FIREPOND]="#FirePond"
-icons[HYDRANT]="#Hydrant"
-icons[WATER]="#Water"
-icons[WATERFALL]="#Waterfall"
-icons[SWIMMING]="#Swimming"
-icons[LANDINGSITE]="#Helicopter"
-icons[HELIPAD]="#Helipad"
-icons[HELIPORT]="#Heliport"
-icons[PARKING]="#ParkingLot"
-icons[TRAILHEAD]="#Trailhead"
-icons[PEAK]="#Peak"
-icons[BIGPEAK]="#BigPeak"
-icons[HOTSPRING]="#HotSpring"
-icons[PLACE]="#Place"
-
-get_icon()
-{
-    local tag="${1:-UNKNOWN}"
-    local scale="${2:-1.0}"
-    
-#    underground) icon="icons[UNDERGROUND]" ;;
-    
-    cat <<EOF >> ${outfile}
-        <Style>
-	  <IconStyle>
-	    <scale>${scale}</scale>
-	    <Icon>
--	      <href>${icon[${tag}]}</href>
-	    </Icon>
-	  </IconStyle>
-        </Style>
-EOF
-
-    return 0
-}
-
 # # Make sure the specified polygon is in the database
 # if test ${#polygons[@]} -gt 0; then
 #     for i in ${!#polygons[@]}; do
@@ -237,7 +181,7 @@ EOF
 # fi
 
 # Create the final KML file
-kml_file_header "${outfile}" "${title}"
+kml_file_header "${outfile}" "${title}" "${subs}"
 
 tmpout="${outdir}/campgrounds.out"
 rm -f ${tmpout}
@@ -247,15 +191,17 @@ EOF
 
 kmlstatus="header"
 flevel=0
-# Execute the query. The index is an integer, whuc can be used in ${subnames} to
+total=0
+# Execute the query. The index is an integer, which can be used in ${subnames} to
 # get the full name.
 for subset in ${subsets[@]}; do
     func="count_${subset}"
     count="`${func}`"
-    if test $? -eq 0; then
+    if test "${count}" -eq 0; then
 	echo "No data entries for ${subset} in ${database}"
 	continue
     fi
+    total=$(expr ${total} + 1)
     # Create the SQL command file
     sqlcmd="`sql_file ${subset} ${outdir}/${database}-${subset}`"
     sqlout="`echo ${sqlcmd} | sed -e 's:\.sql:.tmp:'`"
@@ -340,7 +286,8 @@ echo "SQL file is ${sqlcmd}"
 
 # Make a KMZ file if specified
 if test x"${format}" = x"kmz"; then
-    newout="`basename ${outfile} | sed -e 's:\.kml:.kmz:'`"
+    #newout="`basename ${outfile} | sed -e 's:\.kml:.kmz:'`"
+    newout="`echo ${outfile} | sed -e 's:\.kml:.kmz:'`"
     (cd ${topdir} && zip -qrj ${newout} icons)
     echo "Making KMZ file ${newout}"
     zip -q -j ${newout} ${outfile}
