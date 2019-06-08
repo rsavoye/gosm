@@ -17,6 +17,9 @@
 # Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 # 
 
+## \copyright GNU Public License.
+## \file poly.py Handle polygon files
+
 import os
 import sys
 import logging
@@ -25,20 +28,61 @@ import epdb
 from osgeo import ogr
 from sys import argv
 sys.path.append(os.path.dirname(argv[0]) + '/osmpylib')
-import urllib.request
-import math
 import mercantile
-from tiledb import tiledb
-import rasterio
-from rasterio.merge import merge
-from rasterio.enums import ColorInterp
 
-
+# https://wiki.openstreetmap.org/wiki/Osmosis/Polygon_Filter_File_Format
+# This class currently this class ignores subtracting areas, since our
+# whole purpose is on processing map tiles. Subtracted parts don't
+# apply to basemaps.
 class Poly(object):
-    """Class to manage a map polygons"""
-    def __init__(self):
+    """Class to manage a OSM map polygons"""
+    def __init__(self, filespec=None):
         self.filespec = None
-        pass
+        self.geometry = None
+        if filespec is not None:
+            self.readPolygon(filespec)
+
+    def getName(self):
+        return self.filespec
+
+    def readPolygon(self, filespec):
+        self.filespec = filespec
+        self.file = open(filespec, "r")
+        #data = list()
+        lines = self.file.readlines()
+        #curname = ""
+        ring = ogr.Geometry(ogr.wkbLinearRing)
+        for line in lines:
+            # Ignore the first two lines
+            if line[0] != ' ':
+                continue
+            line = line.rstrip()
+            line = line.lstrip()
+            if line == 'END' or line == '1' or line == '2' or line[0] == '!':
+                continue
+            coords = line.split()
+            if len(coords) > 1:
+                ring.AddPoint(float(coords[0]), float(coords[1]))
+
+        poly = ogr.Geometry(ogr.wkbPolygon)
+        poly.AddGeometry(ring)
+
+        multipoly = ogr.Geometry(ogr.wkbMultiPolygon)
+        multipoly.AddGeometry(poly)
+        multipoly.CloseRings()
+        self.geometry = multipoly
+        # ExportToWkt adds a 0 elevation, which has to be stripped off as
+        # it's not used by the TM database
+        #text =  multipoly.ExportToWkt().replace(" 0,", ",")
+        #return text.replace("0)", ")")
+        return self.geometry
+
+    def getWkt(self):
+        text = self.geometry.ExportToWkt().replace(" 0,", ",")
+        return text.replace("0)", ")")
+
+    def getGeometry(self):
+        return self.geometry
     
     def getBBox(self, filespec):
         self.filespec = filespec
@@ -47,19 +91,18 @@ class Poly(object):
         data = list()
         lines = self.file.readlines()
         curname = ""
-        skip = 0
         ring = ogr.Geometry(ogr.wkbLinearRing)
         for line in lines:
             # Ignore the first two lines
-            if skip <= 2:
-                skip = skip + 1
+            if line[0] != ' ':
                 continue
             line = line.rstrip()
             line = line.lstrip()
-            if line == 'END' or line[0] == '!':
-                break
+            if line == 'END' or line == '1' or line == '2' or line[0] == '!':
+                continue
             coords = line.split()
-            ring.AddPoint(float(coords[0]), float(coords[1]))
+            if len(coords) > 1:
+                ring.AddPoint(float(coords[0]), float(coords[1]))
 
         poly = ogr.Geometry(ogr.wkbLinearRing)
         poly.AddGeometry(ring)
@@ -74,3 +117,13 @@ class Poly(object):
         xapi = "(\nway(%s);\nnode(%s)\nrel(%s)\n<;\n>;\n);\nout meta;" % (str(xbox), str(xbox), str(xbox))
         print(xapi)
 
+    def dump(self):
+        if self.geometry is None:
+            logging.warning("No data yet")
+            return 1
+        print("Area:\t %d" % self.geometry.GetArea())
+        print("Wkt:\t %s" % self.getWkt())
+        print("Centroid: %s" % self.geometry.Centroid())
+        #print("KML:\t%s" % self.getKML())
+        bbox = self.geometry.GetEnvelope()
+        print("Envelope: (%s, %s, %s ,%s)" % (bbox[0], bbox[1], bbox[2], bbox[3]))
