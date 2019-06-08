@@ -23,11 +23,13 @@
 
 import os
 import sys
+import epdb
 import logging
 import psycopg2
 from sys import argv
 sys.path.append(os.path.dirname(argv[0]) + '/osmpylib')
 from datetime import datetime
+from poly import Poly
 
 # {'id': 1, 'project_id': 7, 'x': 420, 'y': 1270, 'zoom': 11, 'extra_properties': None, 'is_square': True, 'ST_GeomFromGeoJSON_1': '{"type": "MultiPolygon", "coordinates": [[[[-106.17187498098184, 39.639537558401855], [-106.17187498098184, 39.77476947931811], [-105.99609373101333, 39.77476947931811], [-105.99609373101333, 39.639537558401855], [-106.17187498098184, 39.639537558401855]]]]}', 'ST_SetSRID_1': 4326, 'task_status': 0, 'locked_by': None, 'mapped_by': None, 'validated_by': None}
 class Task(object):
@@ -46,14 +48,15 @@ class Task(object):
         self.tasks['mapped_by'] = None
         self.tasks['validated_by'] = None
 
-    def create(self, id=0, project_id=0, x=0, y=0, zoom=0, geometry=None):
+    def create(self, id=None, project_id=None, x=0, y=0, zoom=0, geometry=None):
         """Create a Task object with only the values required"""
-        self.tasks['id'] = id
-        self.tasks['project_id'] = project_id
-        self.tasks['x'] = x
-        self.tasks['y'] = y
-        self.tasks['zoom'] = zoom
-        self.tasks['geometry'] = geometry
+        if id is None:
+            id = self.tasks['id']
+        if project_id is None:
+            project_id = self.tasks['project_id']
+        query="INSERT INTO tasks (id, project_id, x, y, zoom, task_status) VALUES(%d, %d, %d, %d, %d, %d)" % (id, project_id, x, y, zoom, self.tasks['task_status'])
+
+        return query
 
     def dump(self):
         print("Dumping data from Task class")
@@ -108,7 +111,7 @@ class Info(object):
 
 # {'status': 2, 'created': datetime.datetime(2019, 6, 6, 15, 32, 47, 680796), 'priority': 2, 'default_locale': 'en', 'author_id': 4606673, 'mapper_level': 1, 'enforce_mapper_level': False, 'enforce_validator_role': False, 'allow_non_beginners': False, 'private': False, 'entities_to_map': None, 'changeset_comment': None, 'osmcha_filter_id': None, 'due_date': None, 'imagery': None, 'josm_preset': None, 'last_updated': datetime.datetime(2019, 6, 6, 15, 32, 47, 634713), 'license_id': None, 'ST_GeomFromGeoJSON_1': '{"type": "MultiPolygon", "coordinates": [[[[-106.0148349220815, 39.88596504944786], [-105.7621493752065, 39.88596504944786], [-105.712710898644, 39.70447940319431], [-106.0473838760935, 39.6482545636245], [-106.0148349220815, 39.88596504944786]]]]}', 'ST_SetSRID_1': 4326, 'task_creation_mode': 0, 'mapping_types': None, 'organisation_tag': None, 'campaign_tag': None, 'mapping_editors': [0, 1, 2, 3], 'validation_editors': [0, 1, 2, 3], 'total_tasks': 6, 'tasks_mapped': 0, 'tasks_validated': 0, 'tasks_bad_imagery': 0}
 class Project(object):
-    def __init__(self):
+    def __init__(self, geometry=None):
         self.project = dict()
         self.project['status'] = 2
         self.project['created'] = datetime.now()
@@ -128,7 +131,7 @@ class Project(object):
         self.project['josm_preset'] = None
         self.project['last_updated'] =  datetime.now()
         self.project['license_id'] = None
-        self.project['geometry'] = None
+        self.project['geometry'] = geometry
         self.project['centroid'] = None
         self.project['task_creation_mode'] = 0
         self.project['mapping_types'] = None
@@ -141,17 +144,20 @@ class Project(object):
         self.project['tasks_validated'] = 0
         self.project['tasks_bad_imagery'] = 0
 
-    def create(self, id, comment=None, geometry=None):
+    def create(self, id, comment=None, polygon=None):
         editors = "{0,1, 2, 3}"
         if comment is None:
-            #comment = self.project['changeset_comment']
-            comment = "#tm-senecass"
-        query="""INSERT INTO projects (id, mapping_editors, validation_editors, total_tasks, tasks_mapped, tasks_validated, tasks_bad_imagery, organisation_tag, changeset_comment, created, status, author_id, mapper_level, task_creation_mode) VALUES(%d, %r, %r, %d, %d, %d, %d, '%s', '%s', '%s', %d, %d, %d, %d)""" % (id, editors, editors, 0, 0, 0, 0, self.project['organisation_tag'], comment, self.project['created'], self.project['status'], self.project['author_id'], self.project['mapper_level'], self.project['task_creation_mode'])
-
+            comment = self.project['changeset_comment']
+        if polygon is None:
+            geometry = self.project['geometry']
+        else:
+            geometry = polygon.getGeometry()
+        self.project['centroid'] = geometry.Centroid().ExportToWkt()
+        wkt = polygon.getWkt()
+        centroid = geometry.Centroid()
+        query="""INSERT INTO projects (id, mapping_editors, validation_editors, total_tasks, tasks_mapped, tasks_validated, tasks_bad_imagery, organisation_tag, changeset_comment, created, status, author_id, mapper_level, task_creation_mode, centroid, geometry) VALUES(%d, %r, %r, %d, %d, %d, %d, '%s', '%s', '%s', %d, %d, %d, %d, ST_Force_2D(ST_GeomFromText('%s', 4326)), ST_Force_2D(ST_GeomFromText('%s', 4326)))""" % (id, editors, editors, 0, 0, 0, 0, self.project['organisation_tag'], comment, self.project['created'], self.project['status'], self.project['author_id'], self.project['mapper_level'], self.project['task_creation_mode'], centroid, geometry)
         return query
-        #self.dbcursor.execute(query)
-
-        pass
+        self.dbcursor.execute(query)
 
     def dump(self):
         print("Dumping data from Project class")
@@ -210,33 +216,4 @@ class TM(object):
             return ""
         else:
             return self.result[0][0]
-
-    # "INSERT INTO tasks (id, project_id, x, y, zoom, extra_properties, is_square, geometry, task_status, locked_by, mapped_by, validated_by) VALUES (%(id)s, %(project_id)s, %(x)s, %(y)s, %(zoom)s, %(extra_properties)s, %(is_square)s, ST_SetSRID(ST_GeomFromGeoJSON(%(ST_GeomFromGeoJSON_1)s), %(ST_SetSRID_1)s), %(task_status)s, %(locked_by)s, %(mapped_by)s, %(validated_by)s)"
-    def insert_task(self, task):
-        sql="INSERT INTO tasks"
-        self.query(sql)
-
-def test():
-    tm = TM()
-    tm.dump()
-
-    project = Project()
-    query = project.create(tm.getNextProjectID(), comment="#tm-senecass", geometry=None)
-    #project.dump()
-    print(query)
-    tm.query(query)
-
-    info = Info()
-    query = info.create("Testy", tm.getNextProjectID())
-    #info.dump()
-    print(query)
-    tm.query(query)
-
-    task = Task()
-    #query = project.create(tm.getNextTaskID(), comment="#tm-senecass", geometry=None)
-    task.create(zoom=11, x=123)
-    task.dump()
-
-if __name__ == '__main__':
-    test()
 
