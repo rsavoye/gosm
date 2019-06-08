@@ -40,6 +40,7 @@ class Poly(object):
         self.filespec = None
         self.geometry = None
         if filespec is not None:
+            self.filespec = filespec
             self.readPolygon(filespec)
 
     def getName(self):
@@ -59,6 +60,7 @@ class Poly(object):
             line = line.rstrip()
             line = line.lstrip()
             if line == 'END' or line == '1' or line == '2' or line[0] == '!':
+                #break
                 continue
             coords = line.split()
             if len(coords) > 1:
@@ -83,14 +85,22 @@ class Poly(object):
 
     def getGeometry(self):
         return self.geometry
-    
-    def getBBox(self, filespec):
-        self.filespec = filespec
+
+    def exportKMLBBox(self, filespec=None):
+        bbox = self.getBBox(filespec)
+        kml = """<coordinates>\n\t\t%g,%g %g,%g %g,%g %g,%g %g,%g\n\t    </coordinates>""" % (bbox[0], bbox[3], bbox[1], bbox[3], bbox[1], bbox[2], bbox[0], bbox[2], bbox[0], bbox[3])
+        return kml
+
+    def getBBox(self, filespec=None):
+        if filespec is None:
+            filespec = self.filespec
+        else:
+            self.filespec = filespec
         self.file = open(filespec, "r")
         
-        data = list()
+        #data = list()
         lines = self.file.readlines()
-        curname = ""
+        #curname = ""
         ring = ogr.Geometry(ogr.wkbLinearRing)
         for line in lines:
             # Ignore the first two lines
