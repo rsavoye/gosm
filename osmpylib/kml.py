@@ -1,5 +1,5 @@
 # 
-#   Copyright (C) 2017   Free Software Foundation, Inc.
+#   Copyright (C) 2017, 2018, 2019   Free Software Foundation, Inc.
 # 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -16,6 +16,7 @@
 # 
 
 import logging
+import epdb
 
 
 class kmlfile(object):
@@ -76,6 +77,14 @@ class kmlfile(object):
             self.file.write(way + '\n')
             self.file.write('        </Polygon>\n')
             self.file.write('        <styleUrl>' + style + '</styleUrl>\n')
+        elif type == 'multipolygon':
+            #style = '#Polygon'
+            self.file.write('            <MultiGeometry><Polygon>\n')
+            self.file.write('            <outerBoundaryIs><LinearRing>\n')
+            self.file.write('            ' + data + '\n')
+            self.file.write('            </LinearRing></outerBoundaryIs>\n')
+            self.file.write('            </Polygon></MultiGeometry>\n')
+#            self.file.write('        <styleUrl>' + style + '</styleUrl>\n')
         self.file.write('      </Placemark>\n')
 
     def wayStyle(self):
