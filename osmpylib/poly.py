@@ -22,6 +22,7 @@
 
 import os
 import sys
+import re
 import logging
 import getopt
 import epdb
@@ -29,6 +30,7 @@ from osgeo import ogr
 from sys import argv
 sys.path.append(os.path.dirname(argv[0]) + '/osmpylib')
 import mercantile
+import string
 
 # https://wiki.openstreetmap.org/wiki/Osmosis/Polygon_Filter_File_Format
 # This class currently this class ignores subtracting areas, since our
@@ -39,6 +41,7 @@ class Poly(object):
     def __init__(self, filespec=None):
         self.filespec = None
         self.geometry = None
+        self.polygons = dict()
         if filespec is not None:
             self.filespec = filespec
             self.readPolygon(filespec)
@@ -49,18 +52,38 @@ class Poly(object):
     def readPolygon(self, filespec):
         self.filespec = filespec
         self.file = open(filespec, "r")
-        #data = list()
         lines = self.file.readlines()
-        #curname = ""
+        multipoly = ogr.Geometry(ogr.wkbMultiPolygon)
         ring = ogr.Geometry(ogr.wkbLinearRing)
+        index = 0
         for line in lines:
-            # Ignore the first two lines
-            if line[0] != ' ':
-                continue
             line = line.rstrip()
             line = line.lstrip()
-            if line == 'END' or line == '1' or line == '2' or line[0] == '!':
-                #break
+            if index == 0:
+                index += 1
+                continue
+            # Ignore comments
+            if line[0] == '#':
+                continue
+            if line == 'END':
+                self.polygons[index].AddGeometry(ring)
+                ring = ogr.Geometry(ogr.wkbLinearRing)
+                boundary = self.polygons[index]
+                boundary.CloseRings()
+                multipoly.AddGeometry(boundary)
+                continue
+            # The first line is an identifier string
+            # make line a negative number cause it's an inner boundary
+            if line.isnumeric():
+                print(line)
+                self.polygons[int(line)] = ogr.Geometry(ogr.wkbPolygon)
+                index = int(line)
+                continue
+            if line.isalpha():
+                continue
+            if line[0] == '!':
+                index = 0 - int(line[1:])
+                self.polygons[index] = ogr.Geometry(ogr.wkbPolygon)
                 continue
             coords = line.split()
             if len(coords) > 1:
@@ -69,14 +92,7 @@ class Poly(object):
         poly = ogr.Geometry(ogr.wkbPolygon)
         poly.AddGeometry(ring)
 
-        multipoly = ogr.Geometry(ogr.wkbMultiPolygon)
-        multipoly.AddGeometry(poly)
-        multipoly.CloseRings()
         self.geometry = multipoly
-        # ExportToWkt adds a 0 elevation, which has to be stripped off as
-        # it's not used by the TM database
-        #text =  multipoly.ExportToWkt().replace(" 0,", ",")
-        #return text.replace("0)", ")")
         return self.geometry
 
     def getWkt(self):
@@ -85,6 +101,9 @@ class Poly(object):
 
     def getGeometry(self):
         return self.geometry
+
+    def getPolygons(self):
+        return self.polygons
 
     def exportKMLBBox(self, filespec=None):
         bbox = self.getBBox(filespec)
@@ -137,3 +156,6 @@ class Poly(object):
         #print("KML:\t%s" % self.getKML())
         bbox = self.geometry.GetEnvelope()
         print("Envelope: (%s, %s, %s ,%s)" % (bbox[0], bbox[1], bbox[2], bbox[3]))
+
+#        for poly in self.polygons:
+#           print("%r" % self.polygons[poly])
