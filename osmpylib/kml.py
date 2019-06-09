@@ -52,7 +52,7 @@ class kmlfile(object):
             self.file.close()
             self.file = False
         
-    def placemark(self, name="", type="", data=""):
+    def placemark(self, name="", type="", data="", bound=None):
         self.file.write('        <Placemark>\n')
         if len(name) > 0:
             self.file.write('            <name>' + name + '</name>\n')
@@ -71,19 +71,40 @@ class kmlfile(object):
             self.file.write('        </LineString>\n')
         elif type == 'polygon':
             style = '#Polygon'
-            self.file.write('        <Polygon>\n')
-            self.file.write('            <extrude>1</extrude>\n')
-            self.file.write('            <altitudeMode>relativeToGround</altitudeMode>\n')
-            self.file.write(way + '\n')
-            self.file.write('        </Polygon>\n')
+            #self.file.write('            <Polygon>\n')
+            self.file.write('                <extrude>1</extrude>\n')
+            self.file.write('                <altitudeMode>relativeToGround</altitudeMode>\n')
+            #self.file.write('                <' + bound + 'BoundaryIs><LinearRing>\n')
+            self.file.write('                ' + data + '\n')
+            #self.file.write('                </LinearRing></' + bound + 'BoundaryIs>\n')
+            #self.file.write('            </Polygon>\n')
             self.file.write('        <styleUrl>' + style + '</styleUrl>\n')
         elif type == 'multipolygon':
+            # We only use the outer bounfaries, as TM can't parse inner
+            # boundaries. Actually we don't care about them, as for mapping
+            # we don't want to exclude anything.
             #style = '#Polygon'
-            self.file.write('            <MultiGeometry><Polygon>\n')
-            self.file.write('            <outerBoundaryIs><LinearRing>\n')
-            self.file.write('            ' + data + '\n')
-            self.file.write('            </LinearRing></outerBoundaryIs>\n')
-            self.file.write('            </Polygon></MultiGeometry>\n')
+            self.file.write('            <MultiGeometry>\n')
+            #self.file.write('            <outerBoundaryIs><LinearRing>\n')
+            epdb.st()
+            for poly in data:
+                if poly < 0:
+                    continue
+                print("FIXME: %d" % data[poly].GetX())
+                tmp = data[poly].ExportToKML()
+                tmp = tmp.replace("<innerBoundaryIs><LinearRing><coordinates></coordinates></LinearRing></innerBoundaryIs>", "")
+                print(tmp)
+                self.file.write('            ' + tmp + '\n')
+            #self.file.write('            </LinearRing></outerBoundaryIs>\n')
+            self.file.write('            </MultiGeometry>\n')
+        elif type == "multigeometry":
+            self.file.write('            <MultiGeometry>\n')
+
+            print("FIXME Count: %r" % data.GetGeometryCount())
+            tmp = data.ExportToKML()
+            self.file.write('            ' + tmp + '\n')
+            #self.file.write('            </LinearRing></' + bound + 'BoundaryIs>\n')
+            self.file.write('            </MultiGeometry>\n')
 #            self.file.write('        <styleUrl>' + style + '</styleUrl>\n')
         self.file.write('      </Placemark>\n')
 

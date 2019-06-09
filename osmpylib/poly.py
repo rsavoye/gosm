@@ -95,6 +95,9 @@ class Poly(object):
         self.geometry = multipoly
         return self.geometry
 
+    def getBoundary(self):
+        set.geometry.GetBoundary()
+
     def getWkt(self):
         text = self.geometry.ExportToWkt().replace(" 0,", ",")
         return text.replace("0)", ")")
