@@ -20,10 +20,10 @@
 # but does the trick for me. It's still hard to filter out all bad data,
 # but this gets close.
 import logging
-import html
 import string
-import pdb
+import epdb
 import re
+
 
 class correct(object):
     def __init__(self):
@@ -32,8 +32,8 @@ class correct(object):
         self.modified = False
         self.dirshort = ("S", "E", "N", "W")
         self.dirlong = ("South", "East", "North", "West")
-        self.abbrevs = ("CR", "Hwy", "Rd", "Ln", "Dr", "Cir", "Ave", "Pl", "Trl", "Ct", "CR", "FS")
-        self.fullname = ( "County Road", "Highway", "Road", "Lane", "Drive", "Circle", "Avenue", "Place", "Trail", "Court", "Forest Service")
+        self.abbrevs = ("CR", "Hwy", "Rd", "Ln", "Dr", "Cir", "Ave", "Pl", "Trl", "Ct", "CR", "FR")
+        self.fullname = ("County Road", "Highway", "Road", "Lane", "Drive", "Circle", "Avenue", "Place", "Trail", "Court", "County Road", "FS")
 
     def alphaNumeric(self, value=""):
         self.orig = value
