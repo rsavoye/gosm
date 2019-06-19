@@ -1,7 +1,7 @@
 #!/usr/bin/python3
 
 # 
-#   Copyright (C) 2018   Free Software Foundation, Inc.
+#   Copyright (C) 2018, 2019   Free Software Foundation, Inc.
 # 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -17,12 +17,6 @@
 # Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 # 
 
-# This script is where you want to import data, but all the names are all in
-# upper cases, which isn't appropriaye for OSM. This fixes addresses
-# specifically and nothing else by just capitalizing he first letter of
-# every word in the value, and expanding abbreviations for road types tp
-# their full name.
-#
 # ogr2ogr -t_srs EPSG:4326 Roads-new.shp hwy_road_aerial.shp
 
 import os
@@ -32,11 +26,10 @@ import string
 import logging
 import getopt
 import pdb
-import correct
-
 from sys import argv
 sys.path.append(os.path.dirname(argv[0]) + '/osmpylib')
 
+import correct
 import osm
 from lxml import etree
 from lxml.etree import tostring
@@ -58,7 +51,6 @@ class myconfig(object):
         self.options['verbose'] = False
         self.options['infile'] = os.path.dirname(argv[0])
         self.options['outfile'] = "./out.osm"
-        self.options['convfile'] = os.path.dirname(argv[0]) + "/default.conv"
         self.options['uid'] = ''
         self.options['user'] = ''
 
@@ -166,124 +158,7 @@ mod = 'action="modifiy"'
 
 osmout = osm.osmfile(dd, outfile)
 osmout.header()
-abbrevs = ("Hwy", "Rd", "Ln", "Dr", "Cir", "Ave", "Pl", "Trl", "Ct")
-fullname = ("Highway", "Road", "Lane", "Drive", "Circle", "Avenue", "Place", "Trail", "Court")
 
-dirshort = ("S", "E", "N", "W")
-dirlong = ("South", "East", "North", "West")
-
-tag = dict()
-doc = etree.parse(infile)
-members = list()
-modified = False
-fix = correct.correct()
-
-for docit in doc.getiterator():
-    #print("TAG: %r" % docit.tag)
-    if docit.tag == 'node':
-        tags = list()
-        attrs = dict()
-        for elit in docit.getiterator():
-            newvalue = ""
-            for ref,value in elit.items():
-
-                if ref == 'k':
-                    k = value
-                elif ref == 'v':
-                    if k == 'addr:street' or k == 'name' or k == 'alt_name':
-                        newvalue = fix.alphaNumeric(value)
-                        newvalue = fix.abbreviation(newvalue)
-                        newvalue = fix.compass(newvalue)
-                    else:
-                        newvalue = value
-
-                    #print("FIXME: %r %r" % (fix.ismodified(), value))
-                    tag = osmout.makeTag(k, newvalue)
-                    #print("<tag k=\"%r\" v=\"%r\"/>" % (k, v))
-                    tags.append(tag)
-                    #print("NO CHANGE %r: %r" % (k, v))
-                    if fix.ismodified() is True:
-                        attrs['action'] = 'modify'
-                else:
-                    attrs[ref] = value
-
-        osmout.node(tags, attrs)
-        #pdb.set_trace()
-        #attrs = dict()
-    elif docit.tag == 'way':
-        refs = list()
-        tags = list()
-        attrs = dict()
-        # if k == 'addr:street' or k == 'name' or k == 'alt_name':
-        #     pass
-        for elit in docit.getiterator():
-            modified = False
-            newvalue = ""
-            for ref,value in elit.items():
-                if ref == 'ref':
-                    refs.append(value)
-                elif ref == 'k':
-                    k = value
-                    continue
-                elif ref == 'v':
-                    if k == 'addr:street' or k == 'name' or k == 'alt_name'  or k == 'addr:city' or k == 'addr:full':
-                        newvalue = fix.alphaNumeric(value)
-                        newvalue = fix.abbreviation(newvalue)
-                        newvalue = fix.compass(newvalue)
-                        newvalue = string.capwords(newvalue)
-                    else:
-                        newvalue = value
-                    tag = osmout.makeTag(k, newvalue)
-                    tags.append(tag)
-                else:
-                    attrs[ref] = value
-        osmout.makeWay(refs, tags, attrs)
-
-    elif docit.tag == 'bounds':
-        pass
-    elif docit.tag == 'member':
-        # members = list()
-        # for elit in docit.getiterator():
-        #     for ref,value in elit.items():
-        #         member = dict()
-        #         print("MEMBER:  %r, %r" % (ref, value))
-        #         member[ref] = value
-        #         members.append(member)
-        pass
-    elif docit.tag == 'route':
-        pass
-    elif docit.tag == 'type':
-        pass
-    elif docit.tag == 'nd':
-        # Don't need to do anything, handled by osm.py
-        pass
-    elif docit.tag == 'osm':
-        pass
-    elif docit.tag == 'relation':
-        tags = list()
-        attrs = dict()
-        members = list()
-        for elit in docit.getiterator():
-            modified = False
-            for ref,value in elit.items():
-                #print("RELATION: %r %r" % (ref, value))
-                if ref == 'type' or ref == 'ref' or ref == 'role':
-                    member = dict()
-                    member[ref] = value
-                    members.append(member)
-                    continue
-                elif ref == 'k':
-                    k = value
-                    continue
-                elif ref == 'v':
-                    if k == 'name':
-                        v = string.capwords(value)
-                    else:
-                        v = value
-                    tag = osmout.makeTag(k, v)
-                    tags.append(tag)
-                else:
-                    attrs[ref] = value
-        osmout.makeRelation(members, tags, attrs)
+poly = open(infile)
 
 osmout.footer()
