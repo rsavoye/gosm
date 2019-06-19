@@ -1,8 +1,7 @@
 #!/bin/bash
 
 # 
-#   Copyright (C) 2016, 2017, 2018
-#   Free Software Foundation, Inc.
+#   Copyright (C) 2016, 2017, 2018, 2019   Free Software Foundation, Inc.
 # 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -97,7 +96,7 @@ while test $i -lt ${#polyfiles[@]} -o x"${polys}" = x; do
     if test "${exists}" -eq 0; then
 	echo "Creating postgresql database ${dbname}"
 	if test x"${dropdb}" = x"yes"; then
-	    dropdb ${dbname}
+	    dropdb --if-exists ${dbname}
 	fi
 	createdb -EUTF8 ${dbname} ${dbname} -T template0
 	if test $? -gt 0; then
@@ -136,7 +135,7 @@ while test $i -lt ${#polyfiles[@]} -o x"${polys}" = x; do
 		    exit
 		fi
 	    fi
-	    osm2pgsql --slim -C 1500 -d ${dbname} --number-processes 8 ${infile} --hstore --input-reader xml --drop >& /dev/null
+	    osm2pgsql --slim -C 500 -d ${dbname} --number-processes 8 ${infile} --hstore --input-reader xml --drop >& /dev/null
 	    if test $? -gt 0; then
 		exit
 	    fi
