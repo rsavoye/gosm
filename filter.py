@@ -8,9 +8,9 @@ import getopt
 import epdb
 #from haversine import haversine, Units
 import haversine
-import csv
 from sys import argv
 sys.path.append(os.path.dirname(argv[0]) + '/osmpylib')
+import psycopg2
 
 
 if os.path.exists('filter.log'):
@@ -159,10 +159,64 @@ class OSMWriter(osmium.SimpleHandler):
         logging.debug("REL TAGS %s" % n.tags.get('addr:housenumber'))
         self.writer.add_relation(n)
 
+# This copies only nodes and ways with addr:housenumber set, but the distance
+# calculation is ignoresd unless the input is sorted by geometry. That's hard
+# to do, but easy in postgis.
 if __name__ == '__main__':
-    if os.path.exists('copy.osm'):
-        os.remove('copy.osm')
-    writer = osmium.SimpleWriter('copy.osm')
-    n = OSMWriter(writer)
-    n.apply_file("foo.osm", locations=True)
-    writer.close()
+    # if os.path.exists('copy.osm'):
+    #     os.remove('copy.osm')
+    # writer = osmium.SimpleWriter('copy.osm')
+    # n = OSMWriter(writer)
+    # n.apply_file("foo.osm", locations=True)
+    # writer.close()
+
+    # connect += " dbname='" + database + "'"
+    connect = " dbname='TimberlineFireProtectionDistrict'" 
+    dbshell = psycopg2.connect(connect)
+    dbshell.autocommit = True
+    dbcursor = dbshell.cursor()
+
+    # These first queries have no output, we're just sorting the data
+    # internally using postgis into a new table,
+    query = """SELECT "addr:housenumber",way INTO sorted FROM planet_osm_point WHERE "addr:housenumber" is not NULL ORDER BY way;"""
+    dbcursor.execute(query)
+    logging.debug("Rowcount: %r" % dbcursor.rowcount)
+    if dbcursor.rowcount < 0:
+        logging.error("Query failed: %s" % query)
+
+    query = """SELECT way,"addr:housenumber" FROM sorted"""
+    dbcursor.execute(query)
+    logging.debug("Rowcount: %r" % dbcursor.rowcount)
+    if dbcursor.rowcount < 0:
+        logging.error("Query failed: %s" % query)
+
+    # osm.header()
+    result = dbcursor.fetchone()
+    while result is not None:
+        logging.debug(result)
+        result = dbcursor.fetchone()
+        # osm.node()
+
+    query = """DROP TABLE sorted;"""
+    dbcursor.execute(query)
+    logging.debug("Rowcount: %r" % dbcursor.rowcount)
+    if dbcursor.rowcount < 0:
+        logging.error("Query failed: %s" % query)
+
+    query = """SELECT "addr:housenumber",ST_Centroid(way) AS way INTO sorted FROM planet_osm_polygon WHERE "addr:housenumber" is not NULL;"""
+    dbcursor.execute(query)
+    logging.debug("Rowcount: %r" % dbcursor.rowcount)
+    if dbcursor.rowcount < 0:
+        logging.error("Query failed: %s" % query)
+
+    query = """SELECT ST_Transform(way,4326),"addr:housenumber" FROM sorted;"""
+    dbcursor.execute(query)
+    logging.debug("Rowcount: %r" % dbcursor.rowcount)
+    if dbcursor.rowcount < 0:
+        logging.error("Query failed: %s" % query)
+
+    result = dbcursor.fetchone()
+    while result is not None:
+        logging.debug(result)
+        result = dbcursor.fetchone()
+    # osm.footer()
