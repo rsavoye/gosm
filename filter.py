@@ -166,7 +166,7 @@ if __name__ == '__main__':
     # if os.path.exists('copy.osm'):
     #     os.remove('copy.osm')
     # writer = osmium.SimpleWriter('copy.osm')
-    # n = OSMWriter(writer)
+    osm = OSMWriter(writer)
     # n.apply_file("foo.osm", locations=True)
     # writer.close()
 
