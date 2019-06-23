@@ -6,10 +6,10 @@ import osmium
 import logging
 import getopt
 import epdb
-#from haversine import haversine, Units
-import haversine
+from haversine import haversine, Unit
 from sys import argv
 sys.path.append(os.path.dirname(argv[0]) + '/osmpylib')
+import osm
 import psycopg2
 
 
@@ -18,6 +18,15 @@ if os.path.exists('filter.log'):
 
 class myconfig(object):
     def __init__(self, argv=list()):
+        # Default values for user options
+        self.options = dict()
+        self.options['verbose'] = False
+        self.options['format'] = "osm"
+        self.options['outfile'] = "reduced.osm"
+        self.options['infile'] = None
+        self.options['uid'] = ''
+        self.options['user'] = ''
+
         # Read the config file to get our OSM credentials, if we have any
         file = os.getenv('HOME') + "/.gosmrc"
         try:
@@ -25,12 +34,29 @@ class myconfig(object):
         except Exception as inst:
             logging.warning("Couldn't open %s for writing! not using OSM credentials" % file)
             return
-         # Default values for user options
-        self.options = dict()
-        self.options['verbose'] = False
-        self.options['format'] = "osm"
-        self.options['outfile'] = "reduced.osm"
-        self.options['infile'] = None
+        try:
+            lines = gosmfile.readlines()
+        except Exception as inst:
+            logging.error("Couldn't read lines from %s" % gosmfile.name)
+
+        for line in lines:
+            try:
+                # Ignore blank lines or comments
+                if line is '' or line[1] is '#':
+                    continue
+            except Exception as inst:
+                pass
+            # First field of the CSV file is the name
+            index = line.find('=')
+            name = line[:index]
+            # Second field of the CSV file is the value
+            value = line[index + 1:]
+            index = len(value)
+#            print ("FIXME: %s %s %d" % (name, value[:index - 1], index))
+            if name == "uid":
+                self.options['uid'] = value[:index - 1]
+            if name == "user":
+                self.options['user'] = value[:index - 1]
 
         try:
             (opts, val) = getopt.getopt(argv[1:], "h,o:,i:,v,f:",
@@ -47,7 +73,6 @@ class myconfig(object):
                 self.options['infile'] = val
             elif opt == "--outfile" or opt == '-o':
                 self.options['outfile'] = val
-
             elif opt == "--format" or opt == '-f':
                 self.options['format'] = val
             elif opt == "--verbose" or opt == '-v':
@@ -102,7 +127,7 @@ if dd.get('verbose') == 1:
 
 
 # distance between points
-threshold = 30
+threshold = 100
 
 # https://gdal.org/drivers/vector/csv.html
 # Latitude,Longitude,Name
@@ -121,7 +146,7 @@ def distance(previous, current):
             prev = (current.location.lat, current.location.lon)
     cur = (current.location.lat, current.location.lon)
     if prev is not None and current is not None:
-        dist = haversine.haversine(prev, cur, unit=haversine.Unit.METERS)
+        dist = haversine(prev, cur, unit=Unit.METERS)
     else:
         dist = 0.0
     logging.debug("DIST: %r" % dist)
@@ -163,11 +188,15 @@ class OSMWriter(osmium.SimpleHandler):
 # calculation is ignoresd unless the input is sorted by geometry. That's hard
 # to do, but easy in postgis.
 if __name__ == '__main__':
+    outfile = dd.get('outfile')
+    osm = osm.osmfile(dd, outfile)
+    osm.header()
+    
     # if os.path.exists('copy.osm'):
-    #     os.remove('copy.osm')
+    #    os.remove('copy.osm')
     # writer = osmium.SimpleWriter('copy.osm')
-    osm = OSMWriter(writer)
-    # n.apply_file("foo.osm", locations=True)
+    # osm = OSMWriter(writer)
+    # osm.apply_file("foo.osm", locations=True)
     # writer.close()
 
     # connect += " dbname='" + database + "'"
@@ -175,6 +204,12 @@ if __name__ == '__main__':
     dbshell = psycopg2.connect(connect)
     dbshell.autocommit = True
     dbcursor = dbshell.cursor()
+
+    query = """DROP TABLE sorted;"""
+    dbcursor.execute(query)
+    logging.debug("Rowcount: %r" % dbcursor.rowcount)
+    if dbcursor.rowcount < 0:
+        logging.error("Query failed: %s" % query)
 
     # These first queries have no output, we're just sorting the data
     # internally using postgis into a new table,
@@ -184,39 +219,63 @@ if __name__ == '__main__':
     if dbcursor.rowcount < 0:
         logging.error("Query failed: %s" % query)
 
-    query = """SELECT way,"addr:housenumber" FROM sorted"""
-    dbcursor.execute(query)
-    logging.debug("Rowcount: %r" % dbcursor.rowcount)
-    if dbcursor.rowcount < 0:
-        logging.error("Query failed: %s" % query)
-
-    # osm.header()
-    result = dbcursor.fetchone()
-    while result is not None:
-        logging.debug(result)
-        result = dbcursor.fetchone()
-        # osm.node()
-
-    query = """DROP TABLE sorted;"""
-    dbcursor.execute(query)
-    logging.debug("Rowcount: %r" % dbcursor.rowcount)
-    if dbcursor.rowcount < 0:
-        logging.error("Query failed: %s" % query)
-
-    query = """SELECT "addr:housenumber",ST_Centroid(way) AS way INTO sorted FROM planet_osm_polygon WHERE "addr:housenumber" is not NULL;"""
-    dbcursor.execute(query)
-    logging.debug("Rowcount: %r" % dbcursor.rowcount)
-    if dbcursor.rowcount < 0:
-        logging.error("Query failed: %s" % query)
-
-    query = """SELECT ST_Transform(way,4326),"addr:housenumber" FROM sorted;"""
+    query = """SELECT ST_AsText(ST_Transform(way,4326)),"addr:housenumber" FROM sorted"""
     dbcursor.execute(query)
     logging.debug("Rowcount: %r" % dbcursor.rowcount)
     if dbcursor.rowcount < 0:
         logging.error("Query failed: %s" % query)
 
     result = dbcursor.fetchone()
+    previous = None
     while result is not None:
         logging.debug(result)
+        alltags = list()
+        attrs = dict()
+        lon = float(result[0].split()[0].replace("POINT(", ""))
+        lat = float(result[0].split()[1].replace(")", ""))
+        # Calculate the distance between points
+        if previous is None:
+            previous = (lat, lon)
+        current = (lat, lon)
+        dist = haversine(previous, current, unit=Unit.METERS)
+        #logging.debug("DIST: %r" % dist)
+        if dist < threshold:
+            logging.info("Ignoring for dist %r" % dist)
+            result = dbcursor.fetchone()
+            continue
+        previous = (lat, lon)
+
+        # Make the OSM Node
+        attrs['user'] = dd.get('user')
+        attrs['uid'] = dd.get('uid')
+        attrs['lon'] = str(lon)
+        attrs['lat'] = str(lat)
+        tagger = osm.makeTag('name', result[1])
+        alltags.append(tagger)
+        node = osm.node(alltags, attrs)
         result = dbcursor.fetchone()
-    # osm.footer()
+
+    # query = """DROP TABLE sorted;"""
+    # dbcursor.execute(query)
+    # logging.debug("Rowcount: %r" % dbcursor.rowcount)
+    # if dbcursor.rowcount < 0:
+    #     logging.error("Query failed: %s" % query)
+
+    # query = """SELECT "addr:housenumber",ST_Centroid(way) AS way INTO sorted FROM planet_osm_polygon WHERE "addr:housenumber" is not NULL;"""
+    # dbcursor.execute(query)
+    # logging.debug("Rowcount: %r" % dbcursor.rowcount)
+    # if dbcursor.rowcount < 0:
+    #     logging.error("Query failed: %s" % query)
+
+    # query = """SELECT ST_Transform(way,4326),"addr:housenumber" FROM sorted;"""
+    # dbcursor.execute(query)
+    # logging.debug("Rowcount: %r" % dbcursor.rowcount)
+    # if dbcursor.rowcount < 0:
+    #     logging.error("Query failed: %s" % query)
+
+    # result = dbcursor.fetchone()
+    # while result is not None:
+    #     logging.debug(result)
+    #     result = dbcursor.fetchone()
+
+    osm.footer()
