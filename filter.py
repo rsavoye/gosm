@@ -24,8 +24,10 @@ class myconfig(object):
         self.options['format'] = "osm"
         self.options['outfile'] = "reduced.osm"
         self.options['infile'] = None
-        self.options['uid'] = ''
-        self.options['user'] = ''
+        self.options['database'] = "test"
+        self.options['uid'] = None
+        self.options['user'] = None
+        self.options['threshold'] = 100
 
         # Read the config file to get our OSM credentials, if we have any
         file = os.getenv('HOME') + "/.gosmrc"
@@ -59,8 +61,8 @@ class myconfig(object):
                 self.options['user'] = value[:index - 1]
 
         try:
-            (opts, val) = getopt.getopt(argv[1:], "h,o:,i:,v,f:",
-                ["help", "outfile", "infile", "verbose", "format"])
+            (opts, val) = getopt.getopt(argv[1:], "h,o:,i:,v,f:,t:,d:",
+                ["help", "outfile", "infile", "verbose", "format", "threshold"])
         except getopt.GetoptError as e:
             logging.error('%r' % e)
             self.usage(argv)
@@ -69,12 +71,16 @@ class myconfig(object):
         for (opt, val) in opts:
             if opt == '--help' or opt == '-h':
                 self.usage(argv)
+            elif opt == "--database" or opt == '-d':
+                self.options['database'] = val
             elif opt == "--infile" or opt == '-i':
                 self.options['infile'] = val
             elif opt == "--outfile" or opt == '-o':
                 self.options['outfile'] = val
             elif opt == "--format" or opt == '-f':
                 self.options['format'] = val
+            elif opt == "--threshold" or opt == '-t':
+                self.options['threshold'] = val
             elif opt == "--verbose" or opt == '-v':
                 self.options['verbose'] = True
                 logging.basicConfig(filename='filter.log',level=logging.DEBUG)
@@ -99,6 +105,7 @@ class myconfig(object):
 \t--outfile(-o)    Output file
 \t--infile(-i)    Input file
 \t--format(-f)    Output file format, (csv, osm)
+\t--threshold(-t) Threshold for address distance
 \t--verbose(-v)   Enable verbosity
         """)
         quit()
@@ -127,7 +134,7 @@ if dd.get('verbose') == 1:
 
 
 # distance between points
-threshold = 100
+threshold = int(dd.get('threshold'))
 
 # https://gdal.org/drivers/vector/csv.html
 # Latitude,Longitude,Name
@@ -199,13 +206,13 @@ if __name__ == '__main__':
     # osm.apply_file("foo.osm", locations=True)
     # writer.close()
 
-    # connect += " dbname='" + database + "'"
-    connect = " dbname='TimberlineFireProtectionDistrict'" 
+    database = dd.get('database')
+    connect = " dbname='" + database + "'"
     dbshell = psycopg2.connect(connect)
     dbshell.autocommit = True
     dbcursor = dbshell.cursor()
 
-    query = """DROP TABLE sorted;"""
+    query = """DROP TABLE IF EXISTS sorted;"""
     dbcursor.execute(query)
     logging.debug("Rowcount: %r" % dbcursor.rowcount)
     if dbcursor.rowcount < 0:
