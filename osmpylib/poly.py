@@ -39,7 +39,7 @@ import string
 class Poly(object):
     """Class to manage a OSM map polygons"""
     def __init__(self, filespec=None):
-        self.filespec = None
+        self.filespec = filespec
         self.geometry = None
         self.polygons = dict()
         if filespec is not None:
@@ -47,7 +47,7 @@ class Poly(object):
             self.readPolygon(filespec)
 
     def getName(self):
-        return self.filespec
+        return os.path.basename(self.filespec).replace(".poly", "")
 
     def readPolygon(self, filespec):
         self.filespec = filespec
@@ -77,6 +77,7 @@ class Poly(object):
             if line.isnumeric():
                 print(line)
                 self.polygons[int(line)] = ogr.Geometry(ogr.wkbPolygon)
+                self.polygons[int(line)].FlattenTo2D()
                 index = int(line)
                 continue
             if line.isalpha():
