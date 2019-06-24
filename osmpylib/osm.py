@@ -29,6 +29,8 @@ import epdb
 import subprocess
 ON_POSIX = 'posix' in sys.builtin_module_names
 from datetime import datetime
+import correct
+
 
 class osmfile(object):
     """OSM File output"""
@@ -74,7 +76,7 @@ class osmfile(object):
             self.file.close()
 
     def makeNode(self, attr=dict()):
-        node(attr['osmid'], attrs['lat'], attrs['lon'], attr['osmid'], attr['user'])
+        self.node(attr['osmid'], attrs['lat'], attrs['lon'], attr['osmid'], attr['user'])
 
         #    def node(self, lat="", lon="", tags=list(), modified=False, osmid=None, user=None, uid=None, version=None):
     def node(self, tags=list(), attrs=dict(), modified=False):
@@ -99,7 +101,6 @@ class osmfile(object):
         except:
             attrs['uid'] = str(self.options.get('uid'))
 
-        # epdb.set_trace()
         if len(attrs) > 0:
             self.file.write("    <node")
             for ref,value in attrs.items():
@@ -132,6 +133,7 @@ class osmfile(object):
     # random field names to standard OSM tag names. Same for the values,
     # which for OSM often have defined ranges.
     def makeTag(self, field, value):
+        fix = correct.correct()
         newval = str(value)
         #newval = html.unescape(newval)
         newval = newval.replace('&', 'and')
@@ -155,6 +157,12 @@ class osmfile(object):
             newtag = change[0]
             newval = change[1]
 
+        # name tags, usually roads or addresses, often have to be tweaked
+        # for OSM standards
+        if (newtag == "name") or (newtag == "alt_name"):
+            newval = string.capwords(fix.alphaNumeric(newval))
+            newval = fix.abbreviation(newval)
+            newval = fix.compass(newval)
         tag[newtag] = newval
         # tag[newtag] = string.capwords(newval)
 
@@ -185,8 +193,8 @@ class osmfile(object):
             self.file.write(" version='1'")
             self.file.write(" id=\'" + str(self.osmid) + "\'")
             self.file.write(" timestamp='" + timestamp + "\'")
-            self.file.write(" user='" + self.options.get('user') + "' uid='" +
-                            str(self.options.get('uid')) + "'>'\n")
+#            self.file.write(" user='" + self.options.get('user') + "' uid='" +
+#                            str(self.options.get('uid')) + "'>'\n")
 
         # Each ref ID points to a node id. The coordinates is im the node.
         for ref in refs:
@@ -208,7 +216,7 @@ class osmfile(object):
                                     str(value) + "\"/>\n")
 
         self.file.write("  </way>\n")
-        self.osmid = self.osmid - 1
+        self.osmid = int(self.osmid) - 1
 
     def makeRelation(self, members, tags=list(), attrs=dict()):
         if len(attrs) > 0:
@@ -270,7 +278,7 @@ class osmConvert(object):
             file = self.file
 
         if os.path.exists(file) is False:
-            logging.error("%s does not exist!" % file)
+            logging.warning("%s does not exist!" % file)
             return None
         else:
             if os.stat(file).st_size == 0:
