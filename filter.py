@@ -136,13 +136,6 @@ if dd.get('verbose') == 1:
 # distance between points
 threshold = int(dd.get('threshold'))
 
-# https://gdal.org/drivers/vector/csv.html
-# Latitude,Longitude,Name
-# 48.1,0.25,"First point"
-# 49.2,1.1,"Second point"
-# 47.5,0.75,"Third point"
-
-
 def distance(previous, current):
     if previous is not None:
         prev = (previous.location.lat, previous.location.lon)
@@ -220,13 +213,13 @@ if __name__ == '__main__':
 
     # These first queries have no output, we're just sorting the data
     # internally using postgis into a new table,
-    query = """SELECT "addr:housenumber",way INTO sorted FROM planet_osm_point WHERE "addr:housenumber" is not NULL ORDER BY way;"""
+    query = """SELECT * INTO sorted FROM planet_osm_point WHERE "addr:housenumber" is not NULL ORDER BY way;"""
     dbcursor.execute(query)
     logging.debug("Rowcount: %r" % dbcursor.rowcount)
     if dbcursor.rowcount < 0:
         logging.error("Query failed: %s" % query)
 
-    query = """SELECT ST_AsText(ST_Transform(way,4326)),"addr:housenumber" FROM sorted"""
+    query = """SELECT ST_AsText(ST_Transform(way,4326)) AS way,"addr:housenumber" AS num,tags->'addr:street' AS street FROM sorted;"""
     dbcursor.execute(query)
     logging.debug("Rowcount: %r" % dbcursor.rowcount)
     if dbcursor.rowcount < 0:
@@ -257,7 +250,9 @@ if __name__ == '__main__':
         attrs['uid'] = dd.get('uid')
         attrs['lon'] = str(lon)
         attrs['lat'] = str(lat)
-        tagger = osm.makeTag('name', result[1])
+        tagger = osm.makeTag('addr:housenumber', result[1])
+        alltags.append(tagger)
+        tagger = osm.makeTag('addr:street', result[2])
         alltags.append(tagger)
         node = osm.node(alltags, attrs)
         result = dbcursor.fetchone()
