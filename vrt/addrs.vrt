@@ -1,6 +1,6 @@
 <OGRVRTDataSource>
     <OGRVRTLayer name="Addresses">
-        <SrcDataSource>/play/MapData/Colorado/FireDepts/NFPD/NFPD.osm</SrcDataSource>
+        <SrcDataSource>bar.osm</SrcDataSource>
         <SrcSQL>SELECT addr_street,addr_housenumber AS num,'LABEL(f:"Times New Roman",s:29px,t:{num},c:#000000FF)' as OGR_STYLE FROM points WHERE addr_housenumber is not NULL</SrcSQL>
 	<LayerSRS>WGS84</LayerSRS>
 	<GeometryType>wkbPoint</GeometryType>
