@@ -34,28 +34,20 @@ import correct
 
 class osmfile(object):
     """OSM File output"""
-    def __init__(self, options, outfile=False):
+    def __init__(self, options, filespec=None):
         self.options = options
-        #self.file = False
         # Read the config file to get our OSM credentials, if we have any
         # self.config = config.config(self.options)
         self.version = 3
         self.visible = 'true'
         self.osmid = -30470
         # Open the OSM output file
-        if outfile == False:
-            self.outfile = self.options.get('outdir') + "foobar.osm"
-        try:
-            suffix = outfile.split('.')[1]
-            if suffix != "osm":
-                outfile += ".osm"
-            if os.path.isfile(outfile):
-                self.file = open(outfile, 'w')
-            else:
-                self.file = open(outfile, 'x')
-            logging.info("Opened output file: " + outfile )
-        except Exception as inst:
-            logging.error("Couldn't open %s for writing!" % outfile)
+        if filespec is None:
+            self.file = self.options.get('outdir') + "foobar.osm"
+        else:
+            self.file = open(filespec + ".osm", 'x')
+        logging.info("Opened output file: " + filespec )
+        #logging.error("Couldn't open %s for writing!" % filespec)
 
         # This is the file that contains all the filtering data
         self.ctable = convfile(options.get('convfile'))
@@ -64,7 +56,7 @@ class osmfile(object):
         return self.file.closed
 
     def header(self):
-        if self.file != False:
+        if self.file is not False:
             self.file.write('<?xml version=\'1.0\' encoding=\'UTF-8\'?>\n')
             #self.file.write('<osm version="0.6" generator="gosm 0.1" timestamp="2017-03-13T21:43:02Z">\n')
             self.file.write('<osm version="0.6" generator="gosm 0.1">\n')
@@ -192,7 +184,7 @@ class osmfile(object):
 
             self.file.write(" version='1'")
             self.file.write(" id=\'" + str(self.osmid) + "\'")
-            self.file.write(" timestamp='" + timestamp + "\'")
+            self.file.write(" timestamp='" + timestamp + "\'>\n")
 #            self.file.write(" user='" + self.options.get('user') + "' uid='" +
 #                            str(self.options.get('uid')) + "'>'\n")
 
