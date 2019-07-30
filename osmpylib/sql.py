@@ -23,7 +23,10 @@
 import epdb
 import psycopg2
 import logging
-from maptypes import MapType
+from io import BytesIO
+from shapely.geometry import GeometryCollection, Point, LineString, Polygon
+from shapely import wkt, wkb
+import ppygis3
 
 
 class Postgis(object):
@@ -72,6 +75,46 @@ class Postgis(object):
             if e.pgcode != None:
                 logging.error("Query failed to fetch! %r" % e.pgcode)
 
+#        for row in self.dbcursor:
+#            i = 0
+#            for item in row:
+#                print(row[i])
+#                i += 1
+
+#        buffer = BytesIO()
+#        self.dbcursor.copy_to(buffer, '')
+#        buffer.seek(0)
+#        for line in buffer:
+#            print(Geometry.read_ewkb(line.strip()))
+
+        tmp = query.split(' ')
+        fields = tmp[1].split(',')
+        line = self.dbcursor.fetchone()
+        while line is not None:
+            i = 0
+            data = dict()
+            for item in line:
+                if fields[i] is "other_tags":
+                    tags = line[i].split(',')
+                    for value in tags:
+                        print(value)
+                        tmp = value.split('=>')
+                        print(len(tmp))
+                        if len(tmp) == 2:
+                            print(tmp[1])
+                            data[tmp[0]] = tmp[1]
+                elif fields[i] == "wkb_geometry":
+                    data['wkb_geometry'] = wkb.loads(item,hex=True)
+                else:
+                    data[fields[i]] = item
+                i += 1
+            # FIXME: convert Collection to points
+            print(data)
+            self.result.append(data)
+            line = self.dbcursor.fetchone()
+
+        return self.result
+
     def count(self, type):
         if type is "roads":
             sql = "COUNT(*) FROM planet_osm_line WHERE highway is not NULL AND highway!='path' OR highway!='footway' OR highway!='cycleway"
@@ -96,54 +139,58 @@ class Postgis(object):
 
 
     def getRoads(self, result=list()):
-#        self.query("osm_id,name,wkb_gemetry,highway,other_tags from lines WHERE (highway IS NOT NULL) AND (highway!='path' AND ighway!='footway' AND highway!='cycleway' AND highway!='driveway'")
-        self.query("SELECT osm_id,name,wkb_geometry,highway,other_tags from lines WHERE (highway!='path' AND highway!='footway');")
-        line = self.dbcursor.fetchone()
-        while line is not None:
-            road = dict()
-            road['osm_id'] = line[0]
-            road['name'] = line[1] 
-            road['way'] = line[2]
-            road['highway'] = line[3]
-            if line[4] is not None:
-                tags = line[4].split(',')
-                for item in tags:
-                    print(item)
-                    tmp = item.split('=>')
-                    print(len(tmp))
-                    if len(tmp) == 2:
-                        print(tmp[1])
-                        road[tmp[0]] = tmp[1]
-            line = self.dbcursor.fetchone()
-            result.append(road)
-        print(self.dbcursor.rowcount)
-#line.osm_id,line.name,ST_AsKML(line.way),line.tags->'addr:full',tags->'adrr:street',tags->'addr:housenumber',tags->'alt_name',tags->'addr:full' from planet_osm_line AS line;
-#line.osm_id,line.name,ST_AsKML(line.way) from planet_osm_line AS line;
-#line.osm_id,line.name,line.tags->'sac_scale',line.tags->'bicycle',line.tags->'mtb:scale:imba',line.access,ST_AsKML(line.way) FROM planet_osm_line AS line, dblink('dbname=polygons', 'select name,geom FROM boundary') AS poly(name name,geom geometry) WHERE poly.name='${polygon}' AND (ST_Crosses(line.way,poly.geom) OR ST_Contains(poly.geom,line.way)) AND (line.highway='footway' OR line.highway = 'path');
-#line.osm_id,line.name,ST_AsKML(line.way),line.tags->'sac_scale',line.tags->'bicycle',line.tags->'mtb:scale:imba',line.access FROM planet_osm_line AS line WHERE line.highway='footway' OR line.highway = 'path' OR line.highway = 'cycleway';
-#line.osm_id,line.name,ST_AsKML(line.way),line.tags->'piste:type',line.tags->'piste:difficulty',line.tags->'piste:grooming',line.aerialway,line.access FROM planet_osm_line AS line WHERE line.tags->'piste:type' is not NULL
-#osm_id,name,ST_AsKML(way) from planet_osm_point WHERE (highway='trailhead' OR leisure='trailhead' OR amenity='trailhead') AND name LIKE '%Trailhead';
-#osm_id,name,ST_AsKML(way) from planet_osm_polygon WHERE amenity='parking' AND name LIKE '%Trailhead';
-#SELECT name FROM planet_osm_polygon WHERE tags->'is_in'!='' AND tourism='camp_site';
-# osm_id,name,ST_AsKML(way),tags->'fee',tags->'toilets',tags->'website',tags->'operator',tags->'sites',amenity,leisure,tourism,tags->'is_in' from planet_osm_point WHERE tourism='camp_site' OR amenity='campground' ORDER BY tags->'is_in';
-# osm_id,name,ST_AsKML(way),tags->'alt_name' from planet_osm_point WHERE highway='milestone';
-# osm_id,name,ST_AsKML(way),historic from planet_osm_point WHERE historic is not NULL;
-# osm_id,name,ST_AsKML(way),ele FROM planet_osm_point WHERE natural='peak';
-# osm_id,ST_AsKML(way),"addr:housenumber",tags->'addr:street',tags->'addr:full' FROM planet_osm_point WHERE tags->'addr:street'!='' AND 'addr:housenumber' is not NULL;
-# osm_id,ST_AsKML(ST_Centroid(way)),'addr:housenumber',tags->'addr:street',tags->'addr:full' FROM planet_osm_polygon WHERE tags->'addr:street'!='' AND 'addr:housenumber' is not NULL AND building='yes';
-# osm_id,name,ST_AsKML(way),tags->'description' FROM planet_osm_point WHERE "natural"='hot_spring' OR "leisure"='hot_spring' OR "amenity"='hot_spring' OR 'bath:type'='hot_spring' OR name LIKE '%Hot%' ;
-# osm_id,name,ST_AsKML(way),tags->'emergency',tags->'aeroway' from planet_osm_point WHERE aeroway='helipad' OR aeroway='heliport' OR tags->'emergency'='landing_site' ${polysql};
-# osm_id,name,ST_AsKML(way),tags->'emergency',tags->'fire_hydrant:type',tags->'fire_hydrant:diameter',water,tags->'water_tank:volume',tags->'note',disused,tags->'is_in' from planet_osm_point WHERE tags->'emergency'='fire_hydrant' OR tags->'emergency'='water_tank' ORDER BY tags->'is_in';
-# osm_id,name,ST_AsKML(way),amenity,tags->'emergency' from planet_osm_point WHERE tags->'emergency'!='';
-# sql.sh 323:SELECT osm_id,name,ST_AsKML(way) from planet_osm_point WHERE tags->'internet_access'='wlan';
-# osm_id,name,ST_AsKML(way),tags->'name.en',tags->'description' from planet_osm_point WHERE waterway='waterfall';
-# osm_id,name,ST_AsKML(way),name.en,description from planet_osm_point WHERE tags->'sport'='swimming' AND tags->'amenity'!='swimming_pool' ${polysql};
-# sql.sh 338:SELECT osm_id,name,ST_AsKML(way),name.en,description from planet_osm_point WHERE tags->'sport'='climbing'' ${polysql};
-# osm_id,name,ST_AsKML(way),tourism,tags->'phone',tags->'email',tags->'website',tags->'addr:street',tags->'addr:housenumber' from planet_osm_point WHERE tourism='wilderness_hut' OR tourism='alpine_hut' ${polysql};
-# osm_id,name,ST_AsKML(way),place from planet_osm_point WHERE place='hamlet' OR place='village' OR place='town' OR place='isolated_dwelling' OR place='locality';
-# osm_id,name,ST_AsKML(way),tourism,tags->'phone',tags->'email',tags->'website',tags->'addr:street',tags->'addr:housenumber',tags->'name:en' from planet_osm_point WHERE tourism='hotel' OR tourism='hostel' OR tourism='guest_house' ${polysql};
-# #osm_id,name,tags->'alt_name',tags->'addr:state',ST_AsKML(way) FROM planet_osm_line SORT WHERE boundary='administrative' AND name!='';
- 
-post = Postgis()
-post.connect('localhost', 'TimberlineFireProtectionDistrict')
-post.getRoads()
+        result = self.query("SELECT osm_id,name,other_tags,highway,wkb_geometry,highway,other_tags FROM lines WHERE highway is not NULL AND (highway!='path' AND highway!='footway' AND highway!='milestone');")
+        return result
+
+    def getAddresses(self, result=list()):
+        result = self.query("SELECT osm_id,name,addr_housenumber,addr_street,wkb_geometry FROM points;")
+        return result
+
+    def getTrails(self, result=list()):
+        result = self.query("SELECT osm_id,name,other_tags,highway,wkb_geometry FROM lines WHERE (highway='path' OR highway='footway'  OR highway='cycleway');")
+        return result
+
+    def getCamps(self, result=list()):
+        result = self.query("SELECT osm_id,name,other_tags,tourism,wkb_geometry FROM points WHERE tourism='camp_site' OR tourism='camp_pitch' ORDER BY is_in;")
+        return result
+
+    def getPiste(self, result=list()):
+        result = self.query("")
+        return result
+    
+    def getHistoric(self, result=list()):
+        result = self.query("SELECT osm_id,name,other_tags,historic,wkb_geometry FROM points WHERE historic is not NULL;")
+        return result
+
+    def getMilestone(self, result=list()):
+        result = self.query("SELECT osm_id,name,other_tags,wkb_geometry FROM points WHERE highway='milestone';")
+        return result
+
+    def getTrailhead(self, result=list()):
+        result = self.query("")
+        return result
+
+    def getHotSprings(self, result=list()):
+        # result = self.query("SELECT osm_id,name,description,wkb_geometry FROM points WHERE "natural"='hot_spring' OR "leisure"='hot_spring' OR "amenity"='hot_spring' OR 'bath:type'='hot_spring' OR name LIKE '%Hot%' ;")
+        return result
+
+    def getLandingZones(self, result=list()):
+        result = self.query("SELECT osm_id,name,emergency,aeroway,wkb_geometry FROM points WHERE aeroway='helipad' OR aeroway='heliport' OR emergency='landing_site';")
+        return result
+
+    def getFireWater(self, result=list()):
+        result = self.query("SELECT osm_id,name,emergency,water_tank,disused,is_in,wkb_geometry from points WHERE emergency='fire_hydrant' OR emergency='water_tank' OR water_tank IS NOT NULL ORDER BY is_in;")
+        return result
+
+    def getPlace(self, result=list()):
+        result = self.query("osm_id,name,place,wkb_geometry FROM points WHERE place='hamlet' OR place='village' OR place='town' OR place='isolated_dwelling' OR place='locality';")
+        return result
+
+    def getWaterfalls(self, result=list()):
+        result = self.query("")
+        return result
+
+    def getLodging(self, result=list()):
+        result = self.query("")
+        return result
+
