@@ -94,15 +94,16 @@ class Postgis(object):
             i = 0
             data = dict()
             for item in line:
-                if fields[i] is "other_tags":
-                    tags = line[i].split(',')
-                    for value in tags:
-                        print(value)
-                        tmp = value.split('=>')
-                        print(len(tmp))
-                        if len(tmp) == 2:
-                            print(tmp[1])
-                            data[tmp[0]] = tmp[1]
+                if fields[i] == "other_tags":
+                    if item is not None:
+                        tags = item.split(',')
+                        for value in tags:
+                            print(value)
+                            tmp = value.split('=>')
+                            print(len(tmp))
+                            if len(tmp) == 2:
+                                print(tmp[1])
+                                data[tmp[0]] = tmp[1]
                 elif fields[i] == "wkb_geometry":
                     data['wkb_geometry'] = wkb.loads(item,hex=True)
                 else:
