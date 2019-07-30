@@ -168,16 +168,42 @@ k.append(d)
 f = kml.Folder(ns, 0, 'Trails', 'Trails in ' + title)
 d.append(f)
 
-epdb.st()
+#pdb.st()
 #wkb = ppygis3.Geometry()
 
 for trail in trails:
-    print(trail['name'])
-    p = kml.Placemark(ns, trail['osm_id'], trail['name'])
+    print(trail)
+    #print(trail['name'])
+    if trail['name'] is None:
+        description = """OSM_ID: %s
+        FIXME: this needs the real name!
+        """ % trail['osm_id']
+        trail['name'] = "Unknown: " + trail['osm_id']
+    else:
+        description = trail['name']
+
+    if 'surface' in trail:
+        description += "\nSurface: " + trail['surface']
+    if 'sac_scale' in trail:
+        description += "\nSac_scale: " + trail['sac_scale']
+    if 'bicycle' in trail:
+        description += "\nBicycle: " + trail['bicycle']
+    if 'horse' in trail:
+        description += "\nHorse: " + trail['horse']
+    if 'atv' in trail:
+        description += "\nAtv: " + trail['atv']
+    if 'foot' in trail:
+        description += "\nFoot: " + trail['foot']
+    if 'access' in trail:
+        description += "\nAccess: " + trail['access']
+    if 'motor_vehicle' in trail:
+        description += "\nMotor Vehicle: " + trail['motor_vehicle']
+
+    p = kml.Placemark(ns, trail['osm_id'], trail['name'], description)
     way = trail['wkb_geometry']
     p.geometry =  LineString(way.geoms[0])
     f.append(p)
-print(k.to_string(prettyprint=True))
+#print(k.to_string(prettyprint=True))
 
 outkml = open(outfile, 'w')
 outkml.write(k.to_string(prettyprint=True))
