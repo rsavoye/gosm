@@ -25,6 +25,12 @@ import sys
 import logging
 import getopt
 import epdb
+import ppygis3
+from fastkml import kml
+from osgeo import ogr
+#import shapely.wkt
+from shapely.geometry import Point, LineString, Polygon
+
 from sys import argv
 sys.path.append(os.path.dirname(argv[0]) + '/osmpylib')
 from poly import Poly
@@ -40,30 +46,20 @@ class myconfig(object):
         except Exception as inst:
             logging.warning("Couldn't open %s for writing! not using OSM credentials" % file)
             return
-         # Default values for user options
+
+        # Default values for user options
         self.options = dict()
-        self.options['logging'] = True
         self.options['verbose'] = False
-        self.options['zooms'] = None
-        self.options['poly'] = ""
-        self.options['source'] = "ersi,topo,usgs,terrain"
-        self.options['format'] = "gtiff"
-        #self.options['force'] = False
-        self.options['outfile'] = "./"
-        # FIXME: 
-        self.options['mosaic'] = False
-        self.options['download'] = False
-        self.options['ersi'] = False
-        self.options['usgs'] = False
-        self.options['topo'] = False
-        self.options['terrain'] = False
-        self.options['gtiff'] = False
-        self.options['pdf'] = False
-        self.options['osmand'] = False
+        self.options['poly'] = None
+        self.options['database'] = None
+        self.options['subset'] = None
+        self.options['title'] = None
+        self.options['remote'] = None
+        self.options['outfile'] = "./out.kml"
 
         try:
-            (opts, val) = getopt.getopt(argv[1:], "h,o:,s:,p:,v,z:,f:,d,m,n",
-                ["help", "outfile", "source", "poly", "verbose", "zooms", "format", "download", "mosaic", "nodata"])
+            (opts, val) = getopt.getopt(argv[1:], "h,o:,s:,p:,t:,v,d:,r:",
+                ["help", "outfile", "subset", "poly", "title", "verbose", "database", "remote"])
         except getopt.GetoptError as e:
             logging.error('%r' % e)
             self.usage(argv)
@@ -74,23 +70,22 @@ class myconfig(object):
                 self.usage(argv)
             elif opt == "--outfile" or opt == '-o':
                 self.options['outfile'] = val
-            elif opt == "--source" or opt == '-s':
-                self.options['source'] = val
+            elif opt == "--subset" or opt == '-s':
+                self.options['subset'] = val
             elif opt == "--poly" or opt == '-p':
                 self.options['poly'] = val
-            elif opt == "--download" or opt == '-d':
-                self.options['download'] = True
-            elif opt == "--mosaic" or opt == '-m':
-                self.options['mosaic'] = True
-            elif opt == "--zooms" or opt == '-z':
-                self.options['zooms'] = ( val.split(',' ) )
-            elif opt == "--format" or opt == '-f':
-                self.options['format'] = val
-            elif opt == "--nodata" or opt == '-n':
-                self.options['nodata'] = True
+            elif opt == "--title" or opt == '-t':
+                self.options['title'] = val
+            elif opt == "--database" or opt == '-d':
+                self.options['database'] = val
+            elif opt == "--remote" or opt == '-r':
+                self.options['remote'] = val
             elif opt == "--verbose" or opt == '-v':
                 self.options['verbose'] = True
                 logging.basicConfig(filename='tiler.log',level=logging.DEBUG)
+
+        if self.options['title'] is None and self.options['poly'] is not None:
+            self.options['title'] =  os.path.basename(self.options['poly']).replace(".poly", "")
 
     def get(self, opt):
         try:
@@ -104,21 +99,23 @@ class myconfig(object):
             print("\t%s: %s" % (i, j))
 
     # Basic help message
-    def usage(self, argv=["tiler.py"]):
+    def usage(self, argv=["osm2kml.py"]):
         print("This program downloads map tiles and the geo-references them")
         print(argv[0] + ": options:")
         print("""\t--help(-h)   Help
-\t--outdir(-o)    Output directory for tiles
+\t--outdir(-o)    Output directory for KML file
 \t--poly(-p)      Input OSM polyfile
 \t--subset(-p)    Subset of data to map
-\t--title(-t)     Title
+\t--title(-t)     Title for KML file
+\t--database(-d)  Database to Use
+\t--remote(-r)    Database Server to Use (default localhost)
 \t--verbose(-v)   Enable verbosity
         """)
         quit()
 
 dd = myconfig(argv)
-dd.checkOptions()
-#dd.dump()
+#dd.checkOptions()
+dd.dump()
 if len(argv) <= 2:
     dd.usage(argv)
 
@@ -139,8 +136,8 @@ if dd.get('verbose') == 1:
     ch.setFormatter(formatter)
     root.addHandler(ch)
 
+title = dd.get('title')
 outfile = dd.get('outfile')
-mod = 'action="modifiy"'
 
 poly = Poly()
 bbox = poly.getBBox(dd.get('poly'))
@@ -150,6 +147,38 @@ bbox = poly.getBBox(dd.get('poly'))
 # minimum latitude, minimum longitude, maximum latitude, maximum longitude
 xbox = "%s,%s,%s,%s" % (bbox[2], bbox[0], bbox[3], bbox[1])
 #logging.info("Bounding xbox is %r" % xbox)
-epdb.st()
 
 print("------------------------")
+post = Postgis()
+post.connect('localhost', 'TimberlineFireProtectionDistrict')
+#rr = post.getRoads()
+#print(len(rr))
+
+#rr = post.getAddresses()
+#print(len(rr))
+
+trails = post.getTrails()
+print(len(trails))
+
+k = kml.KML()
+ns = '{http://www.opengis.net/kml/2.2}'
+d = kml.Document(ns, 'docid', title, 'doc description')
+k.append(d)
+
+f = kml.Folder(ns, 0, 'Trails', 'Trails in ' + title)
+d.append(f)
+
+epdb.st()
+#wkb = ppygis3.Geometry()
+
+for trail in trails:
+    print(trail['name'])
+    p = kml.Placemark(ns, trail['osm_id'], trail['name'])
+    way = trail['wkb_geometry']
+    p.geometry =  LineString(way.geoms[0])
+    f.append(p)
+print(k.to_string(prettyprint=True))
+
+outkml = open(outfile, 'w')
+outkml.write(k.to_string(prettyprint=True))
+outkml.close()
