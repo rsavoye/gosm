@@ -71,6 +71,7 @@ class Postgis(object):
         self.result = list()
         try:
             self.dbcursor.execute(query)
+            logging.info("Got %r records from query." % self.dbcursor.rowcount)
         except psycopg2.ProgrammingError as e:
             if e.pgcode != None:
                 logging.error("Query failed to fetch! %r" % e.pgcode)
@@ -103,14 +104,15 @@ class Postgis(object):
                             print(len(tmp))
                             if len(tmp) == 2:
                                 print(tmp[1])
-                                data[tmp[0]] = tmp[1]
+                                data[tmp[0].replace('"', '')] = tmp[1].replace('"', '')
                 elif fields[i] == "wkb_geometry":
                     data['wkb_geometry'] = wkb.loads(item,hex=True)
                 else:
                     data[fields[i]] = item
                 i += 1
             # FIXME: convert Collection to points
-            print(data)
+            #epdb.st()
+            #print(data)
             self.result.append(data)
             line = self.dbcursor.fetchone()
 
@@ -140,7 +142,7 @@ class Postgis(object):
 
 
     def getRoads(self, result=list()):
-        result = self.query("SELECT osm_id,name,other_tags,highway,wkb_geometry,highway,other_tags FROM lines WHERE highway is not NULL AND (highway!='path' AND highway!='footway' AND highway!='milestone');")
+        result = self.query("SELECT osm_id,name,other_tags,highway,wkb_geometry FROM lines WHERE highway is not NULL AND (highway!='path' AND highway!='footway' AND highway!='milestone' AND highway!='cycleway' AND highway!='bridleway');")
         return result
 
     def getAddresses(self, result=list()):

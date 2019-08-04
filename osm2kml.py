@@ -83,7 +83,7 @@ class myconfig(object):
                 self.options['remote'] = val
             elif opt == "--verbose" or opt == '-v':
                 self.options['verbose'] = True
-                logging.basicConfig(filename='tiler.log',level=logging.DEBUG)
+                logging.basicConfig(filename='osm2kml.log',level=logging.DEBUG)
 
         if self.options['title'] is None and self.options['poly'] is not None:
             self.options['title'] =  os.path.basename(self.options['poly']).replace(".poly", "")
@@ -166,9 +166,6 @@ mstyle = mapstyle.getStyles()
 d = kml.Document(ns, 'docid', title, 'doc description', styles=mstyle)
 k.append(d)
 
-f = kml.Folder(ns, 0, 'Trails', 'Trails in ' + title)
-d.append(f)
-
 #pdb.st()
 #wkb = ppygis3.Geometry()
 
@@ -179,6 +176,8 @@ outkml = open(outfile, 'w')
 # Hiking Trails
 #
 trails = post.getTrails()
+f = kml.Folder(ns, 0, 'Trails', 'Trails in ' + title)
+d.append(f)
 #print(len(trails))
 for trail in trails:
     print(trail)
@@ -194,6 +193,31 @@ for trail in trails:
     style = mapstyle.trails(trail)
     p = kml.Placemark(ns, trail['osm_id'], trail['name'], style[1], styles=[style[0]])
     way = trail['wkb_geometry']
+    p.geometry =  LineString(way.geoms[0])
+    f.append(p)
+#print(k.to_string(prettyprint=True))
+
+#
+# Roads
+#
+roads = post.getRoads()
+f = kml.Folder(ns, 0, 'Roads', 'Roads in ' + title)
+d.append(f)
+#print(len(trails))
+for road in roads:
+    print("FIXME: %r" % road)
+    #print(road['name'])
+    if road['name'] is None:
+        description = """OSM_ID: %s
+        FIXME: this needs the real name!
+        """ % road['osm_id']
+        road['name'] = "Unknown: " + road['osm_id']
+    else:
+        description = road['name']
+
+    style = mapstyle.roads(road)
+    p = kml.Placemark(ns, road['osm_id'], road['name'], style[1], styles=[style[0]])
+    way = road['wkb_geometry']
     p.geometry =  LineString(way.geoms[0])
     f.append(p)
 #print(k.to_string(prettyprint=True))

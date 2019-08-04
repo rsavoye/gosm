@@ -33,12 +33,13 @@ class MapStyle(object):
         self.ns = ns
         self.description = ""
         self.default = dict()
+        # highway=path
         self.default['hiking'] = {"color": "brown", "id": "BrownLine", "width": 3.0}
-        self.default['mountain_hiking'] = {"color": "ff00a5ff", "id": "OrangeLine", "width": 3.0}
-        self.default['demanding_mountain_hiking'] = {"color": "ff800080", "id": "PurpleLine", "width": 3.0}
-        self.default['alpine_hiking'] = {"color": "ff000080", "id": "SkyBlueLine", "width": 3.0}
-        self.default['demanding_alpine_hiking'] = {"color": "ff000080", "id": "SkyBlueLine", "width": 3.0}
-        self.default['difficult_alpine_hiking'] = {"color": "ff000080", "id": "SkyBlueLine", "width": 3.0}
+        self.default['mountain_hiking'] = {"color": "orange", "id": "OrangeLine", "width": 3.0}
+        self.default['demanding_mountain_hiking'] = {"color": "purple", "id": "PurpleLine", "width": 3.0}
+        self.default['alpine_hiking'] = {"color": "skyblue", "id": "SkyBlueLine", "width": 3.0}
+        self.default['demanding_alpine_hiking'] = {"color": "skyblue", "id": "SkyBlueLine", "width": 3.0}
+        self.default['difficult_alpine_hiking'] = {"color": "skyblue", "id": "SkyBlueLine", "width": 3.0}
 
         self.default['0'] = {"color": "brown", "id": "BrownLine", "width": 3.0}
         self.default['1'] = {"color": "green", "id": "GreenLine", "width": 3.0}
@@ -46,12 +47,69 @@ class MapStyle(object):
         self.default['3'] = {"color": "red", "id": "RedLine", "width": 3.0}
         self.default['4'] = {"color": "black", "id": "BlackLine", "width": 3.0}
 
+        # highway=*
+        self.default['trunk'] = { "color": "orange", "id": "Wide Red/Orange", "width": 3.0}
+        self.default['motorway'] = { "color": "black", "id": "Wide pink", "width": 3.0}
+        self.default['primary'] = { "color": "red", "id": "Wide light orange", "width": 3.0}
+        self.default['tertiary'] = { "color": "blue", "id": "Wide white", "width": 3.0}
+        self.default['secondary'] = { "color": "green", "id": "Wide Yellow", "width": 3.0}
+        # Space cadets... fix later when possible
+        self.default['road'] = { "color": "black", "id": "gray", "width": 3.0}
+        self.default['service'] = { "color": "red", "id": "RedLine", "width": 3.0}
+        self.default['living_street'] = { "color": "red", "id": "RedLine", "width": 3.0}
+        self.default['motorway_link'] = { "color": "red", "id": "RedLine", "width": 3.0}
+        self.default['secondary_link'] = { "color": "red", "id": "RedLine", "width": 3.0}
+        self.default['trunk_link'] = { "color": "red", "id": "RedLine", "width": 3.0}
+
+        # Probably added by me
+        self.default['unclassified'] = { "color": "black", "id": "white", "width": 3.0}
+        self.default['residential']  = { "color": "black", "id": "white", "width": 3.0}
+        self.default['track'] = { "color": "black", "id": "dotted brown", "width": 3.0}
+        self.default['4wd_only'] = { "color": "black", "id": "dotted brown", "width": 3.0}
+
+        # handled by self.trails
+        #self.default['path']= { "color": "black", "id": "dotted red", "width": 3.0}
+        self.default['driveway'] = { "color": "black", "id": "white", "width": 3.0}
+        # a footway is a sidewalk, so we don't care
+        #self.default['footway'] = { "color": "black", "id": "dotted red", "width": 3.0}
+        self.default['cycleway'] = { "color": "black", "id": "dotted red", "width": 3.0}
+        self.default['bridleway'] = { "color": "black", "id": "dotted red", "width": 3.0}
+
+        # Ignore surface tag for now
+        #self.default['dirt'] = { "color": "black", "id": "dotted red", "width": 3.0}
+        
+        # For smoothness tag
+        self.default['impassable'] = { "color": "blue", "id": "blue", "width": 3.0}
+        self.default['poor'] = { "color": "blue", "id": "blue", "width": 3.0}
+        self.default['bad'] = { "color": "blue", "id": "blue", "width": 3.0}
+        self.default['horrible'] = { "color": "blue", "id": "blue", "width": 3.0}
+        self.default['very_horrible'] = { "color": "blue", "id": "blue", "width": 3.0}
+
         self.linestyles = list()
         for key,val in self.default.items():
             lstyle = styles.LineStyle(id=val['id'], color=val['color'], width=val['width'])
             self.linestyles.append(styles.Style(styles=[lstyle]))
             self.styles = list()
 
+        self.description = ""
+
+    def make_hex(self, index, alpha=0xff):
+        try:
+            color = self.default[index]['color']
+        except:
+            color = 'gray'
+        print("Orig Color: %s" % color)
+        base = Color(color).hex_l
+        print("Orig Color: %s{%s)" % (color, base))
+        base = base.replace('#', 'ff')
+        # aa = alpha
+        # rr = rgb[0]
+        # gg = rgb[1]
+        # bb = rgb[2]
+        # return "#{aa}{rr}{gg}{bb}"
+        print("New Color: %s" % base)
+        return base
+        
     def getStyles(self):
         return self.linestyles
 
@@ -70,7 +128,32 @@ class MapStyle(object):
         footway - dotted red, "red"
         road - gray, "gray"
         """
-        pass
+
+        self.description = ""
+        index = data['highway']
+        #color = self.make_hex()
+        try:
+            color = self.make_hex(self.default[index]['color'])
+        except:
+            color = 'pink'
+        width = 3.0
+        if '4wd_only' in data:
+            color = self.make_hex(self.default[index]['color'])
+            id = self.default[index]['id']
+            width = self.default[index]['width']
+            if data['4wd_only'] == 'yes':
+                color =  self.make_hex('4wd_only')
+            self.description += "\n4wd Only: " + data['4wd_only']
+        if 'smoothness' in data:
+            if data['smoothness'] == 'bad':
+                color =  self.default['bad']['color']
+
+        lstyle = styles.LineStyle(color=color, width=width)
+        self.styles = styles.Style(styles=[lstyle])
+
+        print(self.description)
+        return self.styles, self.description
+
     def trails(self, data):
         #print(data)
         self.description = ""
@@ -81,8 +164,8 @@ class MapStyle(object):
         width = 3
         if 'sac_scale' in data:
             index = data['sac_scale']
-            color = self.default[index]['color']
-            #color = Color(color).hex_l.replace('#', 'ff')
+            #epdb.st()
+            color = self.make_hex(self.default[index]['color'])
             id = self.default[index]['id']
             width = self.default[index]['width']
             #self.description += "\nSac_scale: " + data['sac_scale']
