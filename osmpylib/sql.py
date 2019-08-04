@@ -146,7 +146,7 @@ class Postgis(object):
         return result
 
     def getAddresses(self, result=list()):
-        result = self.query("SELECT osm_id,name,addr_housenumber,addr_street,wkb_geometry FROM points;")
+        result = self.query("SELECT osm_id,name,addr_housenumber,addr_street,wkb_geometry FROM points WHERE addr_housenumber is not NULL;")
         return result
 
     def getTrails(self, result=list()):

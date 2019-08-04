@@ -225,5 +225,30 @@ for road in roads:
     f.append(p)
 #print(k.to_string(prettyprint=True))
 
+#
+# House Addresses
+#
+addrs = post.getAddresses()
+f = kml.Folder(ns, 0, 'Addresses', 'House Addresses in ' + title)
+d.append(f)
+#print(len(addrs))
+for addr in addrs:
+    #print(trail['name'])
+    num = "addr['addr_housenumber']"
+    street = "addr['addr_street']"
+    description = ""
+    if 'name' in addr:
+        name = addr['name']
+    else:
+        name = ""
+    description = "{name}{num}{street}"
+
+    style = mapstyle.addresses(addr)
+    p = kml.Placemark(ns, addr['osm_id'], addr['addr_housenumber'], style[1], styles=[style[0]])
+    way = addr['wkb_geometry']
+    p.geometry =  Point(way.geoms[0])
+    f.append(p)
+#print(k.to_string(prettyprint=True))
+
 outkml.write(k.to_string(prettyprint=True))
 outkml.close()

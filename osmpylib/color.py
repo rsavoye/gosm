@@ -252,6 +252,19 @@ class MapStyle(object):
         #print(self.description)
         return self.styles, self.description
 
+    def addresses(self, data):
+        #print(data)
+        self.description = ""
+        color = "ffffff00"
+        id = data['osm_id']
+        if 'addr_street' in data:
+            self.description = "%s %s" % (str(data['addr_housenumber']), data['addr_street'])
+        # label = styles.LabelStyle(color='black', scale=1.0)
+        icon = styles.IconStyle(icon_href="icons/mm_building.png")
+        self.styles = styles.Style(styles=[icon])
+
+        return self.styles, self.description
+    
 
 if __name__ == '__main__':
     ms = MapStyle("ns='{http://www.opengis.net/kml/2.2}'")
