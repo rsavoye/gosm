@@ -265,6 +265,18 @@ class MapStyle(object):
 
         return self.styles, self.description
     
+    def milestones(self, data):
+        #print(data)
+        self.description = ""
+        id = data['osm_id']
+        num = data['name']
+        street= data['alt_name']
+        self.description = "%s Highway %s" % (num, street)
+
+        icon = styles.IconStyle(icon_href="icons/mm_highway_milestone.png")
+        self.styles = styles.Style(styles=[icon])
+
+        return self.styles, self.description
 
 if __name__ == '__main__':
     ms = MapStyle("ns='{http://www.opengis.net/kml/2.2}'")

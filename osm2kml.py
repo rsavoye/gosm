@@ -250,5 +250,22 @@ for addr in addrs:
     f.append(p)
 #print(k.to_string(prettyprint=True))
 
+#
+# Mile Markers
+#
+stones = post.getMilestones()
+f = kml.Folder(ns, 0, 'Mile Markers', 'Mile markers in ' + title)
+d.append(f)
+for mark in stones:
+    num = mark['name']
+    street = "mark['alt_name']"
+
+    style = mapstyle.milestones(mark)
+    p = kml.Placemark(ns, addr['osm_id'], num, style[1], styles=[style[0]])
+    way = mark['wkb_geometry']
+    p.geometry =  Point(way.geoms[0])
+    f.append(p)
+#print(k.to_string(prettyprint=True))
+
 outkml.write(k.to_string(prettyprint=True))
 outkml.close()

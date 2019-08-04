@@ -165,7 +165,7 @@ class Postgis(object):
         result = self.query("SELECT osm_id,name,other_tags,historic,wkb_geometry FROM points WHERE historic is not NULL;")
         return result
 
-    def getMilestone(self, result=list()):
+    def getMilestones(self, result=list()):
         result = self.query("SELECT osm_id,name,other_tags,wkb_geometry FROM points WHERE highway='milestone';")
         return result
 
