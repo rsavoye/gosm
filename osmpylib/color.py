@@ -278,6 +278,30 @@ class MapStyle(object):
 
         return self.styles, self.description
 
+    def landingzones(self, data):
+        #print(data)
+        self.description = ""
+
+        icon = styles.IconStyle(icon_href="icons/heliport.png")
+        self.styles = styles.Style(styles=[icon])
+
+        return self.styles, self.description
+
+    def firewater(self, data):
+        self.description = ""
+
+        if 'water_tank' in data:
+            icon = styles.IconStyle(icon_href="icons/mx_fire_hydrant_type_pillar.png")
+
+        if 'emergency' in data:
+            if data['emergency'] == "fire_hydrant":
+                icon = styles.IconStyle(icon_href="icons/mx_fire_hydrant_type_pillar.png")
+            elif data['emergency'] == "water_tank":
+                icon = styles.IconStyle(icon_href="icons/cistern.png")
+        self.styles = styles.Style(styles=[icon])
+
+        return self.styles, self.description
+
 if __name__ == '__main__':
     ms = MapStyle("ns='{http://www.opengis.net/kml/2.2}'")
     indata = {"name": "Fgake hiking", "sac_scale": "hiking", "mtb:scale": "3"}

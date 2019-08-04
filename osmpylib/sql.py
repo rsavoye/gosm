@@ -182,7 +182,7 @@ class Postgis(object):
         return result
 
     def getFireWater(self, result=list()):
-        result = self.query("SELECT osm_id,name,emergency,water_tank,disused,is_in,wkb_geometry from points WHERE emergency='fire_hydrant' OR emergency='water_tank' OR water_tank IS NOT NULL ORDER BY is_in;")
+        result = self.query("SELECT osm_id,name,emergency,water_tank,is_in,wkb_geometry from points WHERE emergency='fire_hydrant' OR emergency='water_tank' OR water_tank IS NOT NULL  AND disused!='yes' ORDER BY is_in;")
         return result
 
     def getPlace(self, result=list()):

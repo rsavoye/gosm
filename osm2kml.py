@@ -267,5 +267,33 @@ for mark in stones:
     f.append(p)
 #print(k.to_string(prettyprint=True))
 
+#
+# Landing Site
+#
+lzs = post.getLandingZones()
+f = kml.Folder(ns, 0, 'Landing Sites', 'Landing Sites in ' + title)
+d.append(f)
+for lz in lzs:
+    style = mapstyle.landingzones(lz)
+    p = kml.Placemark(ns, lz['osm_id'], lz['name'], style[1], styles=[style[0]])
+    way = lz['wkb_geometry']
+    p.geometry =  Point(way.geoms[0])
+    f.append(p)
+#print(k.to_string(prettyprint=True))
+
+#
+# Water Sources
+#
+firewater = post.getFireWater()
+f = kml.Folder(ns, 0, 'Water Sources', 'Landing Sites in ' + title)
+d.append(f)
+for water in firewater:
+    style = mapstyle.firewater(water)
+    p = kml.Placemark(ns, water['osm_id'], water['name'], style[1], styles=[style[0]])
+    way = water['wkb_geometry']
+    p.geometry =  Point(way.geoms[0])
+    f.append(p)
+#print(k.to_string(prettyprint=True))
+
 outkml.write(k.to_string(prettyprint=True))
 outkml.close()
