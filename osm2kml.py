@@ -25,14 +25,15 @@ import sys
 import logging
 import getopt
 import epdb
-import ppygis3
-from fastkml import kml
+import re
+from fastkml import kml, styles
 from osgeo import ogr
 #import shapely.wkt
 from shapely.geometry import Point, LineString, Polygon
 
 from sys import argv
 sys.path.append(os.path.dirname(argv[0]) + '/osmpylib')
+from color import MapStyle
 from poly import Poly
 from sql import Postgis
 
@@ -151,18 +152,18 @@ xbox = "%s,%s,%s,%s" % (bbox[2], bbox[0], bbox[3], bbox[1])
 print("------------------------")
 post = Postgis()
 post.connect('localhost', 'TimberlineFireProtectionDistrict')
-#rr = post.getRoads()
-#print(len(rr))
 
 #rr = post.getAddresses()
 #print(len(rr))
 
-trails = post.getTrails()
-print(len(trails))
 
+# Create KML file
+outkml = open(outfile, 'w')
 k = kml.KML()
 ns = '{http://www.opengis.net/kml/2.2}'
-d = kml.Document(ns, 'docid', title, 'doc description')
+mapstyle = MapStyle("ns='{http://www.opengis.net/kml/2.2}'")
+mstyle = mapstyle.getStyles()
+d = kml.Document(ns, 'docid', title, 'doc description', styles=mstyle)
 k.append(d)
 
 f = kml.Folder(ns, 0, 'Trails', 'Trails in ' + title)
@@ -171,6 +172,14 @@ d.append(f)
 #pdb.st()
 #wkb = ppygis3.Geometry()
 
+# Write buffer to KML file
+outkml = open(outfile, 'w')
+
+#
+# Hiking Trails
+#
+trails = post.getTrails()
+#print(len(trails))
 for trail in trails:
     print(trail)
     #print(trail['name'])
@@ -182,29 +191,12 @@ for trail in trails:
     else:
         description = trail['name']
 
-    if 'surface' in trail:
-        description += "\nSurface: " + trail['surface']
-    if 'sac_scale' in trail:
-        description += "\nSac_scale: " + trail['sac_scale']
-    if 'bicycle' in trail:
-        description += "\nBicycle: " + trail['bicycle']
-    if 'horse' in trail:
-        description += "\nHorse: " + trail['horse']
-    if 'atv' in trail:
-        description += "\nAtv: " + trail['atv']
-    if 'foot' in trail:
-        description += "\nFoot: " + trail['foot']
-    if 'access' in trail:
-        description += "\nAccess: " + trail['access']
-    if 'motor_vehicle' in trail:
-        description += "\nMotor Vehicle: " + trail['motor_vehicle']
-
-    p = kml.Placemark(ns, trail['osm_id'], trail['name'], description)
+    style = mapstyle.trails(trail)
+    p = kml.Placemark(ns, trail['osm_id'], trail['name'], style[1], styles=[style[0]])
     way = trail['wkb_geometry']
     p.geometry =  LineString(way.geoms[0])
     f.append(p)
 #print(k.to_string(prettyprint=True))
 
-outkml = open(outfile, 'w')
 outkml.write(k.to_string(prettyprint=True))
 outkml.close()
