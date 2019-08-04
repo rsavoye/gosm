@@ -180,7 +180,6 @@ f = kml.Folder(ns, 0, 'Trails', 'Trails in ' + title)
 d.append(f)
 #print(len(trails))
 for trail in trails:
-    print(trail)
     #print(trail['name'])
     if trail['name'] is None:
         description = """OSM_ID: %s
@@ -205,15 +204,19 @@ f = kml.Folder(ns, 0, 'Roads', 'Roads in ' + title)
 d.append(f)
 #print(len(trails))
 for road in roads:
-    print("FIXME: %r" % road)
     #print(road['name'])
-    if road['name'] is None:
-        description = """OSM_ID: %s
-        FIXME: this needs the real name!
-        """ % road['osm_id']
-        road['name'] = "Unknown: " + road['osm_id']
+    if 'service' in road:
+        if road['service'] == 'driveway':
+            color =  mapstyle.make_hex('driveway')
+            description = "Private Driveway"
     else:
-        description = road['name']
+        if road['name'] is None:
+            description = """OSM_ID: %s
+            FIXME: this needs the real name!
+            """ % road['osm_id']
+            road['name'] = "Unknown: " + road['osm_id']
+        else:
+            description = road['name']
 
     style = mapstyle.roads(road)
     p = kml.Placemark(ns, road['osm_id'], road['name'], style[1], styles=[style[0]])

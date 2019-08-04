@@ -99,11 +99,11 @@ class Postgis(object):
                     if item is not None:
                         tags = item.split(',')
                         for value in tags:
-                            print(value)
+                            # print(value)
                             tmp = value.split('=>')
-                            print(len(tmp))
+                            # print(len(tmp))
                             if len(tmp) == 2:
-                                print(tmp[1])
+                                # print(tmp[1])
                                 data[tmp[0].replace('"', '')] = tmp[1].replace('"', '')
                 elif fields[i] == "wkb_geometry":
                     data['wkb_geometry'] = wkb.loads(item,hex=True)
