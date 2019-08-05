@@ -305,14 +305,15 @@ class MapStyle(object):
         self.description = ""
         if 'water' in data:
             if data['water'] == 'yes':
-                self.description += "Water Available"
+                self.description += "<br>Water Available"
         if 'toilets' in data:
             if data['toilets'] == 'yes':
-                self.description += "Toilet Available"
+                self.description += "<br>Toilet Available"
+        if 'power' in data:
+            if data['power'] == 'yes':
+                self.description += "<br>Ac Power Available"
         if 'leisure' in data:
-            self.description += "Firepit"
-        if 'ref' in data:
-            self.description += "Site " + data['ref']
+            self.description += "<br>Firepit"
         return self.styles, self.description
 
     def firewater(self, data):

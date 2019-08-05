@@ -111,7 +111,6 @@ class Postgis(object):
                     data[fields[i]] = item
                 i += 1
             # FIXME: convert Collection to points
-            #epdb.st()
             #print(data)
             self.result.append(data)
             line = self.dbcursor.fetchone()
@@ -144,9 +143,13 @@ class Postgis(object):
         return result
 
     def getCampSites(self, result=list()):
-        result = self.query("SELECT osm_id,name,other_tags,wkb_geometry FROM points WHERE tourism='camp_site' OR tourism='camp_pitch' ORDER BY is_in;")
+        result = self.query("SELECT osm_id,name,ref,other_tags,wkb_geometry FROM points WHERE tourism='camp_site' OR tourism='camp_pitch';")
         return result
 
+    def getCamp(self, geom, result=list()):
+        result = self.query("SELECT osm_id,name,ref,other_tags FROM points WHERE ST_Equals(ST_CollectionExtract(wkb_geometry, 1), ST_GeomFromText('%s', 4326))" % geom.wkt)
+        return result
+ 
     def getPiste(self, result=list()):
         result = self.query("")
         return result

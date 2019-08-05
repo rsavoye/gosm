@@ -313,13 +313,16 @@ for camp in camps:
         #print(g)
         if g.geom_type == 'Polygon':
             style = mapstyle.campground(camp)
-            # p = kml.Placemark(ns, camp['osm_id'], camp['name'], style[1], styles=[style[0]])
-            p = kml.Placemark(ns, camp['osm_id'], camp['name'])
+            p = kml.Placemark(ns, camp['osm_id'], camp['name'], style[1], styles=[style[0]])
             p.geometry = Polygon(g)
             continue
         elif g.geom_type == 'Point':
-            style = mapstyle.campsite()
-            p = kml.Placemark(ns, camp['osm_id'], camp['name'])
+            site = post.getCamp(g)[0]
+            if 'ref' in site:
+                if site['ref'] is not None:
+                    site['name'] = "Site %s" % site['ref']
+            style = mapstyle.campsite(site)
+            p = kml.Placemark(ns, site['osm_id'], site['name'], style[1], styles=[style[0]])
             p.geometry = Point(g)
         f.append(p)
 #print(k.to_string(prettyprint=True))
