@@ -29,7 +29,7 @@ import re
 from fastkml import kml, styles
 from osgeo import ogr
 #import shapely.wkt
-from shapely.geometry import Point, LineString, Polygon
+from shapely.geometry import Point, LineString, Polygon, MultiPoint, MultiPolygon, mapping
 
 from sys import argv
 sys.path.append(os.path.dirname(argv[0]) + '/osmpylib')
@@ -293,6 +293,35 @@ for water in firewater:
     way = water['wkb_geometry']
     p.geometry =  Point(way.geoms[0])
     f.append(p)
+#print(k.to_string(prettyprint=True)
+
+#
+# Campgrounds and camp sites
+#
+camps = post.getCampGrounds()
+f = kml.Folder(ns, 0, 'Campgrounds')
+d.append(f)
+for camp in camps:
+    if 'name' not in camp:
+        if 'ref' in camp:
+            camp['name'] = camp['ref']
+    f = kml.Folder(ns, 0, camp['name'])
+    d.append(f)
+    print(camp)
+    way = camp['wkb_geometry']
+    for g in way.geoms:
+        #print(g)
+        if g.geom_type == 'Polygon':
+            style = mapstyle.campground(camp)
+            # p = kml.Placemark(ns, camp['osm_id'], camp['name'], style[1], styles=[style[0]])
+            p = kml.Placemark(ns, camp['osm_id'], camp['name'])
+            p.geometry = Polygon(g)
+            continue
+        elif g.geom_type == 'Point':
+            style = mapstyle.campsite()
+            p = kml.Placemark(ns, camp['osm_id'], camp['name'])
+            p.geometry = Point(g)
+        f.append(p)
 #print(k.to_string(prettyprint=True))
 
 outkml.write(k.to_string(prettyprint=True))

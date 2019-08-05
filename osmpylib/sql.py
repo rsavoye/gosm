@@ -126,21 +126,6 @@ class Postgis(object):
         elif type is "huts":
             sql = "osm_id,name,ST_AsKML(way),tourism,tags->'phone',tags->'email',tags->'website',tags->'addr:street',tags->'addr:housenumber' from planet_osm_point WHERE tourism='wilderness_hut' OR tourism='alpine_hut"
 
-# --command="SELECT count(*) FROM planet_osm_point WHERE tourism='hotel' OR tourism='hostel' OR tourism='guest_house'" | tr -d ' '`"
-# --command="SELECT count(*) FROM planet_osm_point WHERE natural='peak'" | tr -d ' '`"
-# --command="SELECT count(*) FROM planet_osm_point WHERE place='hamlet' OR place='village' OR place='town' OR place='isolated_dwelling' OR place='locality'" | tr -d ' '`"
-# --command="SELECT count(*) FROM planet_osm_point WHERE tags->'sport'='swimming' AND tags->'amenity'!='swimming_pool'" | tr -d ' '`"#
-# --command="SELECT count(*) FROM planet_osm_point WHERE historic is not NULL" | tr -d ' '`"
-# --command="SELECT count(*) FROM planet_osm_point WHERE tourism='camp_site' OR  amenity='campground'"  | tr -d ' '`"
-#--command="SELECT COUNT(*) FROM planet_osm_point WHERE tags->'emergency'='fire_hydrant' OR tags->'emergency'='water_tank'" | tr -d ' '`"
-# --command="SELECT COUNT(*) FROM planet_osm_point WHERE tags->'aeroway'='helipad' OR tags->'emergency'='landing_site'" | tr -d ' '`"
-# --command="SELECT COUNT(*) FROM planet_osm_point WHERE tags->'emergency'='fire_station'" | tr -d ' '`"
-# --command="SELECT count(*) FROM planet_osm_line WHERE tags->'piste:type' is not NULL" | tr -d ' '`"
-# --command="SELECT count(*) FROM planet_osm_point WHERE 'addr:housenumber' is not NULL" | tr -d ' '`"
-# --command="SELECT count(*) FROM planet_osm_point WHERE milestone is not NULL" | tr -d ' '`" -f /tmp/foo-$$.sql`"
-# --command="SELECT count(*) FROM planet_osm_point WHERE amenity='parking' AND name LIKE '%Trailhead'" | tr -d ' '`"
-
-
     def getRoads(self, result=list()):
         result = self.query("SELECT osm_id,name,other_tags,highway,wkb_geometry FROM lines WHERE highway is not NULL AND (highway!='path' AND highway!='footway' AND highway!='milestone' AND highway!='cycleway' AND highway!='bridleway');")
         return result
@@ -153,8 +138,13 @@ class Postgis(object):
         result = self.query("SELECT osm_id,name,other_tags,highway,wkb_geometry FROM lines WHERE (highway='path' OR highway='footway'  OR highway='cycleway');")
         return result
 
-    def getCamps(self, result=list()):
-        result = self.query("SELECT osm_id,name,other_tags,tourism,wkb_geometry FROM points WHERE tourism='camp_site' OR tourism='camp_pitch' ORDER BY is_in;")
+    def getCampGrounds(self, result=list(), campground=None):
+        #result = self.query("SELECT osm_id,name,other_tags,wkb_geometry FROM other_relations WHERE other_tags LIKE '%camp_site%' AND name LIKE '%Campground%';")
+        result =  self.query("SELECT osm_id,name,other_tags,wkb_geometry FROM other_relations WHERE other_tags LIKE '%camp_site%';")
+        return result
+
+    def getCampSites(self, result=list()):
+        result = self.query("SELECT osm_id,name,other_tags,wkb_geometry FROM points WHERE tourism='camp_site' OR tourism='camp_pitch' ORDER BY is_in;")
         return result
 
     def getPiste(self, result=list()):

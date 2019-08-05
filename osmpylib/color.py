@@ -279,17 +279,44 @@ class MapStyle(object):
         return self.styles, self.description
 
     def landingzones(self, data):
-        #print(data)
         self.description = ""
-
         icon = styles.IconStyle(icon_href="icons/heliport.png")
         self.styles = styles.Style(styles=[icon])
+        return self.styles, self.description
 
+    def campground(self, data):
+        self.description = ""
+        icon = styles.IconStyle(icon_href="icons/campground.png")
+        self.styles = styles.Style(styles=[icon])
+        self.description = ""
+        if 'water' in data:
+            if data['water'] == 'yes':
+                self.description += "Water Available"
+        if 'toilets' in data:
+            if data['toilets'] == 'yes':
+                self.description += "Toilet Available"
+        return self.styles, self.description
+
+    def campsite(self, data=dict()):
+        self.description = ""
+        icon = styles.IconStyle(icon_href="icons/mx_tourism_camp_site.png")
+        self.styles = styles.Style(styles=[icon])
+
+        self.description = ""
+        if 'water' in data:
+            if data['water'] == 'yes':
+                self.description += "Water Available"
+        if 'toilets' in data:
+            if data['toilets'] == 'yes':
+                self.description += "Toilet Available"
+        if 'leisure' in data:
+            self.description += "Firepit"
+        if 'ref' in data:
+            self.description += "Site " + data['ref']
         return self.styles, self.description
 
     def firewater(self, data):
         self.description = ""
-
         if 'water_tank' in data:
             icon = styles.IconStyle(icon_href="icons/mx_fire_hydrant_type_pillar.png")
 
@@ -298,8 +325,8 @@ class MapStyle(object):
                 icon = styles.IconStyle(icon_href="icons/mx_fire_hydrant_type_pillar.png")
             elif data['emergency'] == "water_tank":
                 icon = styles.IconStyle(icon_href="icons/cistern.png")
-        self.styles = styles.Style(styles=[icon])
 
+        self.styles = styles.Style(styles=[icon])
         return self.styles, self.description
 
 if __name__ == '__main__':
