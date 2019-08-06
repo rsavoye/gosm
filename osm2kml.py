@@ -305,8 +305,8 @@ for camp in camps:
     if 'name' not in camp:
         if 'ref' in camp:
             camp['name'] = camp['ref']
-    f = kml.Folder(ns, 0, camp['name'])
-    d.append(f)
+    nf = kml.Folder(ns, 0, camp['name'])
+    f.append(nf)
     print(camp)
     way = camp['wkb_geometry']
     for g in way.geoms:
@@ -324,7 +324,7 @@ for camp in camps:
             style = mapstyle.campsite(site)
             p = kml.Placemark(ns, site['osm_id'], site['name'], style[1], styles=[style[0]])
             p.geometry = Point(g)
-        f.append(p)
+        nf.append(p)
 #print(k.to_string(prettyprint=True))
 
 outkml.write(k.to_string(prettyprint=True))
