@@ -337,9 +337,8 @@ if dd.get('camps') is True:
                         site['name'] = "Site %s" % site['ref']
                 style = mapstyle.campsite(site)
                 p = kml.Placemark(ns, site['osm_id'], site['name'], style[1], styles=[style[0]])
-                p.geometry = Point(g)
-        nf.append(p)
-#print(k.to_string(prettyprint=True))
+            p.geometry = Point(g)
+            nf.append(p)
 
 outkml.write(k.to_string(prettyprint=True))
 outkml.close()
