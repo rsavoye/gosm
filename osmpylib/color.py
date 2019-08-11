@@ -33,7 +33,8 @@ class MapStyle(object):
         self.ns = ns
         self.description = ""
         self.default = dict()
-
+        self.icons = list()
+        
         # Access
         self.default['private'] = {"color": "gray", "id": "GrayLine", "width": 3.0}
 
@@ -111,6 +112,9 @@ class MapStyle(object):
             self.styles = list()
 
         self.description = ""
+
+    def getIcons(self):
+        return self.icons
 
     def make_hex(self, index, alpha=0xff):
         try:
@@ -261,6 +265,7 @@ class MapStyle(object):
             self.description = "%s %s" % (str(data['addr_housenumber']), data['addr_street'])
         # label = styles.LabelStyle(color='black', scale=1.0)
         icon = styles.IconStyle(icon_href="icons/mm_building.png")
+        self.icons.append(icon.icon_href)
         self.styles = styles.Style(styles=[icon])
 
         return self.styles, self.description
@@ -274,6 +279,7 @@ class MapStyle(object):
         self.description = "%s Highway %s" % (num, street)
 
         icon = styles.IconStyle(icon_href="icons/mm_highway_milestone.png")
+        self.icons.append(icon.icon_href)
         self.styles = styles.Style(styles=[icon])
 
         return self.styles, self.description
@@ -281,12 +287,14 @@ class MapStyle(object):
     def landingzones(self, data):
         self.description = ""
         icon = styles.IconStyle(icon_href="icons/heliport.png")
+        self.icons.append(icon.icon_href)
         self.styles = styles.Style(styles=[icon])
         return self.styles, self.description
 
     def campground(self, data):
         self.description = ""
         icon = styles.IconStyle(icon_href="icons/campground.png")
+        self.icons.append(icon.icon_href)
         self.styles = styles.Style(styles=[icon])
         self.description = ""
         if 'water' in data:
@@ -300,6 +308,7 @@ class MapStyle(object):
     def campsite(self, data=dict()):
         self.description = ""
         icon = styles.IconStyle(icon_href="icons/mx_tourism_camp_site.png")
+        self.icons.append(icon.icon_href)
         self.styles = styles.Style(styles=[icon])
 
         self.description = ""
@@ -325,8 +334,13 @@ class MapStyle(object):
             if data['emergency'] == "fire_hydrant":
                 icon = styles.IconStyle(icon_href="icons/mx_fire_hydrant_type_pillar.png")
             elif data['emergency'] == "water_tank":
-                icon = styles.IconStyle(icon_href="icons/cistern.png")
+                icon = styles.IconStyle(icon_href="icons/mx_storage_tank.png")
+            elif data['emergency'] == "fire_water_pond":
+                icon = styles.IconStyle(icon_href="icons/water.png")
+            elif data['emergency'] == "suction_point":
+                icon = styles.IconStyle(icon_href="icons/water.png")
 
+        self.icons.append(icon.icon_href)
         self.styles = styles.Style(styles=[icon])
         return self.styles, self.description
 

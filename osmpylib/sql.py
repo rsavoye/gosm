@@ -23,10 +23,8 @@
 import epdb
 import psycopg2
 import logging
-from io import BytesIO
 from shapely.geometry import GeometryCollection, Point, LineString, Polygon
 from shapely import wkt, wkb
-import ppygis3
 
 
 class Postgis(object):
@@ -63,7 +61,7 @@ class Postgis(object):
     def query(self, query=""):
         """Query a local or remote postgresql database"""
 
-        logging.debug("postgresql.query(" + query + ")")
+        # logging.debug("postgresql.query(" + query + ")")
         if self.dbshell.closed != 0:
             logging.error("Database %r is not connected!" % self.options.get('database'))
             return self.result
@@ -71,22 +69,10 @@ class Postgis(object):
         self.result = list()
         try:
             self.dbcursor.execute(query)
-            logging.info("Got %r records from query." % self.dbcursor.rowcount)
+            # logging.info("Got %r records from query." % self.dbcursor.rowcount)
         except psycopg2.ProgrammingError as e:
             if e.pgcode != None:
                 logging.error("Query failed to fetch! %r" % e.pgcode)
-
-#        for row in self.dbcursor:
-#            i = 0
-#            for item in row:
-#                print(row[i])
-#                i += 1
-
-#        buffer = BytesIO()
-#        self.dbcursor.copy_to(buffer, '')
-#        buffer.seek(0)
-#        for line in buffer:
-#            print(Geometry.read_ewkb(line.strip()))
 
         tmp = query.split(' ')
         fields = tmp[1].split(',')
@@ -110,8 +96,6 @@ class Postgis(object):
                 else:
                     data[fields[i]] = item
                 i += 1
-            # FIXME: convert Collection to points
-            #print(data)
             self.result.append(data)
             line = self.dbcursor.fetchone()
 
@@ -137,6 +121,15 @@ class Postgis(object):
         result = self.query("SELECT osm_id,name,other_tags,highway,wkb_geometry FROM lines WHERE (highway='path' OR highway='footway'  OR highway='cycleway');")
         return result
 
+    def getFireWater(self, result=list()):
+        result =  self.query("SELECT osm_id,name,other_tags,wkb_geometry FROM other_relations WHERE other_tags LIKE '%fire_hydrant%' OR other_tags LIKE '%water_tank%' OR other_tags LIKE '%fire_water_pond%';")
+        return result
+
+    def getWay(self, geom, result=dict()):
+        """Get the data for a fire water source using the GPS location in the relation"""
+        result = self.query("SELECT osm_id,emergency,landing_site,name,ref,other_tags FROM points WHERE ST_Equals(ST_CollectionExtract(wkb_geometry, 1), ST_GeomFromText('%s', 4326))" % geom.wkt)
+        return result
+ 
     def getCampGrounds(self, result=list(), campground=None):
         #result = self.query("SELECT osm_id,name,other_tags,wkb_geometry FROM other_relations WHERE other_tags LIKE '%camp_site%' AND name LIKE '%Campground%';")
         result =  self.query("SELECT osm_id,name,other_tags,wkb_geometry FROM other_relations WHERE other_tags LIKE '%camp_site%';")
@@ -147,6 +140,7 @@ class Postgis(object):
         return result
 
     def getCamp(self, geom, result=list()):
+        """Get the data for a campsite using the GPS location in the relation"""
         result = self.query("SELECT osm_id,name,ref,other_tags FROM points WHERE ST_Equals(ST_CollectionExtract(wkb_geometry, 1), ST_GeomFromText('%s', 4326))" % geom.wkt)
         return result
  
@@ -172,10 +166,6 @@ class Postgis(object):
 
     def getLandingZones(self, result=list()):
         result = self.query("SELECT osm_id,name,emergency,aeroway,wkb_geometry FROM points WHERE aeroway='helipad' OR aeroway='heliport' OR emergency='landing_site';")
-        return result
-
-    def getFireWater(self, result=list()):
-        result = self.query("SELECT osm_id,name,emergency,water_tank,is_in,wkb_geometry from points WHERE emergency='fire_hydrant' OR emergency='water_tank' OR water_tank IS NOT NULL  AND disused!='yes' ORDER BY is_in;")
         return result
 
     def getPlace(self, result=list()):

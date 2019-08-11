@@ -155,18 +155,19 @@ if dd.get('verbose') == 1:
 title = dd.get('title')
 outfile = dd.get('outfile')
 
-poly = Poly()
-bbox = poly.getBBox(dd.get('poly'))
-#logging.info("Bounding box is %r" % bbox)
+if dd.get('poly') is not None:
+    poly = Poly()
+    bbox = poly.getBBox(dd.get('poly'))
+    #logging.info("Bounding box is %r" % bbox)
 
-# XAPI uses:
-# minimum latitude, minimum longitude, maximum latitude, maximum longitude
-xbox = "%s,%s,%s,%s" % (bbox[2], bbox[0], bbox[3], bbox[1])
-#logging.info("Bounding xbox is %r" % xbox)
+    # XAPI uses:
+    # minimum latitude, minimum longitude, maximum latitude, maximum longitude
+    xbox = "%s,%s,%s,%s" % (bbox[2], bbox[0], bbox[3], bbox[1])
+    #logging.info("Bounding xbox is %r" % xbox)
 
 print("------------------------")
 post = Postgis()
-post.connect('localhost', 'TimberlineFireProtectionDistrict')
+post.connect('localhost', dd.get('database'))
 
 #rr = post.getAddresses()
 #print(len(rr))
@@ -204,8 +205,7 @@ if dd.get('trails') is True:
             trail['name'] = "Unknown: " + trail['osm_id']
         else:
             description = trail['name']
-
-            style = mapstyle.trails(trail)
+        style = mapstyle.trails(trail)
         p = kml.Placemark(ns, trail['osm_id'], trail['name'], style[1], styles=[style[0]])
         way = trail['wkb_geometry']
         p.geometry =  LineString(way.geoms[0])
@@ -299,15 +299,39 @@ if dd.get('landingsite') is True:
 # Water Sources
 #
 if dd.get('firewater') is True:
-    firewater = post.getFireWater()
-    f = kml.Folder(ns, 0, 'Water Sources', 'Landing Sites in ' + title)
+    districts = post.getFireWater()
+    f = kml.Folder(ns, 0, 'Emergency Water Sources')
     d.append(f)
-    for water in firewater:
-        style = mapstyle.firewater(water)
-        p = kml.Placemark(ns, water['osm_id'], water['name'], style[1], styles=[style[0]])
-        way = water['wkb_geometry']
-        p.geometry =  Point(way.geoms[0])
-        f.append(p)
+    for dist in districts:
+        if 'name' not in dist:
+            if 'ref' in dist:
+                dist['name'] = dist['ref']
+        nf = kml.Folder(ns, 0, dist['name'])
+        f.append(nf)
+        way = dist['wkb_geometry']
+        for g in way.geoms:
+            if g.geom_type == 'Polygon':
+                style = mapstyle.firewater(dist)
+                p = kml.Placemark(ns, dist['osm_id'], dist['name'], style[1], styles=[style[0]])
+                p.geometry = Polygon(g)
+                continue
+            elif g.geom_type == 'Point':
+                # The relation has no geometry of it's own. Use tmp to
+                # avoid a double query to the database
+                tmp = post.getWay(g)
+                if len(tmp) == 0:
+                    continue
+                site = tmp[0]
+                if 'ref' in site:
+                    if site['ref'] is not None and 'tourism' in site:
+                        site['name'] = "Site %s" % site['ref']
+                    else:
+                        site['name'] = site['ref']
+                style = mapstyle.firewater(site)
+                p = kml.Placemark(ns, site['osm_id'], site['name'], style[1], styles=[style[0]])
+            p.geometry = Point(g)
+            nf.append(p)
+
 
 #
 # Campgrounds and camp sites
