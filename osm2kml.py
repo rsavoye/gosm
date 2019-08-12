@@ -96,9 +96,12 @@ class myconfig(object):
                     self.options['trails'] = True
                     self.options['roads'] = True
                     self.options['camps'] = True
+                    self.options['hotsprings'] = True
                 if sub == 'ems':
+                    self.options['addresses'] = True
                     self.options['trails'] = True
                     self.options['roads'] = True
+                    self.options['milestones'] = True
                     self.options['camps'] = True
                     self.options['firewater'] = True
                     self.options['landingsite'] = True
@@ -267,7 +270,7 @@ if dd.get('addresses') is True:
 #
 # Mile Markers
 #
-if dd.get('milestone') is True:
+if dd.get('milestones') is True:
     stones = post.getMilestones()
     f = kml.Folder(ns, 0, 'Mile Markers', 'Mile markers in ' + title)
     d.append(f)
@@ -294,6 +297,21 @@ if dd.get('landingsite') is True:
         way = lz['wkb_geometry']
         p.geometry =  Point(way.geoms[0])
         f.append(p)
+
+#
+# Hot Spring
+#
+if dd.get('hotsprings') is True:
+    hsprings = post.getHotSprings()
+    if len(hsprings) > 0:
+        f = kml.Folder(ns, 0, 'Hot Springs')
+        d.append(f)
+        for hs in hsprings:
+            style = mapstyle.hotsprings(hs)
+            p = kml.Placemark(ns, hs['osm_id'], hs['name'], style[1], styles=[style[0]])
+            way = hs['wkb_geometry']
+            p.geometry = Point(way.geoms[0])
+            f.append(p)
 
 #
 # Water Sources
@@ -363,6 +381,34 @@ if dd.get('camps') is True:
                 p = kml.Placemark(ns, site['osm_id'], site['name'], style[1], styles=[style[0]])
             p.geometry = Point(g)
             nf.append(p)
+
+#
+# Skiing
+#
+if dd.get('piste') is True:
+    piste = post.getPiste()
+    f = kml.Folder(ns, 0, 'Ski Trails', 'Trails in ' + title)
+    d.append(f)
+    for trail in piste:
+        #print(trail['name'])
+        if trail['name'] is None:
+            description = """OSM_ID: %s
+            FIXME: this needs the real name!
+            """ % trail['osm_id']
+            trail['name'] = "Unknown: " + trail['osm_id']
+        if 'pistw:type' in trail:
+            m = re.search(".*nordic.*", trail['piste:type'])
+            type = None
+            if m is not None:
+                type = 'nordic'
+                m = re.search(".*downhill.*", trail['piste:type'])
+        else:
+            type = 'downhill'
+        style = mapstyle.piste(trail)
+        p = kml.Placemark(ns, trail['osm_id'], trail['name'], style[1], styles=[style[0]])
+        way = trail['wkb_geometry']
+        p.geometry =  LineString(way.geoms[0])
+        f.append(p)
 
 outkml.write(k.to_string(prettyprint=True))
 outkml.close()

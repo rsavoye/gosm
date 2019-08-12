@@ -145,7 +145,7 @@ class Postgis(object):
         return result
  
     def getPiste(self, result=list()):
-        result = self.query("")
+        result = self.query("SELECT osm_id,name,other_tags,wkb_geometry FROM lines WHERE other_tags LIKE '%piste%';")
         return result
     
     def getHistoric(self, result=list()):
@@ -161,7 +161,7 @@ class Postgis(object):
         return result
 
     def getHotSprings(self, result=list()):
-        # result = self.query("SELECT osm_id,name,description,wkb_geometry FROM points WHERE "natural"='hot_spring' OR "leisure"='hot_spring' OR "amenity"='hot_spring' OR 'bath:type'='hot_spring' OR name LIKE '%Hot%' ;")
+        result = self.query("SELECT osm_id,name,description,other_tags FROM points WHERE natural='hot_spring' OR amenity='hot_spring' OR 'bath:type'='hot_spring' OR name LIKE '%Hot Spring%';")
         return result
 
     def getLandingZones(self, result=list()):

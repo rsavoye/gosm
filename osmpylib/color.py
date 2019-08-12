@@ -19,7 +19,6 @@ import logging
 import re
 import epdb
 from fastkml import styles
-from colour import Color
 
 # https://wiki.openstreetmap.org/wiki/Hiking_Maps
 # https://wiki.openstreetmap.org/wiki/Key:highway
@@ -34,6 +33,26 @@ class MapStyle(object):
         self.description = ""
         self.default = dict()
         self.icons = list()
+
+        self.colors = dict()
+        self.colors['pink'] = 'ffff00ff'
+        self.colors['red'] = 'ff0000ff'
+        self.colors['gray'] = 'ff808080'
+        self.colors['black'] = 'ff000000'
+        self.colors['orange'] = 'ff00a5ff'
+        self.colors['yellow'] = 'ffffff00'
+        self.colors['magenta'] = 'ffff00ff'
+        self.colors['maroon'] = 'ff800000'
+        self.colors['purple'] = 'ff800080'
+        self.colors['cyan'] = 'ff00ffff'
+        self.colors['lightblue'] = 'ff00ffff'
+        self.colors['blue'] = 'ffff0000'
+        self.colors['darkblue'] = 'ff000080'
+        self.colors['teal'] = 'ff008080'
+        self.colors['olive'] = 'ff808000'
+        self.colors['lightgreen'] = 'ff00ff00'
+        self.colors['green'] = 'ff008000'
+        self.colors['darkgreen'] = 'ff008000'
         
         # Access
         self.default['private'] = {"color": "gray", "id": "GrayLine", "width": 3.0}
@@ -104,7 +123,18 @@ class MapStyle(object):
         self.default['horse'] = { "color": "blue", "id": "blue", "width": 1.0}
         self.default['atv'] = { "color": "blue", "id": "blue", "width": 1.0}
         self.default['bicycle'] = { "color": "blue", "id": "blue", "width": 1.0}
-        
+
+        # Piste trail grooming
+        # self.default['backcountry'] = { "color": "yellow", "id": "yellow", "width": 1.0}
+        # self.default['nordic'] = { "color": "blue", "id": "blue", "width": 1.0}
+        # self.default['downhill'] = { "color": "blue", "id": "blue", "width": 1.0}
+        self.default['skitour'] = { "color": "blue", "id": "blue", "width": 1.0}
+        self.default['snow_park'] = { "color": "blue", "id": "blue", "width": 1.0}
+        self.default['snowshoe'] = { "color": "blue", "id": "blue", "width": 1.0}
+        self.default['skating'] = { "color": "blue", "id": "blue", "width": 1.0}
+        self.default['classic'] = { "color": "blue", "id": "blue", "width": 1.0}
+
+
         self.linestyles = list()
         for key,val in self.default.items():
             lstyle = styles.LineStyle(id=val['id'], color=val['color'], width=val['width'])
@@ -115,21 +145,6 @@ class MapStyle(object):
 
     def getIcons(self):
         return self.icons
-
-    def make_hex(self, index, alpha=0xff):
-        try:
-            color = self.default[index]['color']
-        except:
-            color = 'green'
-            logging.warning("Index %s doesn't exist!" % index)
-        base = Color(color).hex_l
-        base = base.replace('#', 'ff')
-        # aa = alpha
-        # rr = rgb[0]
-        # gg = rgb[1]
-        # bb = rgb[2]
-        # return "#{aa}{rr}{gg}{bb}"
-        return base
         
     def getStyles(self):
         return self.linestyles
@@ -156,7 +171,7 @@ class MapStyle(object):
         try:
             id = self.default[index]['id']
             width = self.default[index]['width']
-            color = self.make_hex(index)
+            color = self.colors[self.default[diff]['color']]
         except:
             color = 'pink'
 
@@ -165,7 +180,7 @@ class MapStyle(object):
         # Tags that go in the description popyup
         if 'service' in data:
             if data['service'] == 'driveway':
-                color =  self.make_hex('driveway')
+                color = self.colors[self.default['driveway']['color']]
                 self.description += "Private Driveway"
         else:
             if 'name' in data:
@@ -174,30 +189,30 @@ class MapStyle(object):
             self.description += "<br>Alt Name: " + data['alt_name']
         if 'tracktype' in data:
             if data['tracktype'] == 'yes':
-                color =  self.make_hex('tracktype')
+                color = self.colors[self.default['tracktype']['color']]
                 self.description += "<br>Tracktype: " + data['tracktype']
         if 'motor_vehicle' in data:
             if data['motor_vehicle'] == 'yes':
-                color =  self.make_hex('motor_vehicle')
+                color = self.colors[self.default['motor_vehicle']['color']]
                 self.description += "<br>Vehicles OK: yes"
         if 'access' in data:
             if data['access'] == 'private':
-                color =  self.make_hex('private')
+                color = self.colors[self.default['private']['color']]
         if 'atv' in data:
             if data['atv'] == 'yes':
-                color =  self.make_hex('atv')
+                color = self.colors[self.default['atv']['color']]
                 self.description += "<br>ATVs OK: yes"
         if 'horse' in data:
             if data['horse'] == 'yes':
-                color =  self.make_hex('horse')
+                color = self.colors[self.default['horse']['color']]
                 self.description += "<br>Horse OK: yes"
         if 'bicycle' in data:
             if data['bicycle'] == 'yes':
-                color =  self.make_hex('bicycle')
+                color = self.colors[self.default['bicycle']['color']]
                 self.description += "<br>Bicycle OK: yes"
         if '4wd_only' in data:
             if data['4wd_only'] == 'yes':
-                color =  self.make_hex('4wd_only')
+                color = self.colors[self.default['4wd_only']['color']]
             self.description += "<br>4wd Only: " + data['4wd_only']
         if 'smoothness' in data:
             pass
@@ -221,8 +236,7 @@ class MapStyle(object):
         width = 3
         if 'sac_scale' in data:
             index = data['sac_scale']
-            #epdb.st()
-            color = self.make_hex(index)
+            color = self.colors[self.default[index]['color']]
             id = self.default[index]['id']
             width = self.default[index]['width']
             #self.description += "<br>Sac_scale: " + data['sac_scale']
@@ -291,6 +305,13 @@ class MapStyle(object):
         self.styles = styles.Style(styles=[icon])
         return self.styles, self.description
 
+    def hotsprings(self, data):
+        self.description = ""
+        icon = styles.IconStyle(icon_href="icons/mx_natural_hot_spring.png")
+        self.icons.append(icon.icon_href)
+        self.styles = styles.Style(styles=[icon])
+        return self.styles, self.description
+
     def campground(self, data):
         self.description = ""
         icon = styles.IconStyle(icon_href="icons/campground.png")
@@ -339,9 +360,93 @@ class MapStyle(object):
                 icon = styles.IconStyle(icon_href="icons/water.png")
             elif data['emergency'] == "suction_point":
                 icon = styles.IconStyle(icon_href="icons/water.png")
+            else:
+                icon = styles.IconStyle(icon_href="icons/water.png")
 
         self.icons.append(icon.icon_href)
         self.styles = styles.Style(styles=[icon])
+        return self.styles, self.description
+
+    def piste(self, data):
+        print(data)
+        self.description = ""
+        color = "ffffff00"
+        if 'piste:name' in data:
+            name = data['piste:name']
+        if 'name' in data:
+            name = data['name']
+            if 'piste:name' in data:
+                self.description += data['piste:name']
+        id = data['osm_id']
+        width = 3
+        
+        # Colors based on https://wiki.openstreetmap.org/wiki/Piste_Maps
+        # Downhill Piste difficulty
+        downhill = dict()
+        width = 2.0
+        downhill['easy'] = {"color": "green", "width": width}
+        downhill['novice'] = {"color": "green", "width": width}
+        downhill['intermediate'] = {"color": "blue", "width": width}
+        downhill['extreme'] = {"color": "orange", "width": width}
+        downhill['freeride'] = {"color": "yellow", "width": width}
+        downhill['expert'] = {"color": "gray", "width": width}
+        downhill['advanced'] = {"color": "gray", "width": width}
+        downhill['unknown'] = {"color": "gray", "width": width}
+        downhill['Traverse'] = {"color": "gray", "width": width}
+
+        nordic = dict()
+        width = 1.0
+        nordic['easy'] = {"color": "cyan", "width": width}
+        nordic['novice'] = {"color": "cyan", "width": width}
+        nordic['intermediate'] = {"color": "lightblue", "width": width}
+        nordic['expert'] = {"color": "gray", "width": width}
+        nordic['advanced'] = {"color": "gray", "width": width}
+        nordic['skating'] = {"color": "yellow", "width": width}
+        nordic['classic'] = {"color": "green", "width": width}
+        nordic['classic+skating'] = {"color": "green", "width": width}
+        nordic['unknown'] = {"color": "black", "width": width}
+
+        if 'piste:type' not in data:
+            data['piste:type'] = 'downhill'
+            
+        if 'piste:difficulty' not in data:
+            # When in doubt, make it bad
+            diff = 'unknown'
+            data['piste:difficulty'] = 'unknown'
+        else:
+            diff = data['piste:difficulty']
+
+        if 'piste:type' in data:
+            if data['piste:type'] == 'downhill':
+                color = self.colors[downhill[diff]['color']]
+                # id = downhill[diff]['osm_id']
+                width = downhill[diff]['width']
+            elif data['piste:type'] == 'nordic':
+                diff = data['piste:difficulty']
+                color = self.colors[nordic[diff]['color']]
+                # id = nordic[diff]['osm_id']
+                width = nordic[diff]['width']
+                # FIXME: improve these colors
+            else:
+                logging.warning("Unsupported piste type, %r" % data['piste:type'])
+                color  = self.colors['maroon']
+                width = 1.0
+        else:
+            color = self.colors['purple']
+            
+        # Create the description pop-up
+        if 'piste:difficulty' in data:
+            self.description += "<br>Difficulty: " + data['piste:difficulty']
+        else:
+            data['piste:difficulty'] = 'extreme'
+
+        if 'piste:grooming' in data:
+            self.description += "<br>Grooming: " + data['piste:grooming']
+
+        lstyle = styles.LineStyle(color=color, width=width)
+        self.styles = styles.Style(styles=[lstyle])
+
+        #print(self.description)
         return self.styles, self.description
 
 if __name__ == '__main__':
