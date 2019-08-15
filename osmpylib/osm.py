@@ -30,6 +30,8 @@ import subprocess
 ON_POSIX = 'posix' in sys.builtin_module_names
 from datetime import datetime
 import correct
+import overpass
+from poly import Poly
 
 
 class osmfile(object):
@@ -45,7 +47,7 @@ class osmfile(object):
         if filespec is None:
             self.file = self.options.get('outdir') + "foobar.osm"
         else:
-            self.file = open(filespec + ".osm", 'x')
+            self.file = open(filespec + ".osm", 'w')
         logging.info("Opened output file: " + filespec )
         #logging.error("Couldn't open %s for writing!" % filespec)
 
@@ -317,3 +319,29 @@ class osmConvert(object):
         osmc = subprocess.check_output(cmd, shell=True)
 
         return True
+
+
+# script for Overpass that works. Get everthing.
+# (
+#   way(39.75,-105.71,40.12,-105.31);
+#   node(39.75,-105.71,40.12,-105.31);
+#   rel(39.75,-105.71,40.12,-105.31);
+#   <;
+#   >;
+# );
+# out meta;
+class OverpassXAPI(object):
+    """Get data from OSM using the Overpass API"""
+    def __init__(self, bbox, filespec=None):
+        api = overpass.API()
+        query = overpass.MapQuery(bbox[2], bbox[0], bbox[3], bbox[1])
+        response = api.get(query, responseformat="xml")
+
+        epdb.st()
+        if filespec is None:
+            outfile = open('foo.osm', 'w')
+        else:
+            outfile = open(filespec, 'w')
+
+        outfile.write(response)
+        outfile.close()
