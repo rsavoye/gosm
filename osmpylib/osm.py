@@ -337,7 +337,6 @@ class OverpassXAPI(object):
         query = overpass.MapQuery(bbox[2], bbox[0], bbox[3], bbox[1])
         response = api.get(query, responseformat="xml")
 
-        epdb.st()
         if filespec is None:
             outfile = open('foo.osm', 'w')
         else:
