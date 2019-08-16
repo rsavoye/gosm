@@ -230,12 +230,13 @@ print("------------------------")
 
 # Create KML file
 outkml = open(outfile, 'w')
-k = kml.KML()
+mainkml = kml.KML()
 ns = '{http://www.opengis.net/kml/2.2}'
 mapstyle = MapStyle("ns='{http://www.opengis.net/kml/2.2}'")
 mstyle = mapstyle.getStyles()
-d = kml.Document(ns, 'docid', title, 'doc description', styles=mstyle)
-k.append(d)
+d = kml.Document(ns, 'docid', title, 'doc description')
+# d = kml.Document(ns, 'docid', title, 'doc description', styles=mstyle)
+mainkml.append(d)
 
 #pdb.st()
 #wkb = ppygis3.Geometry()
@@ -310,12 +311,16 @@ threshold = 500
 if dd.get('addresses') is True:
     addrs = post.getAddresses()
     if addrs is not None:
+        f = kml.Folder(ns, 0, 'Addresses', 'House Addresses in ' + title)
         if len(addrs) >= threshold:
-            ka = kml.KML()
-            da = kml.Document(ns, 'docid', title, 'doc description', styles=mstyle)
-            ka.append(da)
-            f = kml.Folder(ns, 0, 'Addresses', 'House Addresses in ' + title)
-            d.append(f)
+            logging.info("%d address, putting in separate file %s-addresses.kml" % (len(addrs), dbname))
+            addrkml = kml.KML()
+            # doc = kml.Document(ns, 'docid', title, 'doc description', styles=mstyle)
+            doc = kml.Document(ns, 'docid', title, 'doc description')
+            addrkml.append(doc)
+        else:
+            mainkml.append(f)
+
         for addr in addrs:
             #print(trail['name'])
             num = "addr['addr_housenumber']"
@@ -331,10 +336,13 @@ if dd.get('addresses') is True:
             p = kml.Placemark(ns, addr['osm_id'], addr['addr_housenumber'], style[1], styles=[style[0]])
             way = addr['wkb_geometry']
             p.geometry =  Point(way.geoms[0])
-            f.append(p)
-
+            if len(addrs) >= threshold:
+                doc.append(p)
+            else:
+                f.append(p)
         if len(addrs) >= threshold:
-            addrout.write(k.to_string(prettyprint=True))
+            addrout = open(dbname + "-addresses.kml", 'w')
+            addrout.write(addrkml.to_string(prettyprint=True))
             addrout.close()
     else:
         logging.warning("No addresses in this database")
@@ -502,7 +510,7 @@ if dd.get('piste') is True:
     else:
         logging.warning("No skio trails in this database")
 
-outkml.write(k.to_string(prettyprint=True))
+outkml.write(mainkml.to_string(prettyprint=True))
 outkml.close()
 
 # getIcons()
@@ -512,3 +520,4 @@ for icon in np.unique(x):
     zip.write(icon)
 zip.write(outfile)
 
+logging.info("Wrote %s" % outfile)
