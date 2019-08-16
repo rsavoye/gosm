@@ -324,7 +324,6 @@ class osmConvert(object):
         """This method use an OSM poly file to produce a subset
         from a larger dataset
         """
-        epdb.st()
         if os.path.exists(poly) is False:
             logging.error("%s doesn't exist!" % adiff)
             return None
