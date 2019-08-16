@@ -25,7 +25,7 @@ import config
 import html
 import string
 import epdb
-#from subprocess import PIPE, Popen, STDOUT
+from subprocess import PIPE, Popen, STDOUT
 import subprocess
 ON_POSIX = 'posix' in sys.builtin_module_names
 from datetime import datetime
@@ -319,6 +319,21 @@ class osmConvert(object):
         osmc = subprocess.check_output(cmd, shell=True)
 
         return True
+
+    def applyPoly(self, poly, infile, outfile):
+        """This method use an OSM poly file to produce a subset
+        from a larger dataset
+        """
+        epdb.st()
+        if os.path.exists(poly) is False:
+            logging.error("%s doesn't exist!" % adiff)
+            return None
+
+        cmd = ["osmconvert", "-B=" + poly, "-o=" + outfile, "--max-refs=400000", "--drop-broken-refs", "--complete-ways", infile]
+        ppp = Popen(cmd, stdout=PIPE, bufsize=0, close_fds=ON_POSIX)
+        ppp.wait()
+
+        logging.info("Produced %s from %s using %s" % (outfile, infile, poly))
 
 
 # script for Overpass that works. Get everthing.
