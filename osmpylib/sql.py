@@ -72,16 +72,20 @@ class Postgis(object):
             self.dbcursor = self.dbshell.cursor()
         else:
             logging.warning("DB Shell already open")
+        self.addExtensions()
+
+    def close(self):
+        self.dbshell.close()
 
     def initDB(self, dbname):
+        """Remove and recreate the database to avoid problems"""
         pg = Postgis()
         pg.connect("localhost", 'postgres')
 
+        logging.debug("Adding default extensions to %s" % dbname)
         pg.query("DROP DATABASE IF EXISTS %s" % dbname)
         pg.query("CREATE DATABASE %s" % dbname)
-        pg.query("CREATE EXTENSION postgis %s" % dbname)
-        pg.query("CREATE EXTENSION hstore %s" % dbname)
-        # pg.close()
+        pg.close()
 
     def query(self, query=""):
         """Query a local or remote postgresql database"""
@@ -94,7 +98,7 @@ class Postgis(object):
         self.result = list()
         try:
             self.dbcursor.execute(query)
-            # logging.info("Got %r records from query." % self.dbcursor.rowcount)
+            logging.info("Got %r records from query." % self.dbcursor.rowcount)
         except psycopg2.ProgrammingError as e:
             if e.pgcode != None:
                 logging.error("Query failed to fetch! %r" % e.pgcode)
@@ -120,8 +124,8 @@ class Postgis(object):
                                 # print(tmp[1])
                                 data[tmp[0].replace('"', '')] = tmp[1].replace('"', '')
                 elif fields[i] == "wkb_geometry":
-                    #data['wkb_geometry'] = wkb.loads(item,hex=True)
-                    data['wkb_geometry'] = wkb.loads(item.tobytes())
+                    data['wkb_geometry'] = wkb.loads(item,hex=True)
+                    #data['wkb_geometry'] = wkb.loads(item.tobytes())
                 else:
                     data[fields[i]] = item
                 i += 1
@@ -131,16 +135,18 @@ class Postgis(object):
         return self.result
 
     def addExtensions(self):
-        result = self.query("create extension hstore;")
-        result = self.query("create extension postgis;")
+        result = self.query("create extension hstore")
+        result = self.query("create extension postgis")
 
     def importOSM(self, filespec="out.osm", dbname=None):
+        # FIXME: there has got to be a somple way of doing this purely
+        # in python using ogr, and not using a subprocess.
          # ogr2ogr -overwrite -f  "PostgreSQL" PG:"dbname=${dbname}" -nlt GEOMETRYCOLLECTION ${infile}
         if dbname is None:
             dbname = os.path.basename(filespec).replace('.osm', '')
         logging.info("Trying to import %s into database %s" % (filespec, dbname))
 
-        self.initDB(dbname)
+        # self.initDB(dbname)
 
         cmd = [ 'ogr2ogr', '-overwrite', '-f', "PostgreSQL", "PG:dbname=" + dbname, "-nlt", "GEOMETRYCOLLECTION", filespec]
         ppp = Popen(cmd, stdout=PIPE, bufsize=0, close_fds=ON_POSIX)
@@ -181,7 +187,7 @@ class Postgis(object):
     def getCamp(self, geom, result=list()):
         """Get the data for a campsite using the GPS location in the relation"""
         # result = self.query("SELECT osm_id,name,ref,other_tags FROM points WHERE ST_Equals(ST_CollectionExtract(wkb_geometry, 1), ST_GeomFromText('%s', 4326));" % geom.wkt)
-        result = self.query("SELECT osm_id,name,ref,other_tags FROM points WHERE ST_Equals(ST_CollectionExtract(wkb_geometry, 1), ST_GeomFromText('%s'));" % geom.wkt)
+        result = self.query("SELECT osm_id,name,ref,other_tags FROM points WHERE ST_Equals(ST_CollectionExtract(wkb_geometry, 1), ST_GeomFromText('%s', 4326));" % geom.wkt)
         return result
  
     def getPiste(self, result=list()):
