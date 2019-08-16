@@ -86,12 +86,12 @@ class kmlfile(object):
             #style = '#Polygon'
             self.file.write('            <MultiGeometry>\n')
             #self.file.write('            <outerBoundaryIs><LinearRing>\n')
-            epdb.st()
             for poly in data:
                 if poly < 0:
                     continue
-                print("FIXME: %d" % data[poly].GetX())
                 tmp = data[poly].ExportToKML()
+                # FIXME: figure out where this empty polygon comes from, or
+                # a cleaner way to remove it.
                 tmp = tmp.replace("<innerBoundaryIs><LinearRing><coordinates></coordinates></LinearRing></innerBoundaryIs>", "")
                 print(tmp)
                 self.file.write('            ' + tmp + '\n')
