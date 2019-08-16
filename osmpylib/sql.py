@@ -25,18 +25,26 @@ import psycopg2
 import logging
 from shapely.geometry import GeometryCollection, Point, LineString, Polygon
 from shapely import wkt, wkb
+from subprocess import PIPE, Popen, STDOUT
+import os
+import sys
+ON_POSIX = 'posix' in sys.builtin_module_names
 
 
 class Postgis(object):
     """A class to work with a postgresql/postgis database"""
 
-    def __init__(self):
-        self.database = None
-        self.dbserver = None
+    def __init__(self, dbname=None, dbhost=None):
+        #if dbname is not None or dbhost is not None:
+        #    self.connect(dbhost, dbname)
+        self.database = dbname
+        self.dbserver = dbhost
 
-    def connect(self, dbserver, database):
+    def connect(self, dbserver='localhost', database='postgres'):
         """Connect to a local or remote postgresql server"""
 
+        self.database = database
+        self.dbserver = dbserver
         # Supported parameters for connect are: 
         # *database*: the database name (only as keyword argument)
         # *user*: user name used to authenticate
@@ -45,11 +53,15 @@ class Postgis(object):
         # *port*: connection port number (defaults to 5432 if not provided)
         connect = ""
         if dbserver is not "localhost":
-            connect += "host='" + dbserver + "'"
-        connect += " dbname='" + database + "'"
+            connect += "host='" + dbserver + "' "
+        connect += "dbname='" + database + "'"
 
         logging.debug("postgresql.connect(%r)" % connect)
-        self.dbshell = psycopg2.connect(connect)
+        try:
+            self.dbshell = psycopg2.connect(connect)
+        except psycopg2.OperationalError as e:
+            logging.debug("%s doesn't exist! %r" % (database, e.diag.message_primary))
+
         if self.dbshell.closed == 0:
             self.dbshell.autocommit = True
             logging.info("Opened connection to %r %r" % (database, self.dbshell))
@@ -57,6 +69,17 @@ class Postgis(object):
             self.dbcursor = self.dbshell.cursor()
             if self.dbcursor.closed == 0:
                 logging.info("Opened cursor in %r %r" % (database, self.dbcursor))
+            self.dbcursor = self.dbshell.cursor()
+        else:
+            logging.warning("DB Shell already open")
+
+    def initDB(self, dbname):
+        pg = Postgis()
+        pg.connect("localhost", 'postgres')
+
+        pg.query("DROP DATABASE IF EXISTS %s" % dbname)
+        pg.query("CREATE DATABASE %s" % dbname)
+        # pg.close()
 
     def query(self, query=""):
         """Query a local or remote postgresql database"""
@@ -76,7 +99,10 @@ class Postgis(object):
 
         tmp = query.split(' ')
         fields = tmp[1].split(',')
-        line = self.dbcursor.fetchone()
+        try:
+            line = self.dbcursor.fetchone()
+        except:
+            return None
         while line is not None:
             i = 0
             data = dict()
@@ -101,13 +127,23 @@ class Postgis(object):
 
         return self.result
 
-    def count(self, type):
-        if type is "roads":
-            sql = "COUNT(*) FROM planet_osm_line WHERE highway is not NULL AND highway!='path' OR highway!='footway' OR highway!='cycleway"
-        elif type is "trails":
-            sql = "COUNT(*) FROM planet_osm_line WHERE highway='path' OR highway='footway' OR highway='cycleway"
-        elif type is "huts":
-            sql = "osm_id,name,ST_AsKML(way),tourism,tags->'phone',tags->'email',tags->'website',tags->'addr:street',tags->'addr:housenumber' from planet_osm_point WHERE tourism='wilderness_hut' OR tourism='alpine_hut"
+    def addExtensions(self):
+        result = self.query("create extension hstore;")
+        result = self.query("create extension postgis;")
+
+    def importOSM(self, filespec="out.osm", dbname=None):
+         # ogr2ogr -overwrite -f  "PostgreSQL" PG:"dbname=${dbname}" -nlt GEOMETRYCOLLECTION ${infile}
+        if dbname is None:
+            dbname = os.path.basename(filespec).replace('.osm', '')
+        logging.info("Trying to import %s into database %s" % (filespec, dbname))
+
+        self.initDB(dbname)
+
+        cmd = [ 'ogr2ogr', '-overwrite', '-f', "PostgreSQL", "PG:dbname=" + dbname, "-nlt", "GEOMETRYCOLLECTION", filespec]
+        ppp = Popen(cmd, stdout=PIPE, bufsize=0, close_fds=ON_POSIX)
+        ppp.wait()
+
+        logging.info("Created database %s with data from %s" % (dbname, filespec))
 
     def getRoads(self, result=list()):
         result = self.query("SELECT osm_id,name,other_tags,highway,wkb_geometry FROM lines WHERE highway is not NULL AND (highway!='path' AND highway!='footway' AND highway!='milestone' AND highway!='cycleway' AND highway!='bridleway');")
