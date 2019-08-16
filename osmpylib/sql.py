@@ -79,12 +79,14 @@ class Postgis(object):
 
         pg.query("DROP DATABASE IF EXISTS %s" % dbname)
         pg.query("CREATE DATABASE %s" % dbname)
+        pg.query("CREATE EXTENSION postgis %s" % dbname)
+        pg.query("CREATE EXTENSION hstore %s" % dbname)
         # pg.close()
 
     def query(self, query=""):
         """Query a local or remote postgresql database"""
 
-        # logging.debug("postgresql.query(" + query + ")")
+        logging.debug("postgresql.query(" + query + ")")
         if self.dbshell.closed != 0:
             logging.error("Database %r is not connected!" % self.options.get('database'))
             return self.result
@@ -118,7 +120,8 @@ class Postgis(object):
                                 # print(tmp[1])
                                 data[tmp[0].replace('"', '')] = tmp[1].replace('"', '')
                 elif fields[i] == "wkb_geometry":
-                    data['wkb_geometry'] = wkb.loads(item,hex=True)
+                    #data['wkb_geometry'] = wkb.loads(item,hex=True)
+                    data['wkb_geometry'] = wkb.loads(item.tobytes())
                 else:
                     data[fields[i]] = item
                 i += 1
@@ -177,7 +180,8 @@ class Postgis(object):
 
     def getCamp(self, geom, result=list()):
         """Get the data for a campsite using the GPS location in the relation"""
-        result = self.query("SELECT osm_id,name,ref,other_tags FROM points WHERE ST_Equals(ST_CollectionExtract(wkb_geometry, 1), ST_GeomFromText('%s', 4326))" % geom.wkt)
+        # result = self.query("SELECT osm_id,name,ref,other_tags FROM points WHERE ST_Equals(ST_CollectionExtract(wkb_geometry, 1), ST_GeomFromText('%s', 4326));" % geom.wkt)
+        result = self.query("SELECT osm_id,name,ref,other_tags FROM points WHERE ST_Equals(ST_CollectionExtract(wkb_geometry, 1), ST_GeomFromText('%s'));" % geom.wkt)
         return result
  
     def getPiste(self, result=list()):
