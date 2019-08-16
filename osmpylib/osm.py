@@ -335,26 +335,34 @@ class osmConvert(object):
         logging.info("Produced %s from %s using %s" % (outfile, infile, poly))
 
 
-# script for Overpass that works. Get everthing.
-# (
-#   way(39.75,-105.71,40.12,-105.31);
-#   node(39.75,-105.71,40.12,-105.31);
-#   rel(39.75,-105.71,40.12,-105.31);
-#   <;
-#   >;
-# );
-# out meta;
+# If we trigger too many requests from the same IP, it can be reset like this:
+# http://overpass-api.de/api/kill_my_queries
+# At the same time, the server is a shared resource, so be polite and only
+# do this during debugging.
 class OverpassXAPI(object):
     """Get data from OSM using the Overpass API"""
-    def __init__(self, bbox, filespec=None):
-        api = overpass.API()
-        query = overpass.MapQuery(bbox[2], bbox[0], bbox[3], bbox[1])
-        response = api.get(query, responseformat="xml")
+    def __init__(self, bbox=None, filespec=None):
+        self.filespec = filespec
+        self.bbox = bbox
 
-        if filespec is None:
-            outfile = open('foo.osm', 'w')
+    def getData(self, filespec=None):
+        logging.info("Downloading data using Overpass")
+        api = overpass.API(timeout=600, debug=True)
+        query = overpass.MapQuery(self.bbox[2], self.bbox[0], self.bbox[3], self.bbox[1])
+        try:
+            response = api.get(query, responseformat="xml")
+        except:
+            logging.error("Overpass query failed! Sometimes the server is overloaded")
+            return False
+
+        if filespec is None and self.filespec is None:
+            outfile = open('out.osm', 'w')
+        elif filespec is None and self.filespec is not None:
+            outfile = open(self.filespec, 'w')
         else:
             outfile = open(filespec, 'w')
 
+        logging.info("Writing OSM data to %s" % self.filespec)
         outfile.write(response)
         outfile.close()
+        return True
