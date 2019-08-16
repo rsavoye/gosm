@@ -53,23 +53,25 @@ class MapStyle(object):
         self.colors['lightgreen'] = 'ff00ff00'
         self.colors['green'] = 'ff008000'
         self.colors['darkgreen'] = 'ff008000'
+        self.colors['brown'] = 'ff008000'  # FIXME: wrong value!
         
         # Access
-        self.default['private'] = {"color": "gray", "id": "GrayLine", "width": 3.0}
+        width = 3.0
+        self.default['private'] = {"color": "gray", "width": width}
 
         # highway=path
-        self.default['hiking'] = {"color": "brown", "id": "BrownLine", "width": 3.0}
-        self.default['mountain_hiking'] = {"color": "orange", "id": "OrangeLine", "width": 3.0}
-        self.default['demanding_mountain_hiking'] = {"color": "purple", "id": "PurpleLine", "width": 3.0}
-        self.default['alpine_hiking'] = {"color": "skyblue", "id": "SkyBlueLine", "width": 3.0}
-        self.default['demanding_alpine_hiking'] = {"color": "skyblue", "id": "SkyBlueLine", "width": 3.0}
-        self.default['difficult_alpine_hiking'] = {"color": "skyblue", "id": "SkyBlueLine", "width": 3.0}
+        self.default['hiking'] = {"color": "brown", "width": width}
+        self.default['mountain_hiking'] = {"color": "orange", "width": width}
+        self.default['demanding_mountain_hiking'] = {"color": "purple", "width": width}
+        self.default['alpine_hiking'] = {"color": "lightblue", "width": width}
+        self.default['demanding_alpine_hiking'] = {"color": "lightblue", "width": width}
+        self.default['difficult_alpine_hiking'] = {"color": "lightblue", "width": width}
 
-        self.default['0'] = {"color": "brown", "id": "BrownLine", "width": 3.0}
-        self.default['1'] = {"color": "green", "id": "GreenLine", "width": 3.0}
-        self.default['2'] = {"color": "blue", "id": "BlueLine", "width": 3.0}
-        self.default['3'] = {"color": "red", "id": "RedLine", "width": 3.0}
-        self.default['4'] = {"color": "black", "id": "BlackLine", "width": 3.0}
+        self.default['0'] = {"color": "brown", "width": width}
+        self.default['1'] = {"color": "green", "width": width}
+        self.default['2'] = {"color": "blue", "width": width}
+        self.default['3'] = {"color": "red", "width": width}
+        self.default['4'] = {"color": "black", "width": width}
 
         # Tracktype
         self.default['grade1'] = {"color": "brown", "id": "BrownLine", "width": 2.0}
@@ -137,7 +139,8 @@ class MapStyle(object):
 
         self.linestyles = list()
         for key,val in self.default.items():
-            lstyle = styles.LineStyle(id=val['id'], color=val['color'], width=val['width'])
+            # lstyle = styles.LineStyle(id=val['id'], color=val['color'], width=val['width'])
+            lstyle = styles.LineStyle(color=val['color'], width=val['width'])
             self.linestyles.append(styles.Style(styles=[lstyle]))
             self.styles = list()
 
@@ -237,7 +240,7 @@ class MapStyle(object):
         if 'sac_scale' in data:
             index = data['sac_scale']
             color = self.colors[self.default[index]['color']]
-            id = self.default[index]['id']
+            # id = self.default[index]['id']
             width = self.default[index]['width']
             #self.description += "<br>Sac_scale: " + data['sac_scale']
         if 'mtb:scale:imba' in data:
@@ -368,7 +371,6 @@ class MapStyle(object):
         return self.styles, self.description
 
     def piste(self, data):
-        print(data)
         self.description = ""
         color = "ffffff00"
         if 'piste:name' in data:
@@ -384,8 +386,8 @@ class MapStyle(object):
         # Downhill Piste difficulty
         downhill = dict()
         width = 2.0
-        downhill['easy'] = {"color": "green", "width": width}
-        downhill['novice'] = {"color": "green", "width": width}
+        downhill['easy'] = {"color": "lightgreen", "width": width}
+        downhill['novice'] = {"color": "lightgreen", "width": width}
         downhill['intermediate'] = {"color": "blue", "width": width}
         downhill['extreme'] = {"color": "orange", "width": width}
         downhill['freeride'] = {"color": "yellow", "width": width}
@@ -398,7 +400,7 @@ class MapStyle(object):
         width = 1.0
         nordic['easy'] = {"color": "cyan", "width": width}
         nordic['novice'] = {"color": "cyan", "width": width}
-        nordic['intermediate'] = {"color": "lightblue", "width": width}
+        nordic['intermediate'] = {"color": "blue", "width": width}
         nordic['expert'] = {"color": "gray", "width": width}
         nordic['advanced'] = {"color": "gray", "width": width}
         nordic['skating'] = {"color": "yellow", "width": width}
@@ -417,6 +419,7 @@ class MapStyle(object):
             diff = data['piste:difficulty']
 
         if 'piste:type' in data:
+            self.description += "<br>Type: " + data['piste:type']
             if data['piste:type'] == 'downhill':
                 color = self.colors[downhill[diff]['color']]
                 # id = downhill[diff]['osm_id']
