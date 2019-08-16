@@ -202,11 +202,17 @@ dbname = dd.get('database')
 post = Postgis()
 if dd.get('xapi') is True:
     if dd.get('poly') is not None:
-        polyfiter = Poly()
+        polyfilter = Poly()
         bbox = polyfilter.getBBox(poly)
         osm = outfile.replace('.kml', '.osm')
         xapi = OverpassXAPI(bbox, osm)
-        post.importOSM(osm, dbname)
+        if xapi.getData() is True:
+            post.importOSM(osm, dbname)
+        else:
+            quit()
+    else:
+        logging.error("Need to specify a poly to download!")
+        dd.usage()
 elif infile is not None and dbname is not None and poly is None:
     post.importOSM(infile, dbname)
 elif infile is not None and poly is not None:
@@ -456,10 +462,12 @@ if dd.get('camps') is True:
                         if 'ref' in site:
                             if site['ref'] is not None:
                                 site['name'] = "Site %s" % site['ref']
-                        style = mapstyle.campsite(site)
+                        style = mapstyle.campsite(site, camp['name'])
                         p = kml.Placemark(ns, site['osm_id'], site['name'], style[1], styles=[style[0]])
-                    p.geometry = Point(g)
-                    nf.append(p)
+                        p.geometry = Point(g)
+                        nf.append(p)
+                    else:
+                       logging.error("Couldn't lookup %s" % camp['name'])
     else:
         logging.warning("No camps sites in this database")
 
