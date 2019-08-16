@@ -274,14 +274,21 @@ if dd.get('trails') is True:
 #
 # Roads
 #
+threshold = 500
 if dd.get('roads') is True:
     roads = post.getRoads()
     if roads is not None:
         f = kml.Folder(ns, 0, 'Roads', 'Roads in ' + title)
-        d.append(f)
-        #print(len(trails))
+        if len(roads) > threshold:
+            logging.info("%d roads, putting in separate file %s-roads.kml" % (len(roads), dbname))
+            roadkml = kml.KML()
+            # doc = kml.Document(ns, 'docid', title, 'doc description', styles=mstyle)
+            doc = kml.Document(ns, 'docid', title, 'doc description')
+            roadkml.append(doc)
+        else:
+            mainkml.append(f)
+
         for road in roads:
-            #print(road['name'])
             if 'service' in road:
                 if road['service'] == 'driveway':
                     # color =  mapstyle.driveways('driveway')
@@ -300,7 +307,15 @@ if dd.get('roads') is True:
             p = kml.Placemark(ns, road['osm_id'], road['name'], style[1], styles=[style[0]])
             way = road['wkb_geometry']
             p.geometry =  LineString(way.geoms[0])
-            f.append(p)
+            if len(roads) >= threshold:
+                doc.append(p)
+            else:
+                f.append(p)
+
+        if len(roads) >= threshold:
+            roadout = open(dbname + "-roads.kml", 'w')
+            roadout.write(roadkml.to_string(prettyprint=True))
+            roadout.close()
     else:
         logging.warning("No roads in this database")
 
@@ -340,6 +355,7 @@ if dd.get('addresses') is True:
                 doc.append(p)
             else:
                 f.append(p)
+
         if len(addrs) >= threshold:
             addrout = open(dbname + "-addresses.kml", 'w')
             addrout.write(addrkml.to_string(prettyprint=True))
