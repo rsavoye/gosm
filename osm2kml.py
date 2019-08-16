@@ -203,7 +203,7 @@ post = Postgis()
 if dd.get('xapi') is True:
     if dd.get('poly') is not None:
         polyfiter = Poly()
-        bbox = polyfilter.getBBox(dd.get('poly'))
+        bbox = polyfilter.getBBox(poly)
         osm = outfile.replace('.kml', '.osm')
         xapi = OverpassXAPI(bbox, osm)
         post.importOSM(osm, dbname)
@@ -217,7 +217,6 @@ elif infile is not None and poly is not None:
 
 print("------------------------")
 
-# post.connect('localhost', dbname)
 
 #rr = post.getAddresses()
 #print(len(rr))
@@ -238,57 +237,65 @@ k.append(d)
 # Write buffer to KML file
 #outkml = open(outfile, 'w')
 
+post.connect('localhost', dbname)
 #
 # Hiking Trails
 #
 if dd.get('trails') is True:
     trails = post.getTrails()
-    f = kml.Folder(ns, 0, 'Trails', 'Trails in ' + title)
-    d.append(f)
-    #print(len(trails))
-    for trail in trails:
-        #print(trail['name'])
-        if trail['name'] is None:
-            description = """OSM_ID: %s
-            FIXME: this needs the real name!
-            """ % trail['osm_id']
-            trail['name'] = "Unknown: " + trail['osm_id']
-        else:
-            description = trail['name']
-        style = mapstyle.trails(trail)
-        p = kml.Placemark(ns, trail['osm_id'], trail['name'], style[1], styles=[style[0]])
-        way = trail['wkb_geometry']
-        p.geometry =  LineString(way.geoms[0])
-        f.append(p)
+    if trails is not None:
+        f = kml.Folder(ns, 0, 'Trails', 'Trails in ' + title)
+        d.append(f)
+        #print(len(trails))
+        for trail in trails:
+            #print(trail['name'])
+            if trail['name'] is None:
+                description = """OSM_ID: %s
+                FIXME: this needs the real name!
+                """ % trail['osm_id']
+                trail['name'] = "Unknown: " + trail['osm_id']
+            else:
+                description = trail['name']
+            style = mapstyle.trails(trail)
+            p = kml.Placemark(ns, trail['osm_id'], trail['name'], style[1], styles=[style[0]])
+            way = trail['wkb_geometry']
+            p.geometry =  LineString(way.geoms[0])
+            f.append(p)
+    else:
+        logging.warning("No trails in thie database")
 
 #
 # Roads
 #
 if dd.get('roads') is True:
     roads = post.getRoads()
-    f = kml.Folder(ns, 0, 'Roads', 'Roads in ' + title)
-    d.append(f)
-    #print(len(trails))
-    for road in roads:
-        #print(road['name'])
-        if 'service' in road:
-            if road['service'] == 'driveway':
-                color =  mapstyle.make_hex('driveway')
-            description = "Private Driveway"
-        else:
-            if road['name'] is None:
-                description = """OSM_ID: %s
-                FIXME: this needs the real name!
-                """ % road['osm_id']
-                road['name'] = "Unknown: " + road['osm_id']
+    if roads is not None:
+        f = kml.Folder(ns, 0, 'Roads', 'Roads in ' + title)
+        d.append(f)
+        #print(len(trails))
+        for road in roads:
+            #print(road['name'])
+            if 'service' in road:
+                if road['service'] == 'driveway':
+                    # color =  mapstyle.driveways('driveway')
+                    # description = "Private Driveway"
+                    continue
             else:
-                description = road['name']
+                if road['name'] is None:
+                    description = """OSM_ID: %s
+                    FIXME: this needs the real name!
+                    """ % road['osm_id']
+                    road['name'] = "Unknown: " + road['osm_id']
+                else:
+                    description = road['name']
 
-        style = mapstyle.roads(road)
-        p = kml.Placemark(ns, road['osm_id'], road['name'], style[1], styles=[style[0]])
-        way = road['wkb_geometry']
-        p.geometry =  LineString(way.geoms[0])
-        f.append(p)
+            style = mapstyle.roads(road)
+            p = kml.Placemark(ns, road['osm_id'], road['name'], style[1], styles=[style[0]])
+            way = road['wkb_geometry']
+            p.geometry =  LineString(way.geoms[0])
+            f.append(p)
+    else:
+        logging.warning("No roads in this database")
 
 #
 # House Addresses
@@ -296,69 +303,79 @@ if dd.get('roads') is True:
 threshold = 500
 if dd.get('addresses') is True:
     addrs = post.getAddresses()
-    if len(addrs) >= threshold:
-        ka = kml.KML()
-        da = kml.Document(ns, 'docid', title, 'doc description', styles=mstyle)
-        ka.append(da)
-    f = kml.Folder(ns, 0, 'Addresses', 'House Addresses in ' + title)
-    d.append(f)
-    for addr in addrs:
-        #print(trail['name'])
-        num = "addr['addr_housenumber']"
-        street = "addr['addr_street']"
-        description = ""
-        if 'name' in addr:
-            name = addr['name']
-        else:
-            name = ""
-            description = "{name}{num}{street}"
+    if addrs is not None:
+        if len(addrs) >= threshold:
+            ka = kml.KML()
+            da = kml.Document(ns, 'docid', title, 'doc description', styles=mstyle)
+            ka.append(da)
+            f = kml.Folder(ns, 0, 'Addresses', 'House Addresses in ' + title)
+            d.append(f)
+        for addr in addrs:
+            #print(trail['name'])
+            num = "addr['addr_housenumber']"
+            street = "addr['addr_street']"
+            description = ""
+            if 'name' in addr:
+                name = addr['name']
+            else:
+                name = ""
+                description = "{name}{num}{street}"
 
-        style = mapstyle.addresses(addr)
-        p = kml.Placemark(ns, addr['osm_id'], addr['addr_housenumber'], style[1], styles=[style[0]])
-        way = addr['wkb_geometry']
-        p.geometry =  Point(way.geoms[0])
-        f.append(p)
+            style = mapstyle.addresses(addr)
+            p = kml.Placemark(ns, addr['osm_id'], addr['addr_housenumber'], style[1], styles=[style[0]])
+            way = addr['wkb_geometry']
+            p.geometry =  Point(way.geoms[0])
+            f.append(p)
 
-    if len(addrs) >= threshold:
-        addrout.write(k.to_string(prettyprint=True))
-        addrout.close()
+        if len(addrs) >= threshold:
+            addrout.write(k.to_string(prettyprint=True))
+            addrout.close()
+    else:
+        logging.warning("No addresses in this database")
+
 #
 # Mile Markers
 #
 if dd.get('milestones') is True:
     stones = post.getMilestones()
-    f = kml.Folder(ns, 0, 'Mile Markers', 'Mile markers in ' + title)
-    d.append(f)
-    for mark in stones:
-        num = mark['name']
-        street = "mark['alt_name']"
+    if stones is not None:
+        f = kml.Folder(ns, 0, 'Mile Markers', 'Mile markers in ' + title)
+        d.append(f)
+        for mark in stones:
+            num = mark['name']
+            street = "mark['alt_name']"
 
-        style = mapstyle.milestones(mark)
-        p = kml.Placemark(ns, addr['osm_id'], num, style[1], styles=[style[0]])
-        way = mark['wkb_geometry']
-        p.geometry =  Point(way.geoms[0])
-        f.append(p)
+            style = mapstyle.milestones(mark)
+            p = kml.Placemark(ns, addr['osm_id'], num, style[1], styles=[style[0]])
+            way = mark['wkb_geometry']
+            p.geometry =  Point(way.geoms[0])
+            f.append(p)
+    else:
+        logging.warning("No milestones in this database")
 
 #
 # Landing Site
 #
 if dd.get('landingsite') is True:
     lzs = post.getLandingZones()
-    f = kml.Folder(ns, 0, 'Landing Sites', 'Landing Sites in ' + title)
-    d.append(f)
-    for lz in lzs:
-        style = mapstyle.landingzones(lz)
-        p = kml.Placemark(ns, lz['osm_id'], lz['name'], style[1], styles=[style[0]])
-        way = lz['wkb_geometry']
-        p.geometry =  Point(way.geoms[0])
-        f.append(p)
+    if lzs is not None:
+        f = kml.Folder(ns, 0, 'Landing Sites', 'Landing Sites in ' + title)
+        d.append(f)
+        for lz in lzs:
+            style = mapstyle.landingzones(lz)
+            p = kml.Placemark(ns, lz['osm_id'], lz['name'], style[1], styles=[style[0]])
+            way = lz['wkb_geometry']
+            p.geometry =  Point(way.geoms[0])
+            f.append(p)
+    else:
+        logging.warning("No landing sites in this database")
 
 #
 # Hot Spring
 #
 if dd.get('hotsprings') is True:
     hsprings = post.getHotSprings()
-    if len(hsprings) > 0:
+    if hsprings is not None:
         f = kml.Folder(ns, 0, 'Hot Springs')
         d.append(f)
         for hs in hsprings:
@@ -367,103 +384,115 @@ if dd.get('hotsprings') is True:
             way = hs['wkb_geometry']
             p.geometry = Point(way.geoms[0])
             f.append(p)
+    else:
+        logging.warning("No Hot Springs in this database")
 
 #
 # Water Sources
 #
 if dd.get('firewater') is True:
     districts = post.getFireWater()
-    f = kml.Folder(ns, 0, 'Emergency Water Sources')
-    d.append(f)
-    for dist in districts:
-        if 'name' not in dist:
-            if 'ref' in dist:
-                dist['name'] = dist['ref']
-        nf = kml.Folder(ns, 0, dist['name'])
-        f.append(nf)
-        way = dist['wkb_geometry']
-        for g in way.geoms:
-            if g.geom_type == 'Polygon':
-                style = mapstyle.firewater(dist)
-                p = kml.Placemark(ns, dist['osm_id'], dist['name'], style[1], styles=[style[0]])
-                p.geometry = Polygon(g)
-                continue
-            elif g.geom_type == 'Point':
-                # The relation has no geometry of it's own. Use tmp to
-                # avoid a double query to the database
-                tmp = post.getWay(g)
-                if len(tmp) == 0:
+    if districts is not None:
+        f = kml.Folder(ns, 0, 'Emergency Water Sources')
+        d.append(f)
+        for dist in districts:
+            if 'name' not in dist:
+                if 'ref' in dist:
+                    dist['name'] = dist['ref']
+            nf = kml.Folder(ns, 0, dist['name'])
+            f.append(nf)
+            way = dist['wkb_geometry']
+            for g in way.geoms:
+                if g.geom_type == 'Polygon':
+                    style = mapstyle.firewater(dist)
+                    p = kml.Placemark(ns, dist['osm_id'], dist['name'], style[1], styles=[style[0]])
+                    p.geometry = Polygon(g)
                     continue
-                site = tmp[0]
-                if 'ref' in site:
-                    if site['ref'] is not None and 'tourism' in site:
-                        site['name'] = "Site %s" % site['ref']
-                    else:
-                        site['name'] = site['ref']
-                style = mapstyle.firewater(site)
-                p = kml.Placemark(ns, site['osm_id'], site['name'], style[1], styles=[style[0]])
-            p.geometry = Point(g)
-            nf.append(p)
-
+                elif g.geom_type == 'Point':
+                    # The relation has no geometry of it's own. Use tmp to
+                    # avoid a double query to the database
+                    tmp = post.getWay(g)
+                    if len(tmp) == 0:
+                        continue
+                    site = tmp[0]
+                    if 'ref' in site:
+                        if site['ref'] is not None and 'tourism' in site:
+                            site['name'] = "Site %s" % site['ref']
+                        else:
+                            site['name'] = site['ref']
+                    style = mapstyle.firewater(site)
+                    p = kml.Placemark(ns, site['osm_id'], site['name'], style[1], styles=[style[0]])
+                p.geometry = Point(g)
+                nf.append(p)
+    else:
+        logging.warning("No emergency water sources in this database")
 
 #
 # Campgrounds and camp sites
 #
 if dd.get('camps') is True:
     camps = post.getCampGrounds()
-    f = kml.Folder(ns, 0, 'Campgrounds')
-    d.append(f)
-    for camp in camps:
-        if 'name' not in camp:
-            if 'ref' in camp:
-                camp['name'] = camp['ref']
-        nf = kml.Folder(ns, 0, camp['name'])
-        f.append(nf)
-        print(camp)
-        way = camp['wkb_geometry']
-        for g in way.geoms:
-            if g.geom_type == 'Polygon':
-                style = mapstyle.campground(camp)
-                p = kml.Placemark(ns, camp['osm_id'], camp['name'], style[1], styles=[style[0]])
-                p.geometry = Polygon(g)
-                continue
-            elif g.geom_type == 'Point':
-                site = post.getCamp(g)[0]
-                if 'ref' in site:
-                    if site['ref'] is not None:
-                        site['name'] = "Site %s" % site['ref']
-                style = mapstyle.campsite(site)
-                p = kml.Placemark(ns, site['osm_id'], site['name'], style[1], styles=[style[0]])
-            p.geometry = Point(g)
-            nf.append(p)
+    if camps is not None:
+        f = kml.Folder(ns, 0, 'Campgrounds')
+        d.append(f)
+        for camp in camps:
+            if 'name' not in camp:
+                if 'ref' in camp:
+                    camp['name'] = camp['ref']
+            nf = kml.Folder(ns, 0, camp['name'])
+            f.append(nf)
+            print(camp)
+            way = camp['wkb_geometry']
+            for g in way.geoms:
+                if g.geom_type == 'Polygon':
+                    style = mapstyle.campground(camp)
+                    p = kml.Placemark(ns, camp['osm_id'], camp['name'], style[1], styles=[style[0]])
+                    p.geometry = Polygon(g)
+                    continue
+                elif g.geom_type == 'Point':
+                    tmp = post.getCamp(g)
+                    if tmp is not None:
+                        site = tmp[0]
+                        if 'ref' in site:
+                            if site['ref'] is not None:
+                                site['name'] = "Site %s" % site['ref']
+                        style = mapstyle.campsite(site)
+                        p = kml.Placemark(ns, site['osm_id'], site['name'], style[1], styles=[style[0]])
+                    p.geometry = Point(g)
+                    nf.append(p)
+    else:
+        logging.warning("No camps sites in this database")
 
 #
 # Skiing
 #
 if dd.get('piste') is True:
     piste = post.getPiste()
-    f = kml.Folder(ns, 0, 'Ski Trails', 'Trails in ' + title)
-    d.append(f)
-    for trail in piste:
-        #print(trail['name'])
-        if trail['name'] is None:
-            description = """OSM_ID: %s
-            FIXME: this needs the real name!
-            """ % trail['osm_id']
-            trail['name'] = "Unknown: " + trail['osm_id']
-        if 'pistw:type' in trail:
-            m = re.search(".*nordic.*", trail['piste:type'])
-            type = None
-            if m is not None:
-                type = 'nordic'
-                m = re.search(".*downhill.*", trail['piste:type'])
-        else:
-            type = 'downhill'
-        style = mapstyle.piste(trail)
-        p = kml.Placemark(ns, trail['osm_id'], trail['name'], style[1], styles=[style[0]])
-        way = trail['wkb_geometry']
-        p.geometry =  LineString(way.geoms[0])
-        f.append(p)
+    if piste is not None:
+        f = kml.Folder(ns, 0, 'Ski Trails', 'Trails in ' + title)
+        d.append(f)
+        for trail in piste:
+            #print(trail['name'])
+            if trail['name'] is None:
+                description = """OSM_ID: %s
+                FIXME: this needs the real name!
+                """ % trail['osm_id']
+                trail['name'] = "Unknown: " + trail['osm_id']
+                if 'piste:type' in trail:
+                    m = re.search(".*nordic.*", trail['piste:type'])
+                type = None
+                if m is not None:
+                    type = 'nordic'
+                    m = re.search(".*downhill.*", trail['piste:type'])
+                else:
+                    type = 'downhill'
+            style = mapstyle.piste(trail)
+            p = kml.Placemark(ns, trail['osm_id'], trail['name'], style[1], styles=[style[0]])
+            way = trail['wkb_geometry']
+            p.geometry =  LineString(way.geoms[0])
+            f.append(p)
+    else:
+        logging.warning("No skio trails in this database")
 
 outkml.write(k.to_string(prettyprint=True))
 outkml.close()
