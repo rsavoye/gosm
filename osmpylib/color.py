@@ -329,22 +329,49 @@ class MapStyle(object):
                 self.description += "Toilet Available"
         return self.styles, self.description
 
-    def campsite(self, data=dict()):
+    def campsite(self, data=dict(), ground=None):
         self.description = ""
         icon = styles.IconStyle(icon_href="icons/mx_tourism_camp_site.png")
         self.icons.append(icon.icon_href)
         self.styles = styles.Style(styles=[icon])
 
-        self.description = ""
-        if 'water' in data:
-            if data['water'] == 'yes':
-                self.description += "<br>Water Available"
+        if ground is not None:
+            self.description += ground
+
+        if len(data) > 2:
+            self.description += "<br><i>Has these features</i>:"
+
+        if 'fee' in data:
+            if data['fee'] == 'yes':
+                self.description += "<brHas fee"
+        if 'openfire' in data:
+            if data['openfire'] == 'yes':
+                self.description += "<br>Open fires allowed"
+        if 'internet_access' in data:
+            if data['internet_access'] == 'yes':
+                self.description += "<br>Internet Available"
+        if 'caravans' in data:
+            if data['caravans'] == 'yes':
+                self.description += "<br>RVs allowed"
+        if 'parking' in data:
+            if data['parking'] == 'yes':
+                self.description += "<br>Parking Available"
+
+        if 'drinking_water' in data:
+            if data['drinking_water'] == 'yes':
+                self.description += "<br>Drinking Water Available"
         if 'toilets' in data:
             if data['toilets'] == 'yes':
                 self.description += "<br>Toilet Available"
-        if 'power' in data:
-            if data['power'] == 'yes':
-                self.description += "<br>Ac Power Available"
+        if 'bbq' in data:
+            if data['bbq'] == 'yes':
+                self.description += "<br>Grill Available"
+        if 'power_supply' in data:
+            if data['power_supply'] == 'yes':
+                self.description += "<br>AC Power Available"
+        if 'picnic_table' in data:
+            if data['picnic_table'] == 'yes':
+                self.description += "<br>Picbic table Available"
         if 'leisure' in data:
             self.description += "<br>Firepit"
         return self.styles, self.description
