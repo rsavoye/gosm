@@ -38,6 +38,7 @@ sys.path.append(os.path.dirname(argv[0]) + '/osmpylib')
 from color import MapStyle
 from poly import Poly
 from sql import Postgis
+from osm import OverpassXAPI, osmConvert
 
 
 class myconfig(object):
@@ -54,15 +55,17 @@ class myconfig(object):
         self.options = dict()
         self.options['verbose'] = False
         self.options['poly'] = None
+        self.options['xapi'] = False
         self.options['database'] = None
         self.options['subset'] = None
         self.options['title'] = None
         self.options['remote'] = None
+        self.options['infile'] = None
         self.options['outfile'] = "./out.kml"
 
         try:
-            (opts, val) = getopt.getopt(argv[1:], "h,o:,s:,p:,t:,v,d:,r:",
-                ["help", "outfile", "subset", "poly", "title", "verbose", "database", "remote"])
+            (opts, val) = getopt.getopt(argv[1:], "h,o:,s:,p:,t:,v,d:,r:,x,i:",
+                ["help", "outfile", "subset", "poly", "title", "verbose", "database", "remote", "xapi", "infile"])
         except getopt.GetoptError as e:
             logging.error('%r' % e)
             self.usage(argv)
@@ -71,6 +74,10 @@ class myconfig(object):
         for (opt, val) in opts:
             if opt == '--help' or opt == '-h':
                 self.usage(argv)
+            elif opt == "--xapi" or opt == '-x':
+                self.options['xapi'] = True
+            elif opt == "--infile" or opt == '-i':
+                self.options['infile'] = val
             elif opt == "--outfile" or opt == '-o':
                 self.options['outfile'] = val
             elif opt == "--subset" or opt == '-s':
@@ -87,8 +94,32 @@ class myconfig(object):
                 self.options['verbose'] = True
                 logging.basicConfig(filename='osm2kml.log',level=logging.DEBUG)
 
-        if self.options['title'] is None and self.options['poly'] is not None:
-            self.options['title'] =  os.path.basename(self.options['poly']).replace(".poly", "")
+        # Setup default values
+        self.base = "foo"
+        if self.options['poly'] is None and self.options['infile'] is not None:
+            self.base = os.path.basename(self.options['infile']).replace(".osm", "")
+        elif self.options['poly'] is not None and self.options['infile'] is None:
+            self.base = os.path.basename(self.options['poly']).replace(".poly", "")
+        elif self.options['poly'] is None and self.options['infile'] is None and self.options['database'] is not None:
+            self.base = self.options['database']
+        elif self.options['poly'] is not None and self.options['infile'] is not None:
+            # FIXME: run osmconvert to extract the subset of data
+            self.base = os.path.basename(self.options['poly']).replace(".poly", "")
+        elif self.options['poly'] is None and self.options['infile'] is None and self.options['database'] is None:
+            logging.error("You to specify input data of some kind!")
+            self.usage()
+        else:
+            logging.error("Need an input file or polygon!")
+
+        if self.options['title'] is None:
+            self.options['title'] = self.base
+
+        if self.options['database'] is None:
+            self.options['database'] = self.base
+
+        logging.debug("Using %s as the base name" % self.base)
+
+        # Have a canned subset collections
         if self.options['subset'] is not None:
             for sub in self.options['subset'].split(','):
                 self.options[sub] = True
@@ -114,6 +145,7 @@ class myconfig(object):
 
     def dump(self):
         logging.info("Dumping config")
+        print("\tUsing '%s' as the default base name" % self.base)
         for i, j in self.options.items():
             print("\t%s: %s" % (i, j))
 
@@ -122,13 +154,19 @@ class myconfig(object):
         print("This program downloads map tiles and the geo-references them")
         print(argv[0] + ": options:")
         print("""\t--help(-h)   Help
-\t--outdir(-o)    Output directory for KML file
-\t--poly(-p)      Input OSM polyfile
+\t--outdir(-o)    Output file or directory for KML file(s)
+\t--infile(-i)    An input file in OSM XML format
+\t--poly(-p)      Input OSM polyfile to filter data
 \t--subset(-p)    Subset of data to map
 \t--title(-t)     Title for KML file
 \t--database(-d)  Database to Use
-t--remote(-r)    Database Server to Use (default localhost)
+\t--remote(-r)    Database Server to Use (default localhost)
+\t--xapi(-x)      Download OSM data only
 \t--verbose(-v)   Enable verbosity
+
+Either an input file in osm xml format or a database name. If both are supplied,
+the OSM file is imported into the database. To use fresh downloaded data
+instead of the input file, use -x.
         """)
         quit()
 
@@ -155,22 +193,31 @@ if dd.get('verbose') == 1:
     ch.setFormatter(formatter)
     root.addHandler(ch)
 
+poly = dd.get('poly')
 title = dd.get('title')
 outfile = dd.get('outfile')
+infile = dd.get('infile')
+dbname = dd.get('database')
 
-if dd.get('poly') is not None:
-    poly = Poly()
-    bbox = poly.getBBox(dd.get('poly'))
-    #logging.info("Bounding box is %r" % bbox)
-
-    # XAPI uses:
-    # minimum latitude, minimum longitude, maximum latitude, maximum longitude
-    xbox = "%s,%s,%s,%s" % (bbox[2], bbox[0], bbox[3], bbox[1])
-    #logging.info("Bounding xbox is %r" % xbox)
+post = Postgis()
+if dd.get('xapi') is True:
+    if dd.get('poly') is not None:
+        polyfiter = Poly()
+        bbox = polyfilter.getBBox(dd.get('poly'))
+        osm = outfile.replace('.kml', '.osm')
+        xapi = OverpassXAPI(bbox, osm)
+        post.importOSM(osm, dbname)
+elif infile is not None and dbname is not None and poly is None:
+    post.importOSM(infile, dbname)
+elif infile is not None and poly is not None:
+    oc = osmConvert()
+    osm = outfile.replace('.kml', '.osm')
+    oc.applyPoly(poly, infile, osm)
+    post.importOSM(osm, dbname)
 
 print("------------------------")
-post = Postgis()
-post.connect('localhost', dd.get('database'))
+
+# post.connect('localhost', dbname)
 
 #rr = post.getAddresses()
 #print(len(rr))
@@ -189,7 +236,7 @@ k.append(d)
 #wkb = ppygis3.Geometry()
 
 # Write buffer to KML file
-outkml = open(outfile, 'w')
+#outkml = open(outfile, 'w')
 
 #
 # Hiking Trails
@@ -246,8 +293,13 @@ if dd.get('roads') is True:
 #
 # House Addresses
 #
+threshold = 500
 if dd.get('addresses') is True:
     addrs = post.getAddresses()
+    if len(addrs) >= threshold:
+        ka = kml.KML()
+        da = kml.Document(ns, 'docid', title, 'doc description', styles=mstyle)
+        ka.append(da)
     f = kml.Folder(ns, 0, 'Addresses', 'House Addresses in ' + title)
     d.append(f)
     for addr in addrs:
@@ -267,6 +319,9 @@ if dd.get('addresses') is True:
         p.geometry =  Point(way.geoms[0])
         f.append(p)
 
+    if len(addrs) >= threshold:
+        addrout.write(k.to_string(prettyprint=True))
+        addrout.close()
 #
 # Mile Markers
 #
