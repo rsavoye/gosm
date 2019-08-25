@@ -126,9 +126,9 @@ tag,OTHER_OH_1,Ignore
 tag,OTHER_OH_2,Ignore
 tag,ADMINORG,Ignore
 tag,SECURITYID,Ignore
-tag,DISTRICTNA,addr:district
+tag,DISTRICTNA,Ignore
 tag,FORESTNAME,Ignore
-tag,FIELD_ID,ref:usfs
+tag,FIELD_ID,ref:usfs FS
 tag,SBS_SYMBOL,highway
 tag,ROUTESTATU,Ignore
 tag,GLOBALID,Ignore
