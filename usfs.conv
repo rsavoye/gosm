@@ -128,7 +128,7 @@ tag,ADMINORG,Ignore
 tag,SECURITYID,Ignore
 tag,DISTRICTNA,addr:district
 tag,FORESTNAME,Ignore
-tag,FIELD_ID,alt_name
+tag,FIELD_ID,ref:usfs
 tag,SBS_SYMBOL,highway
 tag,ROUTESTATU,Ignore
 tag,GLOBALID,Ignore
