@@ -72,7 +72,7 @@ class myconfig(object):
         self.options['mosaic'] = False
         self.options['download'] = False
         self.options['ersi'] = False
-        self.options['usgs'] = False
+        self.options['usgs'] = True
         self.options['topo'] = False
         self.options['terrain'] = False
         self.options['gtiff'] = False
@@ -167,7 +167,7 @@ class myconfig(object):
                   ie... GTiff, PDF, AQM, OSMAND
 \t--zooms(-z)     Zoom levels to download (14-18)
 \t--nodata(-n)    Disable downloading OSM data
-\t--download(-d)  Disable downloading OSM data
+\t--download(-d)  Download map tiles
 \t--verbose(-v)   Enable verbosity
         """)
         quit()
@@ -205,6 +205,7 @@ bbox = poly.getBBox(dd.get('poly'))
 # XAPI uses:
 # minimum latitude, minimum longitude, maximum latitude, maximum longitude
 xbox = "%s,%s,%s,%s" % (bbox[2], bbox[0], bbox[3], bbox[1])
+#logging.info("Bounding xbox is %r" % xbox)
 
 print("------------------------")
 #xapi = "(\n  way(%s);\n  node(%s);\n  rel(%s);\n  <;\n  >;\n);\nout meta;" % (box , xbox, xbox)
@@ -255,9 +256,9 @@ if dd.get('nodata') is False:
     else:
         logging.info("No changes found for %s" % polyname + '.osm')
 
-if dd.get('download') is False:
-    logging.info("Not downloading tiles (the default)")
-#    quit()
+if dd.get('download') is False and dd.get('download') is False:
+    logging.info("Not downloading anything (the default)")
+    quit()
 
 # https://mt.google.com/vt/lyrs=s&x=${X}&amp;y=${y}&z=${Z} -- Satellite
 # https://mt.google.com/vt/lyrs=y&amp;x=${X}&amp;y=${y}&z=${Z} -- Hybrid
@@ -296,6 +297,7 @@ ersidb = Tiledb(outfile + "/ERSI")
 
 
 path = dd.get('poly').split('.')
+dbfile = outfile + "/tiledb"
 
 if dd.get('usgs'):
     zoom = 15
@@ -310,7 +312,7 @@ if dd.get('usgs'):
             logging.info("Done downloading USGS data")
     filespec = outfile + '/' + os.path.basename(path[0]) + '-USGS' + str(zoom) + '.txt'
     usgsdb.writeCache(tiles, filespec)
-    usgsdb.writeDB(tiles, "tiledb", poly.getName(), 'usgs')
+    usgsdb.writeDB(tiles, dbfile, poly.getName(), 'usgs')
 
 
 if dd.get('topo'):
@@ -327,7 +329,7 @@ if dd.get('topo'):
             logging.info("Done downloading Topo data")
     filespec = outfile + '/' + os.path.basename(path[0]) + '-Topo' + str(zoom) + '.txt'
     topodb.writeCache(tiles, filespec)
-    topodb.writeDB(tiles, "tiledb", poly.getName(), 'topo')
+    topodb.writeDB(tiles, dbfile, poly.getName(), 'topo')
 #if dd.get('mosaic') is True and dd.get('topo'):
 #    topodb.mosaic(tiles)
 
@@ -344,7 +346,7 @@ if dd.get('ersi'):
             logging.info("Done downloading Sat imagery")
     filespec = path[0] + '-Sat' + str(zoom) + '.txt'
     ersidb.writeCache(tiles, filespec)
-    ersidb.writeDB(tiles, "tiledb", poly.getName(), 'ersi')
+    ersidb.writeDB(tiles, dbfile, poly.getName(), 'ersi')
 
 #if dd.get('mosaic') is True and dd.get('ersi'):
 #    ersidb.mosaic(tiles)
@@ -361,7 +363,7 @@ if dd.get('terrain'):
             logging.info("Done downloading Topo data")
             terraindb.writeCache(tiles,filespec)
     filespec = path[0] + '-Terrain' + str(zoom) + '.txt'
-    usgsdb.writeDB(tiles, "tiledb", poly.getName(), 'terrain')
+    usgsdb.writeDB(tiles, dbfile, poly.getName(), 'terrain')
 #if dd.get('mosaic') is True and dd.get('terrain'):
 #    terraindb.mosaic(tiles)
 
