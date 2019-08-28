@@ -130,6 +130,7 @@ class Tile(object):
             image = "loaded"
         print("X=%s, Y=%s, Z=%s, Image is %s" % (self.z, self.x, self.y, image))
 
+
 class Tiledb(object):
     """Class to manage a map tiles"""
     def __init__(self, top=None, levels=None):
@@ -223,6 +224,7 @@ class Tiledb(object):
         with concurrent.futures.ThreadPoolExecutor(max_workers = self.threads) as executor:
             block = 0
             while block <= len(tiles):
+                # dlthread(self.storage, mirrors, tiles)
                 future = executor.submit(dlthread, self.storage, mirrors, tiles[block:block+100])
                 #logging.debug("FUTURE: %r" % future.result.running())
                 #logging.debug("Block %d:%d" % (block, block + 100))
@@ -260,9 +262,9 @@ class Tiledb(object):
         sql = """CREATE TABLE IF NOT EXISTS data (poly text, source text, z int, x int, y int);"""
         cursor.execute(sql)
         for tile in tiles:
-            #sql = """INSERT OR REPLACE INTO data(poly, source, z, x, y) VALUES(?,?,?,?);"""
+            sql = """INSERT OR REPLACE INTO data(poly, source, z, x, y) VALUES(?,?,?,?,?);"""
             #file = "%s/%s/%s/%s.tif" % (tile.z, tile.x, tile.y, tile.y)
-            sql = """INSERT INTO data(poly, source, z, x, y) VALUES(?,?,?,?,?);"""
+            #sql = """INSERT INTO data(poly, source, z, x, y) VALUES(?,?,?,?,?);"""
             cursor.execute(sql, (os.path.basename(poly), source, tile.z, tile.x, tile.y))
         db.commit()
         logging.info("Wrote cache db %r" % filespec)
@@ -398,7 +400,6 @@ class Tiledb(object):
             #ppp = Popen(cmd, stdout=PIPE, bufsize=0, close_fds=ON_POSIX)
             #dest.colorinterp = [ ColorInterp.red, ColorInterp.green, ColorInterp.blue]
             name = os.path.basename(self.storage + file)
-            print("FIXME: %r" % name)
             with rasterio.open(name + ".tif", "w", **out_meta) as dest:
                 try:
                     dest.write(mosaic)
@@ -484,13 +485,12 @@ def dlthread(dest, mirrors, tiles):
     start = datetime.now()
 
     totaltime = 0.0
-    logging.info("Downloading %d tiles in thread %d" % (len(tiles), threading.get_ident())
-    )
+    # logging.info("Downloading %d tiles in thread %d to %s" % (len(tiles), threading.get_ident(), dest))
     template = "{0}/{1}/{2}/{3}"
     db = Tiledb(dest)
     for tile in tiles:
         fixed = ()
-        logging.debug("Tile: %r/%r/%r in thread %r" % (tile.z, tile.y, tile.x,  threading.get_ident()))
+        logging.debug("Tile: %s/%r/%r/%r in thread %r" % (dest, tile.z, tile.y, tile.x,  threading.get_ident()))
         for url in mirrors:
             new = url.format(tile.z, tile.x, tile.y)
             fixed = fixed + (new,)
