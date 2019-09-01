@@ -375,3 +375,27 @@ attribute,seasonal,Seasonal,seasonal=yes
 # Warning 6: Normalized/laundered field name: 'ROUTESTATUS' to 'ROUTESTATU'
 # Warning 6: Normalized/laundered field name: 'SHAPE_Length' to 'SHAPE_Leng'
 
+tag,WILDERNESS,name
+tag,WILDERNE_1,name
+tag,wilderne_1,Ignore
+tag,AREAID,Ignore
+tag,BOUNDARYST,Ignore
+tag,GIS_ACRES,Ignore
+tag,WID,Ignore
+tag,SHAPE_AREA,Ignore
+tag,SHAPE_LEN,Ignore
+
+tag,DEVELOPEDS,Ignore
+tag,CASENAME,Ignore
+tag,LOCALCASEI,Ignore
+tag,REGION,Ignore
+tag,AREATYPE,Ignore
+tag,AREANAME,name
+tag,FS_STATUS,Ignore
+tag,ACTIONDATE,Ignore
+tag,EXPIRATION,Ignore
+tag,BLM_SERIAL,Ignore
+tag,OFFICIALAC,Ignore
+tag,GIS_ACRES,Ignore
+tag,COMMENTS,Ignore
+
