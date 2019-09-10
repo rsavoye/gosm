@@ -204,10 +204,10 @@ class Postgis(object):
         result = self.query("SELECT osm_id,ref,name,other_tags,wkb_geometry FROM points WHERE ST_Contains(ST_GeomFromText('%s', 4326), ST_CollectionExtract(wkb_geometry, 1)) AND (tourism='camp_pitch' OR tourism='camp_site');" % geom.wkt)
         return result
 
-    def getPlaces(self, result=list(), level=8):
+    def getPlaces(self, level, result=list()):
         """Get all the cities and town in the database, which is used to organize
         various data into smaller, more navigatable subsets."""
-        result =  self.query("SELECT osm_id,name,place,wkb_geometry FROM multipolygons WHERE boundary is not NULL AND admin_level='%d';" % level)
+        result =  self.query("SELECT osm_id,osm_way_id,name,admin_level,place,wkb_geometry FROM multipolygons WHERE boundary is not NULL AND admin_level='%d' AND name is not NULL;" % level)
         return result
 
     def getFireWater(self, geom, result=list()):
@@ -216,13 +216,6 @@ class Postgis(object):
         result = self.query(query)
         return result
 
-    # def getCamp(self, geom, result=list()):
-    #     """Get the data for a campsite using the GPS location in the relation"""
-    #     # result = self.query("SELECT osm_id,name,ref,other_tags FROM points WHERE ST_Equals(ST_CollectionExtract(wkb_geometry, 1), ST_GeomFromText('%s', 4326));" % geom.wkt)
-    #     result = self.query("SELECT osm_id,name,ref,other_tags FROM points WHERE ST_Equals(ST_CollectionExtract(wkb_geometry, 1), ST_GeomFromText('%s', 4326));" % geom.wkt)
-    #     result = self.query("SELECT osm_id,name,ref,other_tags FROM points WHERE ST_Equals(ST_CollectionExtract(wkb_geometry, 1), ST_GeomFromText('%s', 4326));" % geom.wkt)
-    #     return result
- 
     def getPiste(self, result=list()):
         result = self.query("SELECT osm_id,name,other_tags,wkb_geometry FROM lines WHERE other_tags LIKE '%piste%';")
         return result
