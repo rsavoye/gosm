@@ -99,7 +99,6 @@ class Postgis(object):
 
     def query(self, query=""):
         """Query a local or remote postgresql database"""
-
         # logging.debug("postgresql.query(" + query + ")")
         if self.dbshell.closed != 0:
             logging.error("Database %r is not connected!" % self.options.get('database'))
@@ -181,12 +180,11 @@ class Postgis(object):
         result = self.query("SELECT osm_id,name,addr_housenumber,addr_street,wkb_geometry FROM points WHERE addr_housenumber is not NULL;")
         return result
 
-    def getTrails(self, result=list()):
-        result = self.query("SELECT osm_id,name,other_tags,highway,wkb_geometry FROM lines WHERE (highway='path' OR highway='footway'  OR highway='cycleway');")
-        return result
-
-    def getFireWater(self, result=list()):
-        result =  self.query("SELECT osm_id,name,other_tags,wkb_geometry FROM other_relations WHERE other_tags LIKE '%fire_hydrant%' OR other_tags LIKE '%water_tank%' OR other_tags LIKE '%fire_water_pond%';")
+    def getTrails(self, poly=None, result=list()):
+        if poly is None:
+            result = self.query("SELECT osm_id,name,other_tags,highway,wkb_geometry FROM lines WHERE (highway='path' OR highway='footway'  OR highway='cycleway');")
+        else:
+            result = self.query("SELECT osm_id,name,other_tags,highway,wkb_geometry FROM lines WHERE (highway='path' OR highway='footway'  OR highway='cycleway');")
         return result
 
     def getWay(self, geom, result=dict()):
@@ -195,21 +193,35 @@ class Postgis(object):
         return result
  
     def getCampGrounds(self, result=list(), campground=None):
-        #result = self.query("SELECT osm_id,name,other_tags,wkb_geometry FROM other_relations WHERE other_tags LIKE '%camp_site%' AND name LIKE '%Campground%';")
-        result =  self.query("SELECT osm_id,name,wkb_geometry FROM multipolygons WHERE tourism='camp_site' AND boundary is not NULL;")
+        """Get all the camping areas in the database, which is used to organize them
+        the camp sites into each campground"""
+        #result = self.query("SELECT osm_id,name,other_tags,wkb_geometry FROM other_relations WHERE other_tags LIKE '%camp_site%' AND (name LIKE '%Campground%' OR name LIKE '%Camping Area%' );")
+        result =  self.query("SELECT osm_id,name,other_tags,wkb_geometry FROM multipolygons WHERE tourism='camp_site' AND boundary is not NULL;")
         return result
 
     def getCampSites(self, geom, result=list()):
-#        query = "SELECT osm_id,name,wkb_geometry FROM points WHERE ST_Contains(ST_GeomFromText('%s', 4326), ST_CollectionExtract(wkb_geometry, 1)) AND (tourism='camp_pitch' OR tourism='camp_site');" % geom.wkt
-        result = self.query("SELECT osm_id,name,wkb_geometry FROM points WHERE ST_Contains(ST_GeomFromText('%s', 4326), ST_CollectionExtract(wkb_geometry, 1)) AND (tourism='camp_pitch' OR tourism='camp_site');" % geom.wkt)
+        """Get all the camp sites in a camping area"""
+        result = self.query("SELECT osm_id,ref,name,other_tags,wkb_geometry FROM points WHERE ST_Contains(ST_GeomFromText('%s', 4326), ST_CollectionExtract(wkb_geometry, 1)) AND (tourism='camp_pitch' OR tourism='camp_site');" % geom.wkt)
         return result
 
-    def getCamp(self, geom, result=list()):
-        """Get the data for a campsite using the GPS location in the relation"""
-        # result = self.query("SELECT osm_id,name,ref,other_tags FROM points WHERE ST_Equals(ST_CollectionExtract(wkb_geometry, 1), ST_GeomFromText('%s', 4326));" % geom.wkt)
-        result = self.query("SELECT osm_id,name,ref,other_tags FROM points WHERE ST_Equals(ST_CollectionExtract(wkb_geometry, 1), ST_GeomFromText('%s', 4326));" % geom.wkt)
-        result = self.query("SELECT osm_id,name,ref,other_tags FROM points WHERE ST_Equals(ST_CollectionExtract(wkb_geometry, 1), ST_GeomFromText('%s', 4326));" % geom.wkt)
+    def getPlaces(self, result=list(), level=8):
+        """Get all the cities and town in the database, which is used to organize
+        various data into smaller, more navigatable subsets."""
+        result =  self.query("SELECT osm_id,name,place,wkb_geometry FROM multipolygons WHERE boundary is not NULL AND admin_level='%d';" % level)
         return result
+
+    def getFireWater(self, geom, result=list()):
+        """Get all the fire hydrants, cisterns, or open water sources in a polygon."""
+        query = "SELECT osm_id,ref,name,emergency,wkb_geometry FROM points WHERE ST_Contains(ST_GeomFromText('%s', 4326), ST_CollectionExtract(wkb_geometry, 1)) AND (emergency='fire_hydrant' OR emergency='water_tank' OR emergency='fire_water_pond');" % geom[0].wkt
+        result = self.query(query)
+        return result
+
+    # def getCamp(self, geom, result=list()):
+    #     """Get the data for a campsite using the GPS location in the relation"""
+    #     # result = self.query("SELECT osm_id,name,ref,other_tags FROM points WHERE ST_Equals(ST_CollectionExtract(wkb_geometry, 1), ST_GeomFromText('%s', 4326));" % geom.wkt)
+    #     result = self.query("SELECT osm_id,name,ref,other_tags FROM points WHERE ST_Equals(ST_CollectionExtract(wkb_geometry, 1), ST_GeomFromText('%s', 4326));" % geom.wkt)
+    #     result = self.query("SELECT osm_id,name,ref,other_tags FROM points WHERE ST_Equals(ST_CollectionExtract(wkb_geometry, 1), ST_GeomFromText('%s', 4326));" % geom.wkt)
+    #     return result
  
     def getPiste(self, result=list()):
         result = self.query("SELECT osm_id,name,other_tags,wkb_geometry FROM lines WHERE other_tags LIKE '%piste%';")
