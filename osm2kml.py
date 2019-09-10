@@ -251,6 +251,12 @@ mainkml.append(d)
 
 post.connect('localhost', dbname)
 
+# Get all of the cities and towns in the database. As some datasets
+# (like fire_hydrants) are large, and at some zoom levels obscure
+# details, these are put into a sub-folder in the KML file.
+places = post.getPlaces()
+# Get the bigger counties in the database.
+counties = post.getPlaces(6)
 
 #
 # Hiking Trails
@@ -428,38 +434,39 @@ if dd.get('hotsprings') is True:
 # Water Sources
 #
 if dd.get('firewater') is True:
-    districts = post.getFireWater()
-    if districts is not None:
-        f = kml.Folder(ns, 0, 'Emergency Water Sources')
-        d.append(f)
-        for dist in districts:
-            if 'name' not in dist:
-                if 'ref' in dist:
-                    dist['name'] = dist['ref']
-            nf = kml.Folder(ns, 0, dist['name'])
+    f = kml.Folder(ns, 0, 'Fire Water Sources')
+    d.append(f)
+    # cache the water sources we find in the place, so when we use
+    # the county polygon, we don't create a duplicate Placemark.
+    cache = dict()
+    for place in places:
+        if place['place'] is None:
+            logging.warning("%s is missing the place tag, so will be ignored" % place['name'])
+            continue
+        elif place['place'] != 'city' and place['place'] != 'town' and place['name'] is not None:
+            continue
+        water = post.getFireWater(place['wkb_geometry'])
+        # logging.debug("FIXME: %d in %s" % (len(water), place['name']))
+        if len(water) > 0:
+            #if len(cache) == 0:
+            nf = kml.Folder(ns, 0, '%s Water Sources' % place['name'])
             f.append(nf)
-            way = dist['wkb_geometry']
-            for g in way.geoms:
-                if g.geom_type == 'Polygon':
-                    style = mapstyle.firewater(dist)
-                    p = kml.Placemark(ns, dist['osm_id'], dist['name'], style[1], styles=[style[0]])
-                    p.geometry = Polygon(g)
-                    continue
-                elif g.geom_type == 'Point':
-                    # The relation has no geometry of it's own. Use tmp to
-                    # avoid a double query to the database
-                    tmp = post.getWay(g)
-                    if len(tmp) == 0:
+            for source in water:
+                try:
+                    if cache[source['osm_id']] is not None:
                         continue
-                    site = tmp[0]
-                    if 'ref' in site:
-                        if site['ref'] is not None and 'tourism' in site:
-                            site['name'] = "Site %s" % site['ref']
-                        else:
-                            site['name'] = site['ref']
-                    style = mapstyle.firewater(site)
-                    p = kml.Placemark(ns, site['osm_id'], site['name'], style[1], styles=[style[0]])
-                p.geometry = Point(g)
+                except:
+                    pass
+                if 'name' not in source:
+                    if 'ref' in source:
+                        source['name'] = source['ref']
+                    else:
+                        source['name'] = "Unknown"
+                way = source['wkb_geometry']
+                cache[source['osm_id']] = source
+                style = mapstyle.firewater(source)
+                p = kml.Placemark(ns, source['osm_id'], source['name'], style[1], styles=[style[0]])
+                p.geometry = Point(way.geoms[0])
                 nf.append(p)
     else:
         logging.warning("No emergency water sources in this database")
@@ -490,26 +497,15 @@ if dd.get('camps') is True:
                 if sites is None:
                     continue
                 for site in sites:
-                    style = mapstyle.campground(camp)
-                    # style = mapstyle.campsite(site, site['name'])
+                    if 'openfire' in site or 'picnic_table' in site:
+                        style = mapstyle.campsite(site, site['name'])
+                    else:
+                        style = mapstyle.campsite(camp, site['name'])
                     p = kml.Placemark(ns, site['osm_id'], site['name'], style[1], styles=[style[0]])
                     p.geometry = site['wkb_geometry'][0]
                     nf.append(p)
-                # elif g.geom_type == 'Point':
-                #     tmp = post.getCamp(g)
-                #     if tmp is not None:
-                #         site = tmp[0]
-                #         if 'ref' in site:
-                #             if site['ref'] is not None:
-                #                 site['name'] = "Site %s" % site['ref']
-                #         style = mapstyle.campsite(site, camp['name'])
-                #         p = kml.Placemark(ns, site['osm_id'], site['name'], style[1], styles=[style[0]])
-                #         p.geometry = Point(g)
-                #         nf.append(p)
-                #     else:
-                #        logging.error("Couldn't lookup %s" % camp['name'])
     else:
-        logging.warning("No camps sites in this database")
+        logging.warning("No camps sites in this database!")
 
 #
 # Skiing
