@@ -200,9 +200,14 @@ infile = dd.get('infile')
 dbname = dd.get('database')
 
 post = Postgis()
+if dd.get('poly') is not None:
+    polyfilter = Poly(poly)
+    wkt = polyfilter.getWkt()
+    # post.addPolygon(polyfilter)
+
 if dd.get('xapi') is True:
     if dd.get('poly') is not None:
-        polyfilter = Poly()
+        # polyfilter = Poly()
         bbox = polyfilter.getBBox(poly)
         osm = outfile.replace('.kml', '.osm')
         xapi = OverpassXAPI(bbox, osm)
@@ -245,6 +250,8 @@ mainkml.append(d)
 #outkml = open(outfile, 'w')
 
 post.connect('localhost', dbname)
+
+
 #
 # Hiking Trails
 #
@@ -471,27 +478,36 @@ if dd.get('camps') is True:
                     camp['name'] = camp['ref']
             nf = kml.Folder(ns, 0, camp['name'])
             f.append(nf)
-            print(camp)
             way = camp['wkb_geometry']
             for g in way.geoms:
+                # FIXME: do we care ?
                 if g.geom_type == 'Polygon':
                     style = mapstyle.campground(camp)
                     p = kml.Placemark(ns, camp['osm_id'], camp['name'], style[1], styles=[style[0]])
                     p.geometry = Polygon(g)
+                    # continue
+                sites = post.getCampSites(way[0])
+                if sites is None:
                     continue
-                elif g.geom_type == 'Point':
-                    tmp = post.getCamp(g)
-                    if tmp is not None:
-                        site = tmp[0]
-                        if 'ref' in site:
-                            if site['ref'] is not None:
-                                site['name'] = "Site %s" % site['ref']
-                        style = mapstyle.campsite(site, camp['name'])
-                        p = kml.Placemark(ns, site['osm_id'], site['name'], style[1], styles=[style[0]])
-                        p.geometry = Point(g)
-                        nf.append(p)
-                    else:
-                       logging.error("Couldn't lookup %s" % camp['name'])
+                for site in sites:
+                    style = mapstyle.campground(camp)
+                    # style = mapstyle.campsite(site, site['name'])
+                    p = kml.Placemark(ns, site['osm_id'], site['name'], style[1], styles=[style[0]])
+                    p.geometry = site['wkb_geometry'][0]
+                    nf.append(p)
+                # elif g.geom_type == 'Point':
+                #     tmp = post.getCamp(g)
+                #     if tmp is not None:
+                #         site = tmp[0]
+                #         if 'ref' in site:
+                #             if site['ref'] is not None:
+                #                 site['name'] = "Site %s" % site['ref']
+                #         style = mapstyle.campsite(site, camp['name'])
+                #         p = kml.Placemark(ns, site['osm_id'], site['name'], style[1], styles=[style[0]])
+                #         p.geometry = Point(g)
+                #         nf.append(p)
+                #     else:
+                #        logging.error("Couldn't lookup %s" % camp['name'])
     else:
         logging.warning("No camps sites in this database")
 

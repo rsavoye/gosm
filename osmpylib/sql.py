@@ -29,6 +29,9 @@ from subprocess import PIPE, Popen, STDOUT
 import os
 import sys
 ON_POSIX = 'posix' in sys.builtin_module_names
+from sys import argv
+sys.path.append(os.path.dirname(argv[0]) + '/osmpylib')
+from poly import Poly
 
 
 class Postgis(object):
@@ -39,6 +42,8 @@ class Postgis(object):
         #    self.connect(dbhost, dbname)
         self.database = dbname
         self.dbserver = dbhost
+        # The geometry is a multipolygon, and limits the query to that area.
+        self.boundary = None
 
     def connect(self, dbserver='localhost', database='postgres'):
         """Connect to a local or remote postgresql server"""
@@ -74,6 +79,11 @@ class Postgis(object):
             logging.warning("DB Shell already open")
         self.addExtensions()
 
+    def addPolygon(self, poly):
+        wkt = poly.getGeometry().getWkt()
+        self.boundpoints = "AND ST_Contains(ST_GeomFromText(%s, 4326), ST_CollectionExtract(wkb_geometry, 1))" % wkt
+        self.boundlines = "AND ST_Contains(ST_GeomFromText(%s, 4326), ST_CollectionExtract(wkb_geometry, 2))" % wkt
+
     def close(self):
         self.dbshell.close()
 
@@ -90,7 +100,7 @@ class Postgis(object):
     def query(self, query=""):
         """Query a local or remote postgresql database"""
 
-        logging.debug("postgresql.query(" + query + ")")
+        # logging.debug("postgresql.query(" + query + ")")
         if self.dbshell.closed != 0:
             logging.error("Database %r is not connected!" % self.options.get('database'))
             return self.result
@@ -98,7 +108,7 @@ class Postgis(object):
         self.result = list()
         try:
             self.dbcursor.execute(query)
-            logging.info("Got %r records from query." % self.dbcursor.rowcount)
+            # logging.info("Got %r records from query." % self.dbcursor.rowcount)
         except psycopg2.ProgrammingError as e:
             if e.pgcode != None:
                 logging.error("Query failed to fetch! %r" % e.pgcode)
@@ -133,6 +143,15 @@ class Postgis(object):
             line = self.dbcursor.fetchone()
 
         return self.result
+
+    # Edit /usr/share/gdal/osmconf.ini and add boundary as a polygon
+    def getBoundaries(self, poly, result=list()):
+        result = self.query("")
+        self.addPolygon(poly)
+#        result =  self.query("SELECT osm+_id,name,boundary,wkb_geometry FROM multipolygons WHERE boundary is not NULL';")
+        return self.result
+
+        return result
 
     def addExtensions(self):
         result = self.query("create extension hstore")
@@ -177,16 +196,18 @@ class Postgis(object):
  
     def getCampGrounds(self, result=list(), campground=None):
         #result = self.query("SELECT osm_id,name,other_tags,wkb_geometry FROM other_relations WHERE other_tags LIKE '%camp_site%' AND name LIKE '%Campground%';")
-        result =  self.query("SELECT osm_id,name,other_tags,wkb_geometry FROM other_relations WHERE other_tags LIKE '%camp_site%';")
+        result =  self.query("SELECT osm_id,name,wkb_geometry FROM multipolygons WHERE tourism='camp_site' AND boundary is not NULL;")
         return result
 
-    def getCampSites(self, result=list()):
-        result = self.query("SELECT osm_id,name,ref,other_tags,wkb_geometry FROM points WHERE tourism='camp_site' OR tourism='camp_pitch';")
+    def getCampSites(self, geom, result=list()):
+#        query = "SELECT osm_id,name,wkb_geometry FROM points WHERE ST_Contains(ST_GeomFromText('%s', 4326), ST_CollectionExtract(wkb_geometry, 1)) AND (tourism='camp_pitch' OR tourism='camp_site');" % geom.wkt
+        result = self.query("SELECT osm_id,name,wkb_geometry FROM points WHERE ST_Contains(ST_GeomFromText('%s', 4326), ST_CollectionExtract(wkb_geometry, 1)) AND (tourism='camp_pitch' OR tourism='camp_site');" % geom.wkt)
         return result
 
     def getCamp(self, geom, result=list()):
         """Get the data for a campsite using the GPS location in the relation"""
         # result = self.query("SELECT osm_id,name,ref,other_tags FROM points WHERE ST_Equals(ST_CollectionExtract(wkb_geometry, 1), ST_GeomFromText('%s', 4326));" % geom.wkt)
+        result = self.query("SELECT osm_id,name,ref,other_tags FROM points WHERE ST_Equals(ST_CollectionExtract(wkb_geometry, 1), ST_GeomFromText('%s', 4326));" % geom.wkt)
         result = self.query("SELECT osm_id,name,ref,other_tags FROM points WHERE ST_Equals(ST_CollectionExtract(wkb_geometry, 1), ST_GeomFromText('%s', 4326));" % geom.wkt)
         return result
  
