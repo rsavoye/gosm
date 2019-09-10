@@ -254,9 +254,10 @@ post.connect('localhost', dbname)
 # Get all of the cities and towns in the database. As some datasets
 # (like fire_hydrants) are large, and at some zoom levels obscure
 # details, these are put into a sub-folder in the KML file.
-places = post.getPlaces()
+places = post.getPlaces(8)
 # Get the bigger counties in the database.
 counties = post.getPlaces(6)
+
 
 #
 # Hiking Trails
@@ -439,24 +440,30 @@ if dd.get('firewater') is True:
     # cache the water sources we find in the place, so when we use
     # the county polygon, we don't create a duplicate Placemark.
     cache = dict()
-    for place in places:
+    areas = list()
+    areas = places
+    areas += counties
+    for place in areas:
+        if 'osm_way_id' in place and place['osm_id'] is None:
+            place['osm_id'] = place['osm_way_id']
         if place['place'] is None:
-            logging.warning("%s is missing the place tag, so will be ignored" % place['name'])
-            continue
+            if int(place['admin_level']) != 6:
+                logging.warning("%s is missing the place tag, so will be ignored" % place['name'])
+                continue
         elif place['place'] != 'city' and place['place'] != 'town' and place['name'] is not None:
             continue
         water = post.getFireWater(place['wkb_geometry'])
-        # logging.debug("FIXME: %d in %s" % (len(water), place['name']))
+        # gging.debug("FIXME: %d in %s" % (len(water), place['name']))
+        if place['name'] in cache:
+            continue
+        else:
+            cache[place['name']] = place
         if len(water) > 0:
-            #if len(cache) == 0:
             nf = kml.Folder(ns, 0, '%s Water Sources' % place['name'])
             f.append(nf)
             for source in water:
-                try:
-                    if cache[source['osm_id']] is not None:
-                        continue
-                except:
-                    pass
+                if source['osm_id'] in cache:
+                    continue
                 if 'name' not in source:
                     if 'ref' in source:
                         source['name'] = source['ref']
