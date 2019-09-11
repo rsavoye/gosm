@@ -44,7 +44,7 @@ class Poly(object):
         self.polygons = dict()
         if filespec is not None:
             self.filespec = filespec
-            self.readPolygon(filespec)
+            self.geometry = self.readPolygon(filespec)
 
     def getName(self):
         return os.path.basename(self.filespec).replace(".poly", "")
@@ -97,10 +97,13 @@ class Poly(object):
         return self.geometry
 
     def getBoundary(self):
-        set.geometry.GetBoundary()
+        self.geometry.GetBoundary()
 
     def getWkt(self):
         text = self.geometry.ExportToWkt().replace(" 0,", ",")
+        # epdb.st()
+        # bound = self.geometry.GetBoundary()
+        # text = bound.ExportToWkt().replace(" 0,", ",")
         return text.replace("0)", ")")
 
     def getGeometry(self):
