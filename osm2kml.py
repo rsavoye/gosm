@@ -258,18 +258,29 @@ places = post.getPlaces(8)
 # Get the bigger counties in the database.
 counties = post.getPlaces(6)
 
+parks = post.getProtected()
 
 #
 # Hiking Trails
 #
 if dd.get('trails') is True:
-    trails = post.getTrails()
-    if trails is not None:
-        f = kml.Folder(ns, 0, 'Trails', 'Trails in ' + title)
-        d.append(f)
-        #print(len(trails))
+    f = kml.Folder(ns, 0, 'Hiking Trails')
+    d.append(f)
+    # cache the trails we find in the area, so when we use
+    # the county polygon, we don't create a duplicate LineString.
+    cache = dict()
+    areas = list()
+    areas = parks
+    areas += counties
+    for place in areas:
+        tmp = place['wkb_geometry'][0]
+        trails = post.getTrails(tmp)
+        logging.debug("FIXME: %d: %s" % (len(trails), place['name']))
+        if trails is None or len(trails) == 0:
+            continue
+        nf = kml.Folder(ns, 0, '%s Trails' % place['name'])
+        f.append(nf)
         for trail in trails:
-            #print(trail['name'])
             if trail['name'] is None:
                 description = """OSM_ID: %s
                 FIXME: this needs the real name!
@@ -281,10 +292,7 @@ if dd.get('trails') is True:
             p = kml.Placemark(ns, trail['osm_id'], trail['name'], style[1], styles=[style[0]])
             way = trail['wkb_geometry']
             p.geometry =  LineString(way.geoms[0])
-            f.append(p)
-    else:
-        logging.warning("No trails in thie database")
-
+            nf.append(p)
 #
 # Roads
 #
@@ -459,7 +467,7 @@ if dd.get('firewater') is True:
         else:
             cache[place['name']] = place
         if len(water) > 0:
-            nf = kml.Folder(ns, 0, '%s Water Sources' % place['name'])
+            nf = kml.Folder(ns, 0, '%s Water Sources' % title)
             f.append(nf)
             for source in water:
                 if source['osm_id'] in cache:
