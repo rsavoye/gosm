@@ -180,13 +180,6 @@ class Postgis(object):
         result = self.query("SELECT osm_id,name,addr_housenumber,addr_street,wkb_geometry FROM points WHERE addr_housenumber is not NULL;")
         return result
 
-    def getTrails(self, poly=None, result=list()):
-        if poly is None:
-            result = self.query("SELECT osm_id,name,other_tags,highway,wkb_geometry FROM lines WHERE (highway='path' OR highway='footway'  OR highway='cycleway');")
-        else:
-            result = self.query("SELECT osm_id,name,other_tags,highway,wkb_geometry FROM lines WHERE (highway='path' OR highway='footway'  OR highway='cycleway');")
-        return result
-
     def getWay(self, geom, result=dict()):
         """Get the data for a fire water source using the GPS location in the relation"""
         result = self.query("SELECT osm_id,emergency,landing_site,name,ref,other_tags FROM points WHERE ST_Equals(ST_CollectionExtract(wkb_geometry, 1), ST_GeomFromText('%s', 4326))" % geom.wkt)
@@ -208,6 +201,17 @@ class Postgis(object):
         """Get all the cities and town in the database, which is used to organize
         various data into smaller, more navigatable subsets."""
         result =  self.query("SELECT osm_id,osm_way_id,name,admin_level,place,wkb_geometry FROM multipolygons WHERE boundary is not NULL AND admin_level='%d' AND name is not NULL;" % level)
+        return result
+
+    def getProtected(self, result=list()):
+        """Get all the wilderness areas and park in database, which is used to organize
+        various data into smaller, more navigatable subsets."""
+        result =  self.query("SELECT osm_id,osm_way_id,name,admin_level,place,wkb_geometry FROM multipolygons WHERE boundary='protected_area' OR boundary='national_park' AND name is not NULL;")
+        return result
+
+    def getTrails(self, geom, result=list()):
+        """Get all the Trails in a defined area"""
+        result = self.query("SELECT osm_id,name,other_tags,wkb_geometry FROM lines WHERE ST_Contains(ST_GeomFromText('%s', 4326), ST_CollectionExtract(wkb_geometry, 2));" % geom.wkt)
         return result
 
     def getFireWater(self, geom, result=list()):
