@@ -17,6 +17,7 @@
 # Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 # 
 
+
 #
 # This assume the user running this script has full priviledges for the database.
 #
@@ -125,6 +126,7 @@ while test $i -lt ${#polyfiles[@]} -o x"${polys}" = x; do
     if test x"${polys}" = x; then
 	polys="done"
     fi
+
     case ${filetype} in
 	xml|pbf|osm)
 #	    if test x"${polys}" != x"done" -a ${#polyfiles[@]} -gt 0; then
@@ -135,11 +137,13 @@ while test $i -lt ${#polyfiles[@]} -o x"${polys}" = x; do
 		    exit
 		fi
 	    fi
-	    osm2pgsql --slim -C 500 -d ${dbname} --number-processes 8 ${infile} --hstore --input-reader xml --drop >& /dev/null
+	    osm2pgsql -c --slim -C 500 -d ${dbname} --number-processes 8 ${infile} --hstore --input-reader xml --drop >& /dev/null
 	    if test $? -gt 0; then
 		exit
 	    fi
-	    # rm -f ${dbname}.osm
+	    # ogr2ogr imports relations, sort-of, and osm2pgsql doesn't. We use the
+	    # relations or boundaries to create groups, ie.. KML "<Folder>"
+	    ogr2ogr -overwrite -f  "PostgreSQL" PG:"dbname=${dbname}" -nlt GEOMETRYCOLLECTION ${infile}
 	    ;;
 	zip)
 	    unzip -o ${infile}
