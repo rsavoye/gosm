@@ -273,10 +273,12 @@ if dd.get('trails') is True:
     areas = parks
     areas += counties
     for place in areas:
+        if place['name'] is None:
+            continue
         tmp = place['wkb_geometry'][0]
         trails = post.getTrails(tmp)
         logging.debug("FIXME: %d: %s" % (len(trails), place['name']))
-        if trails is None or len(trails) == 0:
+        if trails is None or len(trails) <= 10:
             continue
         nf = kml.Folder(ns, 0, '%s Trails' % place['name'])
         f.append(nf)
@@ -346,44 +348,34 @@ if dd.get('roads') is True:
 #
 threshold = 500
 if dd.get('addresses') is True:
-    addrs = post.getAddresses()
-    if addrs is not None:
-        f = kml.Folder(ns, 0, 'Addresses', 'House Addresses in ' + title)
-        if len(addrs) >= threshold:
-            logging.info("%d address, putting in separate file %s-addresses.kml" % (len(addrs), dbname))
-            addrkml = kml.KML()
-            # doc = kml.Document(ns, 'docid', title, 'doc description', styles=mstyle)
-            doc = kml.Document(ns, 'docid', title, 'doc description')
-            addrkml.append(doc)
-        else:
-            mainkml.append(f)
-
+    # logging.info("%d address, putting in separate file %s-addresses.kml" % (len(addrs), dbname))
+    addrkml = kml.KML()
+    # doc = kml.Document(ns, 'docid', title, 'doc description', styles=mstyle)
+    doc = kml.Document(ns, 'docid', title, 'doc description')
+    addrkml.append(doc)
+    cache = dict()
+    areas = list()
+    areas = places
+    areas += counties
+    for place in areas:
+        if 'tourism' in place:
+            continue
+        addrs = post.getAddresses(place['wkb_geometry'][0])
+        # logging.debug("FIXME: %d: %s" % (len(addrs), place['name']))
+        if len(addrs) == 0:
+            continue
+        af = kml.Folder(ns, 0, place['name'] + ' Addresses')
+        doc.append(af)
         for addr in addrs:
-            #print(trail['name'])
-            num = "addr['addr_housenumber']"
-            street = "addr['addr_street']"
-            description = ""
-            if 'name' in addr:
-                name = addr['name']
-            else:
-                name = ""
-                description = "{name}{num}{street}"
-
             style = mapstyle.addresses(addr)
             p = kml.Placemark(ns, addr['osm_id'], addr['addr_housenumber'], style[1], styles=[style[0]])
             way = addr['wkb_geometry']
             p.geometry =  Point(way.geoms[0])
-            if len(addrs) >= threshold:
-                doc.append(p)
-            else:
-                f.append(p)
+            af.append(p)
 
-        if len(addrs) >= threshold:
-            addrout = open(dbname + "-addresses.kml", 'w')
-            addrout.write(addrkml.to_string(prettyprint=True))
-            addrout.close()
-    else:
-        logging.warning("No addresses in this database")
+    addrout = open(dbname + "-Addresses.kml", 'w')
+    addrout.write(addrkml.to_string(prettyprint=True))
+    addrout.close()
 
 #
 # Mile Markers
@@ -461,13 +453,15 @@ if dd.get('firewater') is True:
         elif place['place'] != 'city' and place['place'] != 'town' and place['name'] is not None:
             continue
         water = post.getFireWater(place['wkb_geometry'])
+        if len(water) == 0:
+            continue
         # gging.debug("FIXME: %d in %s" % (len(water), place['name']))
         if place['name'] in cache:
             continue
         else:
             cache[place['name']] = place
         if len(water) > 0:
-            nf = kml.Folder(ns, 0, '%s Water Sources' % title)
+            nf = kml.Folder(ns, 0, '%s Water Sources' % place['name'])
             f.append(nf)
             for source in water:
                 if source['osm_id'] in cache:
@@ -556,8 +550,8 @@ if dd.get('piste') is True:
 outkml.write(mainkml.to_string(prettyprint=True))
 outkml.close()
 
-# getIcons()
-zip = zipfile.ZipFile("foo.kmz", mode="w")
+
+zip = zipfile.ZipFile(dbname + ".kmz", mode="w")
 x = np.array(mapstyle.getIcons())
 for icon in np.unique(x):
     zip.write(icon)
