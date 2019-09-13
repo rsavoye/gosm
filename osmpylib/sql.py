@@ -57,7 +57,7 @@ class Postgis(object):
         # *host*: database host address (defaults to UNIX socket if not provided)
         # *port*: connection port number (defaults to 5432 if not provided)
         connect = ""
-        if dbserver is not "localhost":
+        if dbserver != "localhost":
             connect += "host='" + dbserver + "' "
         connect += "dbname='" + database + "'"
 
@@ -176,8 +176,9 @@ class Postgis(object):
         result = self.query("SELECT osm_id,name,other_tags,highway,wkb_geometry FROM lines WHERE highway is not NULL AND (highway!='path' AND highway!='footway' AND highway!='milestone' AND highway!='cycleway' AND highway!='bridleway');")
         return result
 
-    def getAddresses(self, result=list()):
-        result = self.query("SELECT osm_id,name,addr_housenumber,addr_street,wkb_geometry FROM points WHERE addr_housenumber is not NULL;")
+    def getAddresses(self, geom, result=list()):
+        """Get all the addresses in a defined area"""
+        result = self.query("SELECT osm_id,name,addr_housenumber,addr_street,wkb_geometry FROM points WHERE ST_Contains(ST_GeomFromText('%s', 4326), ST_CollectionExtract(wkb_geometry, 1)) AND addr_housenumber is not NULL;" % geom.wkt)
         return result
 
     def getWay(self, geom, result=dict()):
@@ -211,7 +212,7 @@ class Postgis(object):
 
     def getTrails(self, geom, result=list()):
         """Get all the Trails in a defined area"""
-        result = self.query("SELECT osm_id,name,other_tags,wkb_geometry FROM lines WHERE ST_Contains(ST_GeomFromText('%s', 4326), ST_CollectionExtract(wkb_geometry, 2));" % geom.wkt)
+        result = self.query("SELECT osm_id,name,highway,other_tags,wkb_geometry FROM lines WHERE ST_Contains(ST_GeomFromText('%s', 4326), ST_CollectionExtract(wkb_geometry, 2)) AND highway='path';" % geom.wkt)
         return result
 
     def getFireWater(self, geom, result=list()):
