@@ -238,10 +238,11 @@ class MapStyle(object):
         id = data['osm_id']
         width = 3
         if 'sac_scale' in data:
-            index = data['sac_scale']
-            color = self.colors[self.default[index]['color']]
+            tmp = data['sac_scale']
+            index = tmp.split(';')
+            color = self.colors[self.default[index[0]]['color']]
             # id = self.default[index]['id']
-            width = self.default[index]['width']
+            width = self.default[index[0]]['width']
             #self.description += "<br>Sac_scale: " + data['sac_scale']
         if 'mtb:scale:imba' in data:
             self.description += "<br>Mnt Scale: " + str(data['mtb:scale:imba'])
@@ -278,8 +279,13 @@ class MapStyle(object):
         self.description = ""
         color = "ffffff00"
         id = data['osm_id']
+        name = ""
+        if 'name' in data:
+            if data['name'] is not None:
+                name = data['name'] + '\n'
+
         if 'addr_street' in data:
-            self.description = "%s %s" % (str(data['addr_housenumber']), data['addr_street'])
+            self.description = "%s %s %s" % (name, str(data['addr_housenumber']), data['addr_street'])
         # label = styles.LabelStyle(color='black', scale=1.0)
         icon = styles.IconStyle(icon_href="icons/mm_building.png")
         self.icons.append(icon.icon_href)
@@ -292,7 +298,10 @@ class MapStyle(object):
         self.description = ""
         id = data['osm_id']
         num = data['name']
-        street= data['alt_name']
+        if 'alt_name' in data:
+            street = data['alt_name']
+        else:
+            street= "unknown"
         self.description = "%s Highway %s" % (num, street)
 
         icon = styles.IconStyle(icon_href="icons/mm_highway_milestone.png")
@@ -321,8 +330,8 @@ class MapStyle(object):
         self.icons.append(icon.icon_href)
         self.styles = styles.Style(styles=[icon])
         self.description = ""
-        if 'water' in data:
-            if data['water'] == 'yes':
+        if 'drinking_water' in data:
+            if data['drinking_water'] == 'yes':
                 self.description += "Water Available"
         if 'toilets' in data:
             if data['toilets'] == 'yes':
