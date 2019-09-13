@@ -362,6 +362,8 @@ if dd.get('addresses') is True:
             continue
         addrs = post.getAddresses(place['wkb_geometry'][0])
         # logging.debug("FIXME: %d: %s" % (len(addrs), place['name']))
+        if addrs is None:
+            continue
         if len(addrs) == 0:
             continue
         af = kml.Folder(ns, 0, place['name'] + ' Addresses')
@@ -390,7 +392,7 @@ if dd.get('milestones') is True:
             street = "mark['alt_name']"
 
             style = mapstyle.milestones(mark)
-            p = kml.Placemark(ns, addr['osm_id'], num, style[1], styles=[style[0]])
+            p = kml.Placemark(ns, mark['osm_id'], num, style[1], styles=[style[0]])
             way = mark['wkb_geometry']
             p.geometry =  Point(way.geoms[0])
             f.append(p)
@@ -453,6 +455,8 @@ if dd.get('firewater') is True:
         elif place['place'] != 'city' and place['place'] != 'town' and place['name'] is not None:
             continue
         water = post.getFireWater(place['wkb_geometry'])
+        if water is None:
+            continue
         if len(water) == 0:
             continue
         # gging.debug("FIXME: %d in %s" % (len(water), place['name']))
