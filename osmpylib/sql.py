@@ -110,7 +110,7 @@ class Postgis(object):
             # logging.info("Got %r records from query." % self.dbcursor.rowcount)
         except psycopg2.ProgrammingError as e:
             if e.pgcode != None:
-                logging.error("Query failed to fetch! %r" % e.pgcode)
+                logging.error("Query failed to fetch! %r" % e.pgerror)
 
         tmp = query.split(' ')
         fields = tmp[1].split(',')
