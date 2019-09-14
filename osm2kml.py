@@ -264,6 +264,7 @@ parks = post.getProtected()
 # Hiking Trails
 #
 if dd.get('trails') is True:
+    logging.info("Downloading trails for %s" % title)
     f = kml.Folder(ns, 0, 'Hiking Trails')
     d.append(f)
     # cache the trails we find in the area, so when we use
@@ -300,11 +301,12 @@ if dd.get('trails') is True:
 #
 threshold = 500
 if dd.get('roads') is True:
+    logging.info("Downloading roads for %s" % title)
     roads = post.getRoads()
     if roads is not None:
         f = kml.Folder(ns, 0, 'Roads', 'Roads in ' + title)
         if len(roads) > threshold:
-            logging.info("%d roads, putting in separate file %s-roads.kml" % (len(roads), dbname))
+            logging.info("%d roads, putting in separate file %s-Roads.kml" % (len(roads), dbname))
             roadkml = kml.KML()
             # doc = kml.Document(ns, 'docid', title, 'doc description', styles=mstyle)
             doc = kml.Document(ns, 'docid', title, 'doc description')
@@ -337,7 +339,7 @@ if dd.get('roads') is True:
                 f.append(p)
 
         if len(roads) >= threshold:
-            roadout = open(dbname + "-roads.kml", 'w')
+            roadout = open(dbname + "-Roads.kml", 'w')
             roadout.write(roadkml.to_string(prettyprint=True))
             roadout.close()
     else:
@@ -348,6 +350,7 @@ if dd.get('roads') is True:
 #
 threshold = 500
 if dd.get('addresses') is True:
+    logging.info("Downloading addresses for %s" % title)
     # logging.info("%d address, putting in separate file %s-addresses.kml" % (len(addrs), dbname))
     addrkml = kml.KML()
     # doc = kml.Document(ns, 'docid', title, 'doc description', styles=mstyle)
@@ -383,6 +386,7 @@ if dd.get('addresses') is True:
 # Mile Markers
 #
 if dd.get('milestones') is True:
+    logging.info("Downloading mile stones for %s" % title)
     stones = post.getMilestones()
     if stones is not None:
         f = kml.Folder(ns, 0, 'Mile Markers', 'Mile markers in ' + title)
@@ -403,6 +407,7 @@ if dd.get('milestones') is True:
 # Landing Site
 #
 if dd.get('landingsite') is True:
+    logging.info("Downloading landing zones for %s" % title)
     lzs = post.getLandingZones()
     if lzs is not None:
         f = kml.Folder(ns, 0, 'Landing Sites', 'Landing Sites in ' + title)
@@ -420,6 +425,7 @@ if dd.get('landingsite') is True:
 # Hot Spring
 #
 if dd.get('hotsprings') is True:
+    logging.info("Downloading Hot Springs for %s" % title)
     hsprings = post.getHotSprings()
     if hsprings is not None:
         f = kml.Folder(ns, 0, 'Hot Springs')
@@ -437,6 +443,7 @@ if dd.get('hotsprings') is True:
 # Water Sources
 #
 if dd.get('firewater') is True:
+    logging.info("Downloading Fire Water Sources for %s" % title)
     f = kml.Folder(ns, 0, 'Fire Water Sources')
     d.append(f)
     # cache the water sources we find in the place, so when we use
@@ -488,6 +495,7 @@ if dd.get('firewater') is True:
 # Campgrounds and camp sites
 #
 if dd.get('camps') is True:
+    logging.info("Downloading Camping for %s" % title)
     camps = post.getCampGrounds()
     if camps is not None:
         f = kml.Folder(ns, 0, 'Campgrounds')
@@ -524,6 +532,7 @@ if dd.get('camps') is True:
 # Skiing
 #
 if dd.get('piste') is True:
+    logging.info("Downloading Sking for %s" % title)
     piste = post.getPiste()
     if piste is not None:
         f = kml.Folder(ns, 0, 'Ski Trails', 'Trails in ' + title)
@@ -560,5 +569,23 @@ x = np.array(mapstyle.getIcons())
 for icon in np.unique(x):
     zip.write(icon)
 zip.write(outfile)
+
+logging.info("Wrote %s" % outfile)
+
+#
+zip = zipfile.ZipFile(dbname + "-Addresses.kmz", mode="w")
+x = np.array(mapstyle.getIcons())
+for icon in np.unique(x):
+    zip.write(icon)
+zip.write(dbname + "-Addresses.kml")
+
+logging.info("Wrote %s" % outfile)
+
+#
+zip = zipfile.ZipFile(dbname + "-Roads.kmz", mode="w")
+x = np.array(mapstyle.getIcons())
+for icon in np.unique(x):
+    zip.write(icon)
+zip.write(dbname + "-Roads.kml")
 
 logging.info("Wrote %s" % outfile)
