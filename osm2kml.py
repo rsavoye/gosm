@@ -342,8 +342,6 @@ if dd.get('roads') is True:
             roadout = open(dbname + "-Roads.kml", 'w')
             roadout.write(roadkml.to_string(prettyprint=True))
             roadout.close()
-    else:
-        logging.warning("No roads in this database")
 
 #
 # House Addresses
@@ -400,8 +398,6 @@ if dd.get('milestones') is True:
             way = mark['wkb_geometry']
             p.geometry =  Point(way.geoms[0])
             f.append(p)
-    else:
-        logging.warning("No milestones in this database")
 
 #
 # Landing Site
@@ -436,8 +432,6 @@ if dd.get('hotsprings') is True:
             way = hs['wkb_geometry']
             p.geometry = Point(way.geoms[0])
             f.append(p)
-    else:
-        logging.warning("No Hot Springs in this database")
 
 #
 # Water Sources
@@ -488,8 +482,6 @@ if dd.get('firewater') is True:
                 p = kml.Placemark(ns, source['osm_id'], source['name'], style[1], styles=[style[0]])
                 p.geometry = Point(way.geoms[0])
                 nf.append(p)
-    else:
-        logging.warning("No emergency water sources in this database")
 
 #
 # Campgrounds and camp sites
@@ -525,8 +517,6 @@ if dd.get('camps') is True:
                     p = kml.Placemark(ns, site['osm_id'], site['name'], style[1], styles=[style[0]])
                     p.geometry = site['wkb_geometry'][0]
                     nf.append(p)
-    else:
-        logging.warning("No camps sites in this database!")
 
 #
 # Skiing
@@ -557,8 +547,6 @@ if dd.get('piste') is True:
             way = trail['wkb_geometry']
             p.geometry =  LineString(way.geoms[0])
             f.append(p)
-    else:
-        logging.warning("No skio trails in this database")
 
 outkml.write(mainkml.to_string(prettyprint=True))
 outkml.close()
