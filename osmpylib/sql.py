@@ -44,6 +44,8 @@ class Postgis(object):
         self.dbserver = dbhost
         # The geometry is a multipolygon, and limits the query to that area.
         self.boundary = None
+        self.dbshell = None
+        self.dbcursor = None
 
     def connect(self, dbserver='localhost', database='postgres'):
         """Connect to a local or remote postgresql server"""
@@ -66,6 +68,10 @@ class Postgis(object):
             self.dbshell = psycopg2.connect(connect)
         except psycopg2.OperationalError as e:
             logging.debug("%s doesn't exist! %r" % (database, e.diag.message_primary))
+
+        if self.dbshell is None:
+            logging.error("There is no database %s" % database)
+            quit()
 
         if self.dbshell.closed == 0:
             self.dbshell.autocommit = True
