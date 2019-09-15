@@ -36,9 +36,9 @@ import math
 import mercantile
 from tiledb import Tile
 from tiledb import Tiledb
-import rasterio
-from rasterio.merge import merge
-from rasterio.enums import ColorInterp
+# import rasterio
+# from rasterio.merge import merge
+# from rasterio.enums import ColorInterp
 import overpy
 #import osm
 import glob
