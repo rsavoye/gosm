@@ -33,9 +33,9 @@ from pySmartDL import SmartDL
 import mercantile
 from osgeo import gdal,ogr,osr
 from urllib.parse import urlparse
-import rasterio
-from rasterio.merge import merge
-from rasterio.enums import ColorInterp
+# import rasterio
+# from rasterio.merge import merge
+# from rasterio.enums import ColorInterp
 from subprocess import PIPE, Popen, STDOUT
 import filetype
 from time import sleep
@@ -559,7 +559,7 @@ def dlthread(dest, mirrors, tiles):
     end = datetime.now()
     delta = start - end
     logging.debug("%d errors out of %d tiles" % (errors, len(tiles)))
-    logging.debug("Processed %d tiles in %d.%d.%d minutes" % (len(tiles), delta.minutes, delta.microseconds))
+    # logging.debug("Processed %d tiles in %d.%d.%d minutes" % (len(tiles), delta.minutes, delta.microseconds))
  
 def convert(filespec, format):
     if os.path.exists(filespec) is False:
