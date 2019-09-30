@@ -309,7 +309,7 @@ if dd.get('roads') is True:
             logging.info("%d roads, putting in separate file %s-Roads.kml" % (len(roads), dbname))
             roadkml = kml.KML()
             # doc = kml.Document(ns, 'docid', title, 'doc description', styles=mstyle)
-            doc = kml.Document(ns, 'docid', title, 'doc description')
+            doc = kml.Document(ns, 'docid', title + " Roads", 'doc description')
             roadkml.append(doc)
         else:
             mainkml.append(f)
@@ -352,7 +352,7 @@ if dd.get('addresses') is True:
     # logging.info("%d address, putting in separate file %s-addresses.kml" % (len(addrs), dbname))
     addrkml = kml.KML()
     # doc = kml.Document(ns, 'docid', title, 'doc description', styles=mstyle)
-    doc = kml.Document(ns, 'docid', title, 'doc description')
+    doc = kml.Document(ns, 'docid', title + " Addresses", 'doc description')
     addrkml.append(doc)
     cache = dict()
     areas = list()
@@ -561,19 +561,21 @@ zip.write(outfile)
 logging.info("Wrote %s" % outfile)
 
 #
-zip = zipfile.ZipFile(dbname + "-Addresses.kmz", mode="w")
-x = np.array(mapstyle.getIcons())
-for icon in np.unique(x):
-    zip.write(icon)
-zip.write(dbname + "-Addresses.kml")
+if os.path.exists(dbname + "-Addresses.kml"):
+    zip = zipfile.ZipFile(dbname + "-Addresses.kmz", mode="w")
+    x = np.array(mapstyle.getIcons())
+    for icon in np.unique(x):
+        zip.write(icon)
+    zip.write(dbname + "-Addresses.kml")
 
-logging.info("Wrote %s" % outfile)
+    logging.info("Wrote %s" % outfile)
 
 #
-zip = zipfile.ZipFile(dbname + "-Roads.kmz", mode="w")
-x = np.array(mapstyle.getIcons())
-for icon in np.unique(x):
-    zip.write(icon)
-zip.write(dbname + "-Roads.kml")
+if os.path.exists(dbname + "-Roads.kml"):
+    zip = zipfile.ZipFile(dbname + "-Roads.kmz", mode="w")
+    x = np.array(mapstyle.getIcons())
+    for icon in np.unique(x):
+        zip.write(icon)
+    zip.write(dbname + "-Roads.kml")
 
-logging.info("Wrote %s" % outfile)
+    logging.info("Wrote %s" % outfile)
