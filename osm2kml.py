@@ -352,7 +352,7 @@ if dd.get('addresses') is True:
     # logging.info("%d address, putting in separate file %s-addresses.kml" % (len(addrs), dbname))
     addrkml = kml.KML()
     # doc = kml.Document(ns, 'docid', title, 'doc description', styles=mstyle)
-    doc = kml.Document(ns, 'docid', title, 'doc description')
+    doc = kml.Document(ns, 'docid', title + " Addresses", 'doc description')
     addrkml.append(doc)
     cache = dict()
     areas = list()
@@ -575,3 +575,24 @@ for icon in np.unique(x):
 zip.write(outfile)
 
 logging.info("Wrote %s" % outfile)
+
+#
+if os.path.exists(dbname + "-Addresses.kml"):
+    zip = zipfile.ZipFile(dbname + "-Addresses.kmz", mode="w")
+    x = np.array(mapstyle.getIcons())
+    for icon in np.unique(x):
+        zip.write(icon)
+    zip.write(dbname + "-Addresses.kml")
+
+    logging.info("Wrote %s" % outfile)
+
+#
+if os.path.exists(dbname + "-Roads.kml"):
+    zip = zipfile.ZipFile(dbname + "-Roads.kmz", mode="w")
+    x = np.array(mapstyle.getIcons())
+    for icon in np.unique(x):
+        zip.write(icon)
+    zip.write(dbname + "-Roads.kml")
+
+    logging.info("Wrote %s" % outfile)
+>>>>>>> e988493fdfd4aa1fde3eed56b755aa35afc0838f
