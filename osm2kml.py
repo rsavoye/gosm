@@ -371,6 +371,8 @@ if dd.get('addresses') is True:
             doc.append(af)
             for addr in addrs:
                 style = mapstyle.addresses(addr)
+                if  addr['addr_street'] is None:
+                     addr['addr_street'] = ""
                 p = kml.Placemark(ns, addr['osm_id'], addr['addr_housenumber'] + " " + addr['addr_street'], style[1], styles=[style[0]])
                 way = addr['wkb_geometry']
                 p.geometry =  Point(way.geoms[0])
@@ -566,7 +568,7 @@ outkml.write(mainkml.to_string(prettyprint=True))
 outkml.close()
 
 
-zip = zipfile.ZipFile(top + dbname + "." + dbname + ".kmz", mode="w")
+zip = zipfile.ZipFile(top + dbname + "/" + dbname + ".kmz", mode="w")
 x = np.array(mapstyle.getIcons())
 for icon in np.unique(x):
     zip.write(icon)
