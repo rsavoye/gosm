@@ -97,24 +97,24 @@ while test $i -lt ${#polyfiles[@]} -o x"${polys}" = x; do
     if test "${exists}" -eq 0; then
 	echo "Creating postgresql database ${dbname}"
 	if test x"${dropdb}" = x"yes"; then
-	    dropdb --if-exists ${dbname}
+	    dropdb --if-exists ${dbname} >& /dev/null
 	fi
-	createdb -EUTF8 ${dbname} ${dbname} -T template0
+	createdb -EUTF8 ${dbname} ${dbname} -T template0  >& /dev/null
 	if test $? -gt 0; then
 	    echo "WARNING: createdb ${dbname} failed!"
 	    exit
 	fi
-	psql -d ${dbname} -c 'create extension hstore;'
+	psql -d ${dbname} -c 'create extension hstore;' >& /dev/null
 	if test $? -gt 0; then
 	    echo "ERROR: couldn't add hstore extension!"
 	    exit
 	fi
-	psql -d ${dbname} -c 'create extension postgis;'
+	psql -d ${dbname} -c 'create extension postgis;' >& /dev/null
 	if test $? -gt 0; then	
 	    echo "ERROR: couldn't add postgis extension!"
 	    exit
 	fi
-	psql -d ${dbname} -c 'create extension dblink;'
+	psql -d ${dbname} -c 'create extension dblink;' >& /dev/null
 	if test $? -gt 0; then	
 	    echo "ERROR: couldn't add dblink extension!"
 	    exit
@@ -138,9 +138,10 @@ while test $i -lt ${#polyfiles[@]} -o x"${polys}" = x; do
 		fi
 	    fi
 	    osm2pgsql -c --slim -C 500 -d ${dbname} --number-processes 8 ${infile} --hstore --input-reader xml --drop >& /dev/null
-	    if test $? -gt 0; then
-		exit
-	    fi
+	    #if test $? -gt 0 -a $? < 127; then
+		#	exit
+		#echo "FIXME: $?"
+	    #fi
 	    # ogr2ogr imports relations, sort-of, and osm2pgsql doesn't. We use the
 	    # relations or boundaries to create groups, ie.. KML "<Folder>"
 	    ogr2ogr -overwrite -f  "PostgreSQL" PG:"dbname=${dbname}" -nlt GEOMETRYCOLLECTION ${infile}
