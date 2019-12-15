@@ -199,6 +199,8 @@ outfile = dd.get('outfile')
 infile = dd.get('infile')
 dbname = dd.get('database')
 
+kmz=outfile.replace(".kml", ".kmz")
+
 post = Postgis()
 if dd.get('poly') is not None:
     polyfilter = Poly(poly)
@@ -234,21 +236,15 @@ print("------------------------")
 
 
 # Create KML file
-outkml = open(outfile, 'w')
-mainkml = kml.KML()
+kmlfile = kml.KML()
 ns = '{http://www.opengis.net/kml/2.2}'
 mapstyle = MapStyle("ns='{http://www.opengis.net/kml/2.2}'")
 mstyle = mapstyle.getStyles()
-d = kml.Document(ns, 'docid', title, 'doc description')
-# d = kml.Document(ns, 'docid', title, 'doc description', styles=mstyle)
-mainkml.append(d)
+kmldoc = kml.Document(ns, 'docid', title, 'doc description')
+# kmldoc = kml.Document(ns, 'docid', title, 'doc description', styles=mstyle)
+kmlfile.append(kmldoc)
 
-#pdb.st()
-#wkb = ppygis3.Geometry()
-
-# Write buffer to KML file
-#outkml = open(outfile, 'w')
-
+# Connect to database
 post.connect('localhost', dbname)
 
 # Get all of the cities and towns in the database. As some datasets
@@ -260,13 +256,12 @@ counties = post.getPlaces(6)
 
 parks = post.getProtected()
 
-top = outfile.split('/')[0] + "/"
 #
 # Hiking Trails
 #
 if dd.get('trails') is True:
     logging.info("Downloading trails for %s" % title)
-    f = kml.Folder(ns, 0, 'Hiking Trails')
+    trailfolder = kml.Folder(ns, 0, 'Hiking Trails')
     # cache the trails we find in the area, so when we use
     # the county polygon, we don't create a duplicate LineString.
     cache = dict()
@@ -274,7 +269,7 @@ if dd.get('trails') is True:
     areas = parks
     areas += counties
     if len(areas) > 0:
-        d.append(f)
+        kmldoc.append(trailfolder)
         for place in areas:
             if place['name'] is None:
                 continue
@@ -283,8 +278,8 @@ if dd.get('trails') is True:
             logging.debug("FIXME trails: %d: %s" % (len(trails), place['name']))
             if trails is None or len(trails) == 0:
                 continue
-            nf = kml.Folder(ns, 0, '%s Trails' % place['name'])
-            f.append(nf)
+            newfolder = kml.Folder(ns, 0, '%s Trails' % place['name'])
+            trailfolder.append(newfolder)
             for trail in trails:
                 if trail['name'] is None:
                     description = """OSM_ID: %s
@@ -294,104 +289,10 @@ if dd.get('trails') is True:
                 else:
                     description = trail['name']
                     style = mapstyle.trails(trail)
-                    p = kml.Placemark(ns, trail['osm_id'], trail['name'], style[1], styles=[style[0]])
+                    pm = kml.Placemark(ns, trail['osm_id'], trail['name'], style[1], styles=[style[0]])
                     way = trail['wkb_geometry']
-                    p.geometry =  LineString(way.geoms[0])
-                    nf.append(p)
-#
-# Roads
-#
-if dd.get('roads') is True:
-    logging.info("Downloading roads for %s" % title)
-    roads = post.getRoads()
-    if roads is not None:
-        f = kml.Folder(ns, 0, 'Roads', 'Roads in ' + title)
-        logging.info("%d roads, putting in separate file %s-Roads.kml" % (len(roads), dbname))
-        roadkml = kml.KML()
-        # doc = kml.Document(ns, 'docid', title, 'doc description', styles=mstyle)
-        doc = kml.Document(ns, 'docid', title, 'doc description')
-        roadkml.append(doc)
-
-        for road in roads:
-            if 'service' in road:
-                if road['service'] == 'driveway':
-                    # color =  mapstyle.driveways('driveway')
-                    # description = "Private Driveway"
-                    continue
-            else:
-                if road['name'] is None:
-                    description = """OSM_ID: %s
-                    FIXME: this needs the real name!
-                    """ % road['osm_id']
-                    road['name'] = "Unknown: " + road['osm_id']
-                else:
-                    description = road['name']
-
-            style = mapstyle.roads(road)
-            p = kml.Placemark(ns, road['osm_id'], road['name'], style[1], styles=[style[0]])
-            way = road['wkb_geometry']
-            p.geometry =  LineString(way.geoms[0])
-            doc.append(p)
-
-        if len(roads) > 0:
-            roadout = open(top + dbname + '/' + dbname + "-Roads.kml", 'w+')
-            roadout.write(roadkml.to_string(prettyprint=True))
-            roadout.close()
-            zip = zipfile.ZipFile(top + dbname + '/' + dbname + "-Roads.kmz", mode="w")
-            x = np.array(mapstyle.getIcons())
-            for icon in np.unique(x):
-                zip.write(icon)
-            zip.write(top + dbname + '/' + dbname + "-Roads.kml")
-            logging.info("Wrote %s" % outfile)
-
-#
-# House Addresses
-#
-if dd.get('addresses') is True:
-    logging.info("Downloading addresses for %s" % title)
-    # logging.info("%d address, putting in separate file %s-addresses.kml" % (len(addrs), dbname))
-    addrkml = kml.KML()
-    # doc = kml.Document(ns, 'docid', title, 'doc description', styles=mstyle)
-    doc = kml.Document(ns, 'docid', title + " Addresses", 'doc description')
-    addrkml.append(doc)
-    cache = dict()
-    areas = list()
-    areas = places
-    areas += counties
-    addrs = list()
-    if len(areas) > 0:
-        for place in areas:
-            if 'tourism' in place:
-                continue
-            addrs = post.getAddresses(place['wkb_geometry'][0])
-            if addrs is None or len(addrs) == 0:
-                logging.debug("%s has no addresses" % place['name'])
-                continue
-            af = kml.Folder(ns, 0, place['name'] + ' Addresses')
-            doc.append(af)
-            for addr in addrs:
-                style = mapstyle.addresses(addr)
-                if  addr['addr_street'] is None:
-                     addr['addr_street'] = ""
-                p = kml.Placemark(ns, addr['osm_id'], addr['addr_housenumber'] + " " + addr['addr_street'], style[1], styles=[style[0]])
-                way = addr['wkb_geometry']
-                p.geometry =  Point(way.geoms[0])
-                af.append(p)
-
-    if len(addrs) > 0:
-        addrout = open(top + dbname + '/' + dbname + "-Addresses.kml", 'w')
-        addrout.write(addrkml.to_string(prettyprint=True))
-        addrout.close()
-
-        zip = zipfile.ZipFile(top + dbname + '/' + dbname + "-Addresses.kmz", mode="w")
-        x = np.array(mapstyle.getIcons())
-        for icon in np.unique(x):
-            zip.write(icon)
-            zip.write(top + dbname + "/" + dbname + "-Addresses.kml")
-
-        logging.info("Wrote %s" % outfile)
-#    else:
-#        os.remove(top + dbname + '/' + dbname + "-Addresses.kmz")
+                    pm.geometry =  LineString(way.geoms[0])
+                    newfolder.append(pm)
 
 #
 # Mile Markers
@@ -401,17 +302,17 @@ if dd.get('milestones') is True:
     stones = post.getMilestones()
     logging.debug("FIXME stones: %d" % (len(stones)))
     if stones is not None and len(stones) > 0:
-        f = kml.Folder(ns, 0, 'Mile Markers', 'Mile markers in ' + title)
-        d.append(f)
+        milefolder = kml.Folder(ns, 0, 'Mile Markers', 'Mile markers in ' + title)
+        kmldoc.append(milefolder)
         for mark in stones:
             num = mark['name']
             street = "mark['alt_name']"
 
             style = mapstyle.milestones(mark)
-            p = kml.Placemark(ns, mark['osm_id'], num, style[1], styles=[style[0]])
+            pm = kml.Placemark(ns, mark['osm_id'], num, style[1], styles=[style[0]])
             way = mark['wkb_geometry']
-            p.geometry =  Point(way.geoms[0])
-            f.append(p)
+            pm.geometry =  Point(way.geoms[0])
+            milefolder.append(pm)
 
 #
 # Landing Site
@@ -420,14 +321,14 @@ if dd.get('landingsite') is True:
     logging.info("Downloading landing zones for %s" % title)
     lzs = post.getLandingZones()
     if lzs is not None and len(lzs) > 0:
-        f = kml.Folder(ns, 0, 'Landing Sites', 'Landing Sites in ' + title)
-        d.append(f)
+        lzfolder = kml.Folder(ns, 0, 'Landing Sites', 'Landing Sites in ' + title)
+        kmldoc.append(lzfolder)
         for lz in lzs:
             style = mapstyle.landingzones(lz)
-            p = kml.Placemark(ns, lz['osm_id'], lz['name'], style[1], styles=[style[0]])
+            pm = kml.Placemark(ns, lz['osm_id'], lz['name'], style[1], styles=[style[0]])
             way = lz['wkb_geometry']
-            p.geometry =  Point(way.geoms[0])
-            f.append(p)
+            pm.geometry =  Point(way.geoms[0])
+            lzfolder.append(pm)
     else:
         logging.warning("No landing sites in this database")
 
@@ -439,7 +340,7 @@ if dd.get('hotsprings') is True:
     hsprings = post.getHotSprings()
     if hsprings is not None and len(hsprings) > 0:
         f = kml.Folder(ns, 0, 'Hot Springs')
-        d.append(f)
+        kmldoc.append(f)
         for hs in hsprings:
             style = mapstyle.hotsprings(hs)
             p = kml.Placemark(ns, hs['osm_id'], hs['name'], style[1], styles=[style[0]])
@@ -460,7 +361,7 @@ if dd.get('firewater') is True:
     areas = places
     areas += counties
     if len(areas) > 0:
-        d.append(f)
+        kmldoc.append(f)
         for place in areas:
             if 'osm_way_id' in place and place['osm_id'] is None:
                 place['osm_id'] = place['osm_way_id']
@@ -507,7 +408,7 @@ if dd.get('camps') is True:
     logging.debug("FIXME camps: %d" % len(camps))
     if camps is not None and len(camps) > 0:
         f = kml.Folder(ns, 0, 'Campgrounds')
-        d.append(f)
+        kmldoc.append(f)
         for camp in camps:
             if 'name' not in camp:
                 if 'ref' in camp:
@@ -534,41 +435,14 @@ if dd.get('camps') is True:
                     p.geometry = site['wkb_geometry'][0]
                     nf.append(p)
 
-#
-# Skiing
-#
-if dd.get('piste') is True:
-    logging.info("Downloading Sking for %s" % title)
-    piste = post.getPiste()
-    if piste is not None:
-        f = kml.Folder(ns, 0, 'Ski Trails', 'Trails in ' + title)
-        d.append(f)
-        for trail in piste:
-            #print(trail['name'])
-            if trail['name'] is None:
-                description = """OSM_ID: %s
-                FIXME: this needs the real name!
-                """ % trail['osm_id']
-                trail['name'] = "Unknown: " + trail['osm_id']
-                if 'piste:type' in trail:
-                    m = re.search(".*nordic.*", trail['piste:type'])
-                type = None
-                if m is not None:
-                    type = 'nordic'
-                    m = re.search(".*downhill.*", trail['piste:type'])
-                else:
-                    type = 'downhill'
-            style = mapstyle.piste(trail)
-            p = kml.Placemark(ns, trail['osm_id'], trail['name'], style[1], styles=[style[0]])
-            way = trail['wkb_geometry']
-            p.geometry =  LineString(way.geoms[0])
-            f.append(p)
 
-outkml.write(mainkml.to_string(prettyprint=True))
+outkml = open(outfile, 'w')
+outkml.write(kmlfile.to_string(prettyprint=True))
 outkml.close()
 
-
-zip = zipfile.ZipFile(top + dbname + "/" + dbname + ".kmz", mode="w")
+# Add icons to main KMZ file
+kmz = outfile.replace(".kml", ".kmz")
+zip = zipfile.ZipFile(kmz, mode="w")
 x = np.array(mapstyle.getIcons())
 for icon in np.unique(x):
     zip.write(icon)
@@ -577,22 +451,128 @@ zip.write(outfile)
 logging.info("Wrote %s" % outfile)
 
 #
-if os.path.exists(dbname + "-Addresses.kml"):
-    zip = zipfile.ZipFile(dbname + "-Addresses.kmz", mode="w")
-    x = np.array(mapstyle.getIcons())
-    for icon in np.unique(x):
-        zip.write(icon)
-    zip.write(dbname + "-Addresses.kml")
+# Roads go in a separate file
+#
+if dd.get('roads') is True:
+    logging.info("Downloading roads for %s" % title)
+    roads = post.getRoads()
+    if roads is not None:
+        logging.info("%d roads, putting in separate file %s" % (len(roads), os.path.basename(outfile)))
+        kmlfile = kml.KML()
+        roaddoc = kml.Document(ns, 'docid', title, 'doc description')
+        # roaddoc = kml.Document(ns, 'docid', title, 'doc description', styles=mstyle)
+        kmlfile.append(roaddoc)
 
-    logging.info("Wrote %s" % outfile)
+        for road in roads:
+            if 'service' in road:
+                if road['service'] == 'driveway':
+                    # color =  mapstyle.driveways('driveway')
+                    # description = "Private Driveway"
+                    continue
+            else:
+                if road['name'] is None:
+                    description = """OSM_ID: %s
+                    FIXME: this needs the real name!
+                    """ % road['osm_id']
+                    road['name'] = "Unknown: " + road['osm_id']
+                else:
+                    description = road['name']
+
+            style = mapstyle.roads(road)
+            pm = kml.Placemark(ns, road['osm_id'], road['name'], style[1], styles=[style[0]])
+            way = road['wkb_geometry']
+            pm.geometry =  LineString(way.geoms[0])
+            roaddoc.append(pm)
+
+        if len(roads) > 0:
+            # Write the KML file
+            kmlout = outfile
+            if outfile.find("Road") < 0 and outfile.find("Trail") < 0:
+                kmlout = outfile.replace(".kml", "-Roads.kml")
+                roadout = open(kmlout, 'w+')
+            else:
+                roadout = open(outfile, 'w+')
+            roadout.write(kmlfile.to_string(prettyprint=True))
+            roadout.close()
+            # Write the KMZ file. Roads have no icons of course
+            kmz = kmlout.replace(".kml", ".kmz")
+            zip = zipfile.ZipFile(kmz, mode="w")
+            zip.write(kmlout)
+            logging.info("Wrote %s" % kmz)
 
 #
-if os.path.exists(dbname + "-Roads.kml"):
-    zip = zipfile.ZipFile(dbname + "-Roads.kmz", mode="w")
-    x = np.array(mapstyle.getIcons())
-    for icon in np.unique(x):
-        zip.write(icon)
-    zip.write(dbname + "-Roads.kml")
+# House Addresses
+#
+if dd.get('addresses') is True:
+    logging.info("Downloading addresses for %s" % title)
+    # logging.info("%d address, putting in separate file %s-addresses.kml" % (len(addrs), dbname))
+    kmlfile = kml.KML()
+    # doc = kml.Document(ns, 'docid', title, 'doc description', styles=mstyle)
+    addrdoc = kml.Document(ns, 'docid', title + " Addresses", 'doc description')
+    kmlfile.append(addrdoc)
+    cache = dict()
+    areas = list()
+    areas = places
+    areas += counties
+    addrs = list()
+    if len(areas) > 0:
+        for place in areas:
+            if 'tourism' in place:
+                continue
+            addrs = post.getAddresses(place['wkb_geometry'][0])
+            if addrs is None or len(addrs) == 0:
+                logging.debug("%s has no addresses" % place['name'])
+                continue
+            af = kml.Folder(ns, 0, place['name'] + ' Addresses')
+            addrdoc.append(af)
+            for addr in addrs:
+                style = mapstyle.addresses(addr)
+                if  addr['addr_street'] is None:
+                     addr['addr_street'] = ""
+                pm = kml.Placemark(ns, addr['osm_id'], addr['addr_housenumber'] + " " + addr['addr_street'], style[1], styles=[style[0]])
+                way = addr['wkb_geometry']
+                pm.geometry =  Point(way.geoms[0])
+                af.append(pm)
 
-    logging.info("Wrote %s" % outfile)
->>>>>>> e988493fdfd4aa1fde3eed56b755aa35afc0838f
+    if len(addrs) > 0:
+        # Write the KML file
+        addrkml = outfile
+        if outfile.find("Road") < 0 and outfile.find("Trail") < 0:
+            addrkml = outfile.replace(".kml", "-Addresses.kml")
+            addrout = open(addrkml, 'w')
+        else:
+            addrout = open(outfile, 'w')
+        addrout.write(kmlfile.to_string(prettyprint=True))
+        addrout.close()
+        # Write the KMZ file
+        kmz = addrkml.replace(".kml", ".kmz")
+        zip = zipfile.ZipFile(kmz, mode="w")
+        x = np.array(mapstyle.getIcons())
+        for icon in np.unique(x):
+            zip.write(icon)
+        zip.write(addrkml)
+
+        logging.info("Wrote %s" % kmz)
+#    else:
+#        os.remove(top + dbname + '/' + dbname + "-Addresses.kmz")
+
+
+# #
+# if os.path.exists(outfile.replace(".kml", "-Addresses.kml")):
+#     zip = zipfile.ZipFile(outfile.replace(".kml", "-Addresses.kmz", mode="w"))
+#     x = np.array(mapstyle.getIcons())
+#     for icon in np.unique(x):
+#         zip.write(icon)
+#         zip.write(outfile.replace(".kml", "-Addresses.kml"))
+
+#     logging.info("Wrote %s" % outfile)
+
+# #
+# if os.path.exists(dbname + "-Roads.kml"):
+#     zip = zipfile.ZipFile(dbname + "-Roads.kmz", mode="w")
+#     x = np.array(mapstyle.getIcons())
+#     for icon in np.unique(x):
+#         zip.write(icon)
+#     zip.write(dbname + "-Roads.kml")
+
+#     logging.info("Wrote %s" % outfile)
