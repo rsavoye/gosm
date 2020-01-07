@@ -1,7 +1,8 @@
 #!/bin/bash
 
 # 
-#   Copyright (C) 2016, 2017, 2018, 2019   Free Software Foundation, Inc.
+# Copyright (C) 2016, 2017, 2018, 2019, 2020
+# Free Software Foundation, Inc.
 # 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -137,13 +138,14 @@ while test $i -lt ${#polyfiles[@]} -o x"${polys}" = x; do
 		    exit
 		fi
 	    fi
+	    # depreciated, using ogr2ogr now
 	    osm2pgsql -c --slim -C 500 -d ${dbname} --number-processes 8 ${infile} --hstore --input-reader xml --drop >& /dev/null
-	    if test $? -gt 0; then
-		exit
-	    fi
+	    #if test $? -gt 0; then
+	    #	exit
+	    #fi
 	    # ogr2ogr imports relations, sort-of, and osm2pgsql doesn't. We use the
 	    # relations or boundaries to create groups, ie.. KML "<Folder>"
-	    ogr2ogr -overwrite -f  "PostgreSQL" PG:"dbname=${dbname}" -nlt GEOMETRYCOLLECTION ${infile}
+	    ogr2ogr -progress -overwrite -f  "PostgreSQL" PG:"dbname=${dbname}" -nlt GEOMETRYCOLLECTION ${infile}
 	    ;;
 	zip)
 	    unzip -o ${infile}
