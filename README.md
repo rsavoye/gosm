@@ -38,14 +38,14 @@ have to come from another source, like park maps, hiking or biking
 organizations, or local knowledge.
 
 # Stable scripts
-setupdb.sh  - Import an OSM file into a PostgreSQL database with extensions.
-shp2map.py  - Convert a ERSI Shapefile into an OSM file while translating tags.
-osm2kml.sh  - Query a PostgreSQL database and make a KML file for display apps.
-kmltool.py  - Split a KML file into sepeerate files, or join them together.
-editosm.py  - Change name fields to follow OSM guidelines on capitalization, etc...
-poly2map.py - Convert an OSM poly file to the KML representation as preferred
-	      by other applications.
-tiler.py    - Download the tiles in an OSM poly file.
+*setupdb.sh  - Import an OSM file into a PostgreSQL database with extensions.
+*shp2map.py  - Convert a ERSI Shapefile into an OSM file while translating tags.
+*osm2kml.sh  - Query a PostgreSQL database and make a KML file for display apps.
+*kmltool.py  - Split a KML file into sepeerate files, or join them together.
+*editosm.py  - Change name fields to follow OSM guidelines on capitalization, etc...
+*poly2map.py - Convert an OSM poly file to the KML representation as preferred
+	         by other applications.
+*tiler.py    - Download the tiles in an OSM poly file.
 
 # Seriously ugly "one-off" scripts, might be useful as code examples.
 distance.sh - Used to calculate the driving distance between an address and a water source.

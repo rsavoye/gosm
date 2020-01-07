@@ -1,6 +1,5 @@
-
 # 
-#   Copyright (C) 2017   Free Software Foundation, Inc.
+# Copyright (C) 2017, 2018, 2019, 2020   Free Software Foundation, Inc.
 # 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -24,6 +23,7 @@ from datafile import convfile
 import config
 import html
 import string
+import re
 import epdb
 from subprocess import PIPE, Popen, STDOUT
 import subprocess
@@ -53,6 +53,9 @@ class osmfile(object):
 
         # This is the file that contains all the filtering data
         self.ctable = convfile(options.get('convfile'))
+        # These are for importing the CO addresses
+        self.full = None
+        self.addr = None
 
     def isclosed(self):
         return self.file.closed
@@ -114,7 +117,6 @@ class osmfile(object):
                         for newname, newvalue in tag.items():
                             # if newname == 'addr:street' or newname == 'addr:full' or newname == 'name' or newname == 'alt_name':
                             #     newvalue = string.capwords(newvalue)
-
                             self.file.write("    <tag k=\"" + newname + "\" v=\"" + str(newvalue) + "\"/>\n")
 
         if len(tags) > 0:
@@ -134,15 +136,16 @@ class osmfile(object):
         newval = newval.replace('"', '')
         #newval = newval.replace('><', '')
         tag = dict()
-        #print("OSM:makeTag(field=%r, value=%r)" % (field, newval))
+        # logging.debug("OSM:makeTag(field=%r, value=%r)" % (field, newval))
 
         try:
             newtag = self.ctable.match(field)
         except Exception as inst:
-            #logging.warning("MISSING Field: %r, %r" % (field, newval))
+            logging.warning("MISSING Field: %r, %r" % (field, newval))
             # If it's not in the conversion file, assume it maps directly
             # to an official OSM tag.
             newtag = field
+
 
         newval = self.ctable.attribute(newtag, newval)
         #logging.debug("ATTRS1: %r %r" % (newtag, newval))
@@ -157,6 +160,18 @@ class osmfile(object):
             newval = string.capwords(fix.alphaNumeric(newval))
             newval = fix.abbreviation(newval)
             newval = fix.compass(newval)
+
+        # This is a hack because the CO address data truncats the street,
+        # and we need the whole thing so routing will work to an address.
+        if newtag == 'addr:full':
+            self.full = re.sub(" Unit .*", '', newval)
+            # logging.debug("FIXME: FULL %" % self.full)
+        elif newtag == 'addr:housenumber':
+            # logging.debug("FIXME: NUM")
+            self.num = newval
+        elif newtag == 'addr:street':
+            newval = self.full.replace(self.num, '')
+
         tag[newtag] = newval
         # tag[newtag] = string.capwords(newval)
 

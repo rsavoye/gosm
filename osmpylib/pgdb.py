@@ -1,7 +1,7 @@
 #!/usr/bin/python3
 
 # 
-#   Copyright (C) 2017, 2018   Free Software Foundation, Inc.
+# Copyright (C) 2017, 2018, 2019, 2020   Free Software Foundation, Inc.
 # 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -23,6 +23,7 @@ import psycopg2
 import subprocess
 import config
 import logging
+from shapely.geometry import MultiPolygon
 
 
 class pgdb(object):
@@ -34,6 +35,8 @@ class pgdb(object):
         # self.config.dump()
 # Load the SQL functions from osmsqllib
         self.load_functions()
+        self.geometry = None
+        #self.geometry =  MultiPolygon()
 
     def connect(self, dbname):
         logging.debug("plotcalls.connect(" + dbname + ")")

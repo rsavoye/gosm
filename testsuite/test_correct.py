@@ -123,6 +123,44 @@ instr = "CR 126e"
 x = obj.alphaNumeric(instr)
 dj.matches(x, "CR 126E", "correct.alphaNumeric(e))")
 
+instr = "Fubar spur"
+x = obj.abbreviation(instr)
+dj.matches(x, "Fubar Spur", "correct.alphaNumeric(spur))")
+
+instr = "Cleveland-Silverwing Mine"
+x = obj.abbreviation(instr)
+dj.matches(x, "Cleveland-Silverwing Mine", "correct.abbreviation(hyphen))")
+x = obj.alphaNumeric(instr)
+dj.matches(x, "Cleveland-Silverwing Mine", "correct.alphaNumeric(hyphen))")
+x = obj.compass(instr)
+dj.matches(x, "Cleveland-Silverwing Mine", "correct.compass(hyphen))")
+
+instr = "D'Artagnan Mine"
+x = obj.alphaNumeric(instr)
+dj.matches(x, instr, "correct.alphaNumeric(apos))")
+x = obj.abbreviation(instr)
+dj.matches(x, instr, "correct.alphaNumeric(apos))")
+x = obj.compass(instr)
+dj.matches(x, instr, "correct.compass(apos))")
+
+instr = "Fubar spur"
+x = obj.abbreviation(instr)
+if obj.ismodified() is True:
+    dj.passes("correct.ismodified()")
+else:
+    dj.fails("correct.ismodified()")
+
+instr = "Arkansas Mtn Rd Cistern"
+x = obj.abbreviation(instr)
+dj.matches(x, "Arkansas Mountain Road Cistern", "correct.abbreviation(Mtn))")
+    
+instr="Coughlin Meadows Rd and Gordon Creek Rd"
+x = obj.abbreviation(instr)
+dj.matches(x, "Coughlin Meadows Road and Gordon Creek Road", "correct.abbreviation(Rds))")
+
+instr="Hwy 119 Mile Marker 5.0 (Gold Dust Rd)"
+x = obj.abbreviation(instr)
+dj.matches(x, "Highway 119 Mile Marker 5.0 (Gold Dust Road)", "correct.abbreviation(paren)", False)
 
 # All done
 if __name__ == '__main__':

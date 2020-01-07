@@ -1,5 +1,5 @@
 # 
-#   Copyright (C) 2017   Free Software Foundation, Inc.
+# Copyright (C) 2017, 2018, 2019, 2020   Free Software Foundation, Inc.
 # 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -22,7 +22,7 @@ import sys
 import re
 import epdb
 import time
-
+import correct
 
 # This class holds a field from the Shapefile. It has 4 fields.
 # Name - name of the field
@@ -97,6 +97,7 @@ class shpfile(object):
         for field in self.fields:
             silly.write(" '%s' " % field[0])
         silly.write("\n")
+        print("Type; %r" % self.sf.shapeType)
         shapeRecs = self.sf.iterShapeRecords()
         for entry in shapeRecs:
             end = (len(entry.record))
@@ -141,6 +142,7 @@ class shpfile(object):
         shapeRecs = self.sf.iterShapeRecords()
         silly.write("   Processing OSM file: \r")
         for entry in shapeRecs:
+            #print("FIXME TYPE: %r" % (entry.shape.shapeType))
             alltags = list()
             end = (len(entry.record))
             tags = dict()
@@ -170,7 +172,6 @@ class shpfile(object):
             hours = False
             i = 1
             for record in entry.record[:end]:
-
                 try:
                     # logging.debug("RECORD: %r" % record)
                     # import pdb; pdb.set_trace()
@@ -289,9 +290,11 @@ class shpfile(object):
             # Process all the points in the Shape file
             k = 0
             refs = []
+            if len(entry.shape.points) == 0:
+                continue
             for point in entry.shape.points:
                 attrs = dict()
-                # logging.debug("POINTS: %r: %r" % (entry.record[1:2], point))
+                #logging.debug("POINTS: %r: %r" % (entry.record[1:2], point))
                 lon = point[0]
                 attrs['lon'] = str(lon)
                 lat = point[1]
@@ -310,6 +313,9 @@ class shpfile(object):
             # logging.debug("OSM ID: %r %r %r" % (tags, lat, lon))
             # logging.debug("REFS %r" % refs)
             # epdb.set_trace()
+            if entry.shape.shapeType == 0:
+                logging.debug("Got a NULL shape type: %r" % alltags)
+                continue
             if self.options.get('type') == "line":
                 osm.makeWay(refs, alltags)
 

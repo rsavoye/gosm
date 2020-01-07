@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # 
-#   Copyright (C) 2016, 2017, 2018, 2019   Free Software Foundation, Inc.
+#  Copyright (C) 2016, 2017, 2018, 2019, 2020   Free Software Foundation, Inc.
 # 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -140,7 +140,10 @@ subnames[milestone]="Mile Markers"
 subnames[parcel]="Parcels"
 subnames[subdivisions]="Subdivisions"
 
-debug=yes
+debug="yes"
+#eval "$(get_camp_sites)"
+#echo ${camps[KellyDahlCampground]}
+#exit 0
 
 # Process the list of polygons
 declare -a polygons=()

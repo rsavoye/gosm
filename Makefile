@@ -57,4 +57,6 @@ pip2-uninstall:
 check:
 	osmpylib/test.py
 
-xforms:
+#compile:
+#    python3 -m nuitka --follow-imports shp2map.py
+

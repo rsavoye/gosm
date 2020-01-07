@@ -1,6 +1,6 @@
 # OSM fields
-column,fullname,name
-column,roadclass,highway
+tag,fullname,name
+tag,roadclass,highway
 # OSM tags
 tag,strtetype,highway
 tag,munileft,Ignore
@@ -24,7 +24,6 @@ tag,stateleft,Ignore
 tag,esnleft,Ignore
 tag,zipright,Ignore
 tag,lasteditor,Ignore
-#fullname' v='Kingston Peak Rd' />
 tag,lastupdate,lastupdate
 tag,centerline,Ignore
 tag,zipleft,Ignore
@@ -36,7 +35,7 @@ tag,astrte,Ignore
 tag,astrtetype,Ignore
 tag,onewaydir,Ignore
 # Attributes
-attribute,highway,4WD,4wd_only=yes
+attribute,highway,4WD,track
 attribute,highway,Service,service
 attribute,highway,Arterial,secondary
 attribute,highway,Collector,tertiary
@@ -57,7 +56,7 @@ tag,created_da,Ignore
 tag,created_us,Ignore
 tag,fulladdr,alt_name
 tag,fulladdrnu,Ignore
-tag,fullname,addr:street
+tag,fullname,name
 tag,last_edi_1,Ignore
 tag,DDSWebUser,Ignore
 tag,lasteditor,Ignore
@@ -71,3 +70,6 @@ tag,status,Ignore
 tag,usngcoord,Ignore
 tag,last_edite,Ignore
 tag,municipali,Ignore
+tag,unitid,Ignore
+tag,unittype,Ignore
+

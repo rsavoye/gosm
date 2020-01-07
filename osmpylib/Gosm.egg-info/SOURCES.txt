@@ -1,0 +1,5 @@
+setup.py
+Gosm.egg-info/PKG-INFO
+Gosm.egg-info/SOURCES.txt
+Gosm.egg-info/dependency_links.txt
+Gosm.egg-info/top_level.txt

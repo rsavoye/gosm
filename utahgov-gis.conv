@@ -173,3 +173,9 @@ attribute,sac_scale,EXTREME,alpine_hiking
 #ignore:LastUpdate
 #ignore:CartoCode
 #ignore:SHAPE_Leng
+
+tag,Warning1,Ignore
+tag,Warning2,Ignore
+tag,Warning3,Ignore
+tag,Warning4,Ignore
+tag,Add_Info,Ignore

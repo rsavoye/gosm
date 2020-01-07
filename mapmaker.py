@@ -1,7 +1,7 @@
 #!/usr/bin/python3
 
 # 
-#   Copyright (C) 2019   Free Software Foundation, Inc.
+# Copyright (C) 2019, 2020   Free Software Foundation, Inc.
 # 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -140,6 +140,9 @@ class myconfig(object):
 \t--format(-f)   Output file format,
                  ie... GTiff, PDF, AQM, OSMAND
 \t--verbose(-v)  Enable verbosity
+
+example:
+        ./mapmaker.py -v -p test.poly -i test.pdf -o ./new.pdf
         """)
         quit()
 
@@ -368,4 +371,5 @@ if dd.get('format') == "pdf":
     outfile = poly.getName() + ".pdf"
     pdf = Avenza(dd)
     pdf.applyLayer("addrs")
+    pdf.applyLayer("buildings")
     pdf.dump()

@@ -28,6 +28,13 @@ senarios[9]="375 County Road 68, Boulder, CO"
 senarios[10]="233 Deer Circle, Black Hawk, CO"
 senarios[11]=""			# Terminator
 
+
+# Station 10:
+# 198 Chase Mine Road, Missouri Flats & Church Placer Rd -105.5219,39.77928
+# Wellington Mine -105.52025,39.77955    Rd - 5414977956
+# Chase Mine -105.5058302,39.7827657
+# station 10 -105.5217809,39.8229471
+
 # GPS coordinates of water sources. We uses coordinate as not all water
 # sources, like cisterns, have an address.
 sources[0]="39.80445,-105.52895"		# Hydrant 50
@@ -101,6 +108,11 @@ storage[15]=""
 storage[16]=""
 storage[17]=""
 storage[18]=""
+
+# Shoshoni 39.926296,-105.502543
+# Blue Apts 39.916231, -105.500284
+# Observatory 39.08128, -105.491934
+
 
 csv="/tmp/distance.csv"
 # Create output file

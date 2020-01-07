@@ -1,5 +1,5 @@
 # 
-#   Copyright (C) 2017   Free Software Foundation, Inc.
+# Copyright (C) 2017, 2018, 2019, 2020   Free Software Foundation, Inc.
 # 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -16,7 +16,7 @@
 # 
 
 import logging
-import pdb
+# import epdb
 # import re
 
 
@@ -30,8 +30,11 @@ class convfile(object):
         self.filespec = file
 
     def open(self, file):
+        if file is False:
+            return
         try:
             self.file = open(file, "r")
+            logging.info("Opened %r" % file)
         except Exception as inst:
             logging.error("Couldn't open %r: %r" % (file), inst)
         self.read()
@@ -39,11 +42,9 @@ class convfile(object):
     def read(self):
         if self.file is False:
             self.file.open(self.filespec)
-        try:
-            lines = self.file.readlines()
-        except Exception as inst:
-            logging.error("Couldn't read lines from %r: %r" % (self.file), inst)
+        if self.file is False:
             return
+        lines = self.file.readlines()
         curname = ""
         for line in lines:
             if line[0] == '#':
@@ -111,5 +112,5 @@ class convfile(object):
         logging.info("Dumping datafile")
         for i, j in self.table.items():
             logging.info("FOOBAR: %r" % (i, j))
-            
+
 

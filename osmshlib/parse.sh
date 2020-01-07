@@ -1,5 +1,5 @@
 # 
-#   Copyright (C) 2016, 2017   Free Software Foundation, Inc.
+# Copyright (C) 2016, 2017, 2018, 2019, 2020  Free Software Foundation, Inc.
 # 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -106,17 +106,20 @@ parse_camp()
     data[LEISURE]="`echo ${line} | cut -d '|' -f 10`"
     data[TOURISM]="`echo ${line} | cut -d '|' -f 11`"
     data[ISIN]="`echo ${line} | cut -d '|' -f 12`"
+    data[REF]="`echo ${line} | cut -d '|' -f 13`"
 
-    if test x"${data[LEISURE]}" = x'firepit'; then
+    if test x"${data[REF]}" != x -a x"${data[NAME]}" = x; then
+	data[NAME]="Site ${data[REF]}"
+    fi
+   if test x"${data[LEISURE]}" = x'firepit'; then
 	data[ICON]='CAMPFIRE'
     fi
-    if test x"${data[TOURISM]}" = x'camp_site'; then
+    if test x"${data[TOURISM]}" = x'camp_site' -o x"${data[TOURISM]}" = x'camp_pitch'; then
 	data[ICON]='CAMPSITE'
     fi
     if test x"${data[AMENITY]}" = x'campground'; then
 	data[ICON]='CAMPGROUND'
     fi
-
     echo `declare -p data`
     return 0
 }

@@ -1,7 +1,7 @@
 #!/usr/bin/python3
 
 # 
-#   Copyright (C) 2018   Free Software Foundation, Inc.
+# Copyright (C) 2018, 2019, 2020   Free Software Foundation, Inc.
 # 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -190,10 +190,12 @@ for docit in doc.getiterator():
                 if ref == 'k':
                     k = value
                 elif ref == 'v':
-                    if k == 'addr:street' or k == 'name' or k == 'alt_name':
+                    if k == 'addr:street' or k == 'addr:city' or k == 'addr:full':
                         newvalue = fix.alphaNumeric(value)
                         newvalue = fix.abbreviation(newvalue)
-                        newvalue = fix.compass(newvalue)
+                        if len(newvalue) > 0:
+                            newvalue = fix.compass(newvalue)
+                        newvalue = string.capwords(newvalue)
                     else:
                         newvalue = value
 

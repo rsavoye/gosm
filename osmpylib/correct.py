@@ -1,5 +1,5 @@
 # 
-#   Copyright (C) 2018   Free Software Foundation, Inc.
+# Copyright (C) 2018, 2019, 2020   Free Software Foundation, Inc.
 # 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -32,8 +32,8 @@ class correct(object):
         self.modified = False
         self.dirshort = ("S", "E", "N", "W")
         self.dirlong = ("South", "East", "North", "West")
-        self.abbrevs = ("CR", "Hwy", "Rd", "Ln", "Dr", "Cir", "Ave", "Pl", "Trl", "Ct", "CR", "FR")
-        self.fullname = ("County Road", "Highway", "Road", "Lane", "Drive", "Circle", "Avenue", "Place", "Trail", "Court", "County Road", "FS")
+        self.abbrevs = ("Hwy", "Rd", "Ln", "Dr", "Cir", "Ave", "Pl", "Trl", "Ct", "Cr", "FR", 'Crk')
+        self.fullname = ("Highway", "Road", "Lane", "Drive", "Circle", "Avenue", "Place", "Trail", "Court", "CR", "FS", 'Creek')
 
     def alphaNumeric(self, value=""):
         self.orig = value
@@ -107,6 +107,8 @@ class correct(object):
         self.orig = value
         i = 0
         # Fix compass direction names
+        if len(value) == 0:
+            epdb.st()
         if value[0] == 'S' or value[0] == 'E' or value[0] == 'N' or value[0] == 'W':
             while i < len(self.dirshort):
                 pattern = "^" + self.dirshort[i] + ' '

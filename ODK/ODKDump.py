@@ -1,7 +1,7 @@
 #!/usr/bin/python3
 
 # 
-#   Copyright (C) 2017   Free Software Foundation, Inc.
+#   Copyright (C) 2017, 2018   Free Software Foundation, Inc.
 # 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -21,6 +21,7 @@ from sys import argv
 import os
 import sys
 sys.path.append(os.path.dirname(argv[0]) + '../osmpylib')
+sys.path.append(os.path.dirname(argv[0]) + 'osmpylib')
 import xmltodict
 import getopt
 import glob

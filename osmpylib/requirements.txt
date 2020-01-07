@@ -1,2 +1,6 @@
 pyshp
 xmltodict
+mercantile
+pySmartDL
+filetype
+rasterio

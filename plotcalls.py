@@ -1,7 +1,7 @@
 #!/usr/bin/python3
 
 # 
-#   Copyright (C) 2017, 2018   Free Software Foundation, Inc.
+# Copyright (C) 2017, 2018, 2019, 2020   Free Software Foundation, Inc.
 # 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -27,7 +27,7 @@ from sys import argv
 sys.path.append(os.path.dirname(argv[0]) + '/osmpylib')
 import pgdb
 from kml import kmlfile
-
+import correct
 
 class config(object):
     """Config data for this program."""
@@ -138,6 +138,7 @@ kml.header("TLFPD Calls")
 
 calldata = open(dd.get('infile'), 'r')    
 lines = calldata.readlines()
+fix = correct.correct()
 for line in lines:
     if line[1] == '#':
         continue
@@ -146,6 +147,10 @@ for line in lines:
     street = line[index + 2:]
     street = street.replace("\n", '')
     street = street.strip()
+    street = fix.alphaNumeric(street)
+    street = fix.abbreviation(street)
+    street = fix.compass(street)
+    
 
     query = "SELECT ST_AsKML(way) from planet_osm_point"
     query += " WHERE \"addr:housenumber\"='" + number + "'"
@@ -154,10 +159,9 @@ for line in lines:
 
     foo = ""
     ret = fcall.query(query)
-    #epdb.set_trace()
     if len(ret) == 1:
         logging.debug("FIXME: query(%r)" % ret)
-        kml.placemark('', 'waypoint', ret[0][0])
+        kml.placemark(number + " " + street, 'waypoint', ret[0][0])
     else:
         logging.warning("%r %r Not found!" % (number, street))
 

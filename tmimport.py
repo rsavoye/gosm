@@ -1,7 +1,7 @@
 #!/usr/bin/python3
 
 # 
-#   Copyright (C) 2019   Free Software Foundation, Inc.
+# Copyright (C) 2019, 2020   Free Software Foundation, Inc.
 # 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -30,6 +30,7 @@ sys.path.append(os.path.dirname(argv[0]) + '/osmpylib')
 from poly import Poly
 from tm import TM,Project,Info,Task
 import getopt
+from osgeo import gdal,ogr,osr
 
 
 class myconfig(object):
@@ -116,11 +117,11 @@ if dd.get('verbose') == 1:
 tm = TM()
 tm.dump()
 
-poly = Poly()
-bbox = poly.getBBox(dd.get('poly'))
+poly = Poly(dd.get('poly'))
+poly.dump()
 
 project = Project()
-query = project.create(tm.getNextProjectID(), comment="#tm-senecass", geometry=None)
+query = project.create(id=tm.getNextProjectID(), comment="#tm-senecass", polygon=poly)
 #project.dump()
 print(query)
 tm.query(query)

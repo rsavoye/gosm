@@ -1,7 +1,7 @@
 #!/usr/bin/python3
 
 # 
-#   Copyright (C) 2019   Free Software Foundation, Inc.
+# Copyright (C) 2019, 2020   Free Software Foundation, Inc.
 # 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -72,7 +72,7 @@ class myconfig(object):
         self.options['mosaic'] = False
         self.options['download'] = False
         self.options['ersi'] = False
-        self.options['usgs'] = True
+        self.options['usgs'] = False
         self.options['topo'] = False
         self.options['terrain'] = False
         self.options['gtiff'] = False
