@@ -22,6 +22,7 @@
 
 import epdb
 import psycopg2
+import sqlparse
 import logging
 from shapely.geometry import GeometryCollection, Point, LineString, Polygon
 from shapely import wkt, wkb
@@ -46,6 +47,16 @@ class Postgis(object):
         self.boundary = None
         self.dbshell = None
         self.dbcursor = None
+        self.fields = list()
+
+    def parse(self, sql):
+        for token in sqlparse.parse(sql)[0].tokens:
+            if token._get_repr_name() == "IdentifierList":
+                for ident in token.get_identifiers():
+                    logging.debug("IDENT: %r" % ident.get_name())
+                    self.fields.append(ident.get_name())
+                    # logging.info("TOKEN: %r %s" % (token, type(token)))
+        return self.fields
 
     def connect(self, dbserver='localhost', database='postgres'):
         """Connect to a local or remote postgresql server"""
@@ -83,7 +94,7 @@ class Postgis(object):
             self.dbcursor = self.dbshell.cursor()
         else:
             logging.warning("DB Shell already open")
-        self.addExtensions()
+        # self.addExtensions()
 
     def addPolygon(self, poly):
         wkt = poly.getGeometry().getWkt()
@@ -105,7 +116,7 @@ class Postgis(object):
 
     def query(self, query=""):
         """Query a local or remote postgresql database"""
-        # logging.debug("postgresql.query(" + query + ")")
+        logging.debug("postgresql.query(" + query + ")")
         if self.dbshell.closed != 0:
             logging.error("Database %r is not connected!" % self.options.get('database'))
             return self.result
@@ -113,13 +124,16 @@ class Postgis(object):
         self.result = list()
         try:
             self.dbcursor.execute(query)
-            # logging.info("Got %r records from query." % self.dbcursor.rowcount)
+            logging.info("Got %r records from query." % self.dbcursor.rowcount)
         except psycopg2.ProgrammingError as e:
             if e.pgcode != None:
                 logging.error("Query failed to fetch! %r" % e.pgerror)
 
         tmp = query.split(' ')
-        fields = tmp[1].split(',')
+        logging.debug("FIXME fields(%d): %r" % (self.dbcursor.rowcount, tmp))
+        fields = self.parse(query)
+        
+        # fields = tmp[1].split(',')
         try:
             line = self.dbcursor.fetchone()
         except:
@@ -139,7 +153,12 @@ class Postgis(object):
                                 # print(tmp[1])
                                 data[tmp[0].replace('"', '')] = tmp[1].replace('"', '')
                 elif fields[i] == "wkb_geometry":
-                    data['wkb_geometry'] = wkb.loads(item,hex=True)
+                    try:
+                        data['wkb_geometry'] = wkb.loads(item,hex=True)
+                    except:
+                        logging.warning("Couldn't parse %r" % data['name'])
+                        i += 1
+                        continue
                     #data['wkb_geometry'] = wkb.loads(item.tobytes())
                 else:
                     data[fields[i]] = item
@@ -153,7 +172,7 @@ class Postgis(object):
     def getBoundaries(self, poly, result=list()):
         result = self.query("")
         self.addPolygon(poly)
-#        result =  self.query("SELECT osm+_id,name,boundary,wkb_geometry FROM multipolygons WHERE boundary is not NULL';")
+#        result =  self.query("SELECT osm_id,name,boundary,wkb_geometry FROM multipolygons WHERE boundary is not NULL';")
         return self.result
 
         return result
