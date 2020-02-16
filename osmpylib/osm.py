@@ -47,7 +47,8 @@ class osmfile(object):
         if filespec is None:
             self.file = self.options.get('outdir') + "foobar.osm"
         else:
-            self.file = open(filespec + ".osm", 'w')
+            self.file = open(filespec, 'w')
+            # self.file = open(filespec + ".osm", 'w')
         logging.info("Opened output file: " + filespec )
         #logging.error("Couldn't open %s for writing!" % filespec)
 
@@ -72,13 +73,13 @@ class osmfile(object):
         if self.file != False:
             self.file.close()
 
-    def makeNode(self, attr=dict()):
-        self.node(attr['osmid'], attrs['lat'], attrs['lon'], attr['osmid'], attr['user'])
+    def writeWay(self, way=list()):
+        for line in way:
+            self.file.write("%s\n" % line)
 
-        #    def node(self, lat="", lon="", tags=list(), modified=False, osmid=None, user=None, uid=None, version=None):
-    def node(self, tags=list(), attrs=dict(), modified=False):
+    def writeNode(self, tags=list(), attrs=dict(), modified=False):
         #        timestamp = ""  # LastUpdate
-        timestamp = time.strftime("%Y-%m-%dT%TZ")
+        timestamp = datetime.now().strftime("%Y-%m-%dT%TZ")
         # self.file.write("       <node id='" + str(self.osmid) + "\' visible='true'")
         try:
             x = attrs['osmid']
@@ -89,14 +90,16 @@ class osmfile(object):
                 attrs['id'] = str(self.osmid)
                 self.osmid -= 1
 
-        try:
-            x = str(attrs['user'])
-        except:
-            attrs['user'] = str(self.options.get('user'))
-        try:
-            x = str(attrs['uid'])
-        except:
-            attrs['uid'] = str(self.options.get('uid'))
+        if 'user' in attrs:
+            try:
+                x = str(attrs['user'])
+            except:
+                attrs['user'] = str(self.options.get('user'))
+        if 'uid' in attrs:
+            try:
+                x = str(attrs['uid'])
+            except:
+                attrs['uid'] = str(self.options.get('uid'))
 
         if len(attrs) > 0:
             self.file.write("    <node")
@@ -161,24 +164,30 @@ class osmfile(object):
             newval = fix.abbreviation(newval)
             newval = fix.compass(newval)
 
-        # This is a hack because the CO address data truncats the street,
+        # This is a hack because the CO address data truncates the street,
         # and we need the whole thing so routing will work to an address.
         if newtag == 'addr:full':
             self.full = re.sub(" Unit .*", '', newval)
+            newval = re.sub("^[0-9]* ", '', self.full)
+            newtag = "add:street"
             # logging.debug("FIXME: FULL %" % self.full)
         elif newtag == 'addr:housenumber':
             # logging.debug("FIXME: NUM")
             self.num = newval
         elif newtag == 'addr:street':
-            newval = self.full.replace(self.num, '')
+            if self.full is not None:
+                newval = re.sub("^[0-9]* ", '', self.full)
+                # newval = self.full.replace(self.num, '')
 
+        self.full = None
+        self.addr = None
         tag[newtag] = newval
         # tag[newtag] = string.capwords(newval)
 
         #print("ATTRS2: %r %r" % (newtag, newval))
         return tag
 
-    def makeWay(self, refs, tags=list(), attrs=dict()):
+    def makeWay(self, refs, tags=list(), attrs=dict(), modified=True):
         if len(refs) is 0:
             logging.error("No refs! %r" % tags)
             return
@@ -197,8 +206,10 @@ class osmfile(object):
             #logging.debug("osmfile::way(refs=%r, tags=%r)" % (refs, tags))
             #logging.debug("osmfile::way(tags=%r)" % (tags))
             self.file.write("    <way")
-            timestamp = time.strftime("%Y-%m-%dT%TZ")
+            timestamp = datetime.now().strftime("%Y-%m-%dT%TZ")
 
+            if modified:
+                self.file.write(" action='modified'")
             self.file.write(" version='1'")
             self.file.write(" id=\'" + str(self.osmid) + "\'")
             self.file.write(" timestamp='" + timestamp + "\'>\n")
