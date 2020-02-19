@@ -50,11 +50,12 @@ class Postgis(object):
         self.fields = list()
 
     def parse(self, sql):
+        self.fields = list()
         for token in sqlparse.parse(sql)[0].tokens:
             if token._get_repr_name() == "IdentifierList":
                 for ident in token.get_identifiers():
-                    logging.debug("IDENT: %r" % ident.get_name())
-                    self.fields.append(ident.get_name())
+                    # logging.debug("IDENT: %r" % ident.get_name())
+                    self.fields.append(ident.get_name().lstrip())
                     # logging.info("TOKEN: %r %s" % (token, type(token)))
         return self.fields
 
@@ -124,16 +125,15 @@ class Postgis(object):
         self.result = list()
         try:
             self.dbcursor.execute(query)
-            logging.info("Got %r records from query." % self.dbcursor.rowcount)
-        except psycopg2.ProgrammingError as e:
+            # logging.info("Got %r records from query." % self.dbcursor.rowcount)
+        except Exception as e:
             if e.pgcode != None:
                 logging.error("Query failed to fetch! %r" % e.pgerror)
+                logging.error("Query failed: %r" % query)
 
-        tmp = query.split(' ')
-        logging.debug("FIXME fields(%d): %r" % (self.dbcursor.rowcount, tmp))
         fields = self.parse(query)
+        # logging.debug("FIXME fields(%d): %r" % (self.dbcursor.rowcount, fields))
         
-        # fields = tmp[1].split(',')
         try:
             line = self.dbcursor.fetchone()
         except:
@@ -141,7 +141,13 @@ class Postgis(object):
         while line is not None:
             i = 0
             data = dict()
+            # While it's possible to edit the osmconf.ini file for GDAL
+            # and have everything you want appear as a field, I prefer
+            # tp not have to edit a root protected config file, so
+            # parse each entry out of other_tags, which accomplishes
+            # the same thing.
             for item in line:
+                # logging.debug("FIXME item: %r, %r" % (fields[i], item))
                 if fields[i] == "other_tags":
                     if item is not None:
                         tags = item.split(',')
@@ -150,18 +156,38 @@ class Postgis(object):
                             tmp = value.split('=>')
                             # print(len(tmp))
                             if len(tmp) == 2:
-                                # print(tmp[1])
-                                data[tmp[0].replace('"', '')] = tmp[1].replace('"', '')
-                elif fields[i] == "wkb_geometry":
+                                # logging.debug("TMP: %r" % tmp)
+                                data[tmp[0].replace('"', '').lstrip()] = tmp[1].replace('"', '')
+                elif fields[i] == "wkb":
                     try:
-                        data['wkb_geometry'] = wkb.loads(item,hex=True)
+                        # FIXME: is this generating hex errors!
+                        data['wkb'] = wkb.loads(item,hex=True)
                     except:
-                        logging.warning("Couldn't parse %r" % data['name'])
+                        if 'name' in data:
+                            logging.warning("Couldn't parse wkb %r" % data['name'])
+                        if 'osm_way_id' in data:
+                            logging.warning("Couldn't parse wkb %r" % data['osm_way_id'])
+                        if 'osm_id' in data:
+                            logging.warning("Couldn't parse wkb %r" % data['osm_id'])
                         i += 1
                         continue
-                    #data['wkb_geometry'] = wkb.loads(item.tobytes())
+                elif fields[i] == "cp":
+                    try:
+                        # FIXME: is this generating hex errors!
+                        data['cp'] = wkb.loads(item,hex=True)
+                    except:
+                        if 'name' in data:
+                            logging.warning("Couldn't parse cp %r" % data['name'])
+                        if 'osm_way_id' in data:
+                            logging.warning("Couldn't parse cp %r" % data['osm_way_id'])
+                        if 'osm_id' in data:
+                            logging.warning("Couldn't parse cp %r" % data['osm_id'])
+                        i += 1
+                        continue
+                    #data['wkb'] = wkb.loads(item.tobytes())
                 else:
-                    data[fields[i]] = item
+                    data[fields[i]] = str(item).lstrip()
+                    # logging.debug("FIXME data: %r" % (data))
                 i += 1
             self.result.append(data)
             line = self.dbcursor.fetchone()
