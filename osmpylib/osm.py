@@ -77,6 +77,29 @@ class osmfile(object):
         for line in way:
             self.file.write("%s\n" % line)
 
+    def mergeTags(self, tags1, tags2):
+        """Merge two sets of tags together. This would be easy if all the
+        values matched exactly, but often imported datra sucks... so
+        apply some fuzzy logic to the merge, or mark it for later review in JOSM.
+        """
+        filter = ['osm_id', 'lat', 'lon']
+        newtags = dict()
+        for key, value in tags1.items():
+            if key == 'osm_id' or key == 'lat' or key == 'lon' or value == 'None':
+                continue
+            if key in tags2:  # see if there is a duplicate tag
+                if tags1[key] == tags2[key] and value != 'None':
+                    newtags[key] = value
+                else:
+                    newtags['alt_' + key] = tags2[key]
+        for key, value in tags2.items():
+            if key == 'osm_id' or key == 'lat' or key == 'lon' or value == 'None':
+                continue
+            if key in newtags is False and value != 'None':
+                newtags[key] = value
+                        
+        return newtags
+
     def writeNode(self, tags=list(), attrs=dict(), modified=False):
         #        timestamp = ""  # LastUpdate
         timestamp = datetime.now().strftime("%Y-%m-%dT%TZ")
@@ -112,7 +135,7 @@ class osmfile(object):
 
         for i in tags:
             for name, value in i.items():
-                if name == "Ignore" or value == '':
+                if name == "Ignore" or value == None:
                     continue
                 if str(value)[0] != 'b':
                     if value != 'None' or value != 'Ignore':
